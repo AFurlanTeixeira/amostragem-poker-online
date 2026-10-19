@@ -19,7 +19,7 @@ O plano completo, com fórmulas e referências, está em [`docs/plano_projeto.md
 | Fonte | Papel | Onde |
 |---|---|---|
 | [Kaggle: *Poker Tournament Survival — Skill vs. Variance*](https://www.kaggle.com/datasets/sergionefedov/poker-tournament-survivorship) | População conhecida (45.000 jogadores, 17 colunas, dados sintéticos) para as simulações de AAS e AAS estratificada | `data/raw/kaggle/` (fora do git) |
-| SharkScope | Coleta de campo do plano em dois estágios (de 5 a 10 consultas por dia; n ≈ 50 a 100) | `data/raw/sharkscope/` (versionado) |
+| SharkScope | Coleta de campo do plano em dois estágios (de 5 a 10 consultas por dia; n ≈ 50 a 100) | [`data/raw/sharkscope/`](data/raw/sharkscope) (versionado) |
 
 Detalhes, dicionário de dados e cabeçalhos das planilhas de campo: [`data/raw/README.md`](data/raw/README.md).
 
