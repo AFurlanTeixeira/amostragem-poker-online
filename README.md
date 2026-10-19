@@ -2,7 +2,7 @@
 
 ### 📌 Sobre o Projeto
 
-Projeto de **Amostragem** (Estatística, Unicamp, 2026). Compara dois tipos de plano para estimar o **ROI médio** e a **proporção de jogadores lucrativos** em torneios de poker online:
+Trabalho Final de **Técnicas de Amostragem** (ME430-Estatística, Unicamp, 2026). Compara dois tipos de plano para estimar o **ROI médio** e a **proporção de jogadores lucrativos** em torneios de poker online:
 
 1. **Amostragem direta de elementos** (AAS e AAS estratificada), simulada por **Monte Carlo** sobre um dataset do Kaggle tratado como população conhecida.
 2. **Amostragem estratificada em dois estágios**, aplicada em campo no **SharkScope**: estratos por faixa de buy-in, torneios como unidades primárias e jogadores como unidades secundárias.
