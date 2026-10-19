@@ -4,8 +4,8 @@
 
 Comparação de planos amostrais no poker online: AAS e AAS estratificada
 (simuladas no dataset do Kaggle) vs. amostragem estratificada em dois estágios
-(coleta real no SharkScope). Ver `docs/plano_projeto.md` para o plano completo
-e `README.md` para rodar o projeto.
+(coleta real no SharkScope). Ver [`docs/plano_projeto.md`](../docs/plano_projeto.md) para o plano completo
+e [`README.md`](../README.md) para rodar o projeto.
 
 ## Stack
 
