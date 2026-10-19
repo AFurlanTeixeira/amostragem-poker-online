@@ -11,13 +11,13 @@ estágios aplicada em campo no SharkScope (torneios = UPA, jogadores = USA).
 Parâmetros: ROI médio por jogador e proporção de jogadores lucrativos.
 
 É um projeto de análise, não um serviço. A entrega é um relatório e slides.
-O plano completo, com fórmulas, está em `docs/plano_projeto.md`.
+O plano completo, com fórmulas, está em [`docs/plano_projeto.md`](docs/plano_projeto.md).
 
 Docs mais profundos:
-- `.ai/contexto.md`: visão geral do fluxo e índice
-- `.ai/padroes-codigo.md`: padrões de R e de testes
-- `.ai/modelagem.md`: decisões estatísticas (ADRs)
-- `docs/referencias.md`: cada fórmula → livro/seção/equação
+- [`.ai/contexto.md`](.ai/contexto.md): visão geral do fluxo e índice
+- [`.ai/padroes-codigo.md`](.ai/padroes-codigo.md): padrões de R e de testes
+- [`.ai/modelagem.md`](.ai/modelagem.md): decisões estatísticas (ADRs)
+- [`docs/referencias.md`](docs/referencias.md): cada fórmula → livro/seção/equação
 
 ## Commands
 
@@ -39,7 +39,7 @@ R/estimadores_dois_estagios.R tau_h, mu (não viesado / razão), variância, EPA
 R/simulacao_kaggle.R          Monte Carlo de AAS/AAS estratificada na população do Kaggle
 ```
 
-Regras que não podem ser quebradas (ver `.ai/modelagem.md`):
+Regras que não podem ser quebradas (ver [`.ai/modelagem.md`](.ai/modelagem.md)):
 
 - A média por jogador divide por M0 da **população** (ou por M̂0 no estimador razão), nunca pela soma dos inscritos dos torneios sorteados.
 - A variância em dois estágios inclui o fator M_hk² no termo dentro dos torneios (torneios de tamanhos diferentes).
