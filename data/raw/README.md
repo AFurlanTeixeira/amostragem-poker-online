@@ -2,7 +2,7 @@
 
 Dado bruto não é editado nem transformado aqui: as transformações ficam em `R/`.
 
-## `kaggle/`: população conhecida (fora do git)
+## `kaggle/`: população conhecida
 
 - **Dataset:** [Poker Tournament Survival — Skill vs. Variance](https://www.kaggle.com/datasets/sergionefedov/poker-tournament-survivorship) (autor: `sergionefedov`).
 - **Arquivos:** `poker_tournament_survival.csv` (45.000 linhas × 17 colunas) e `data_dictionary_poker.csv`.
