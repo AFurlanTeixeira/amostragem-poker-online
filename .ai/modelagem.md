@@ -9,6 +9,7 @@ Estratos: 3 faixas de buy-in (Micro/Nano < US$5; Low US$5–24,99; Mid/High
 >= US$25). 1º estágio: AAS sem reposição de torneios (n_h >= 2). 2º estágio:
 AAS sem reposição de jogadores (m_hk >= 2) + lista de reserva ordenada.
 A estratificação é uma partição, não um estágio (Thompson, p. 171).
+Por que 3 estratos e não 5: ver `docs/notas/estratificacao_buyin.md`.
 
 ## ADR-002: Estimador da média por jogador
 
