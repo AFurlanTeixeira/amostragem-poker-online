@@ -44,10 +44,13 @@ Por isso o desenho evita depender de uma lista completa e concentra o esforço d
 
 ### 2.1 População-alvo
 
-> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go e torneios satélite assim como Cash Game) do **PokerStars.com**, com início entre **01/10/2026** e **15/10/2026**.
+> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go e torneios satélite assim como Cash Game) do **PokerStars.com**, com início entre **01/10/2026** e **14/10/2026** (14 dias corridos).
+>
 > Os torneios abaixo de US\$ 1,00 ficam fora pois têm comportamento atípico (muitos inscritos, na maioria jogadores recreativos, prêmios irrisórios e ROI pouco informativo). Eles também são **descartados na listagem** de cada bloco, antes do sorteio do 2º estágio.
 
-Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mesmo jogador pode aparecer mais de uma vez na população. Isso é intencional: o parâmetro estimado é o ROI médio *por inscrição*, que pondera os jogadores pela frequência com que jogam. Na análise, discutimos a diferença em relação ao ROI médio *por jogador distinto* (ver [§14](#14-limitações-e-considerações-éticas)).
+Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mesmo jogador pode aparecer mais de uma vez na população, em torneios diferentes. Isso é intencional: o parâmetro estimado é o ROI médio *por inscrição*, que pondera os jogadores pela frequência com que jogam.
+
+**Re-entries:** dentro de um mesmo torneio, o jogador conta **uma única vez**, por mais entradas que tenha feito. O ROI do SharkScope é um atributo do jogador, e não da entrada; se cada entrada contasse como uma unidade, quem faz re-entry teria mais chance de ser sorteado e um mesmo valor de $y$ poderia aparecer duplicado no conglomerado. O número de entradas fica registrado como variável auxiliar (`n_entradas`). Na análise, discutimos a diferença em relação ao ROI médio *por jogador distinto* (ver [§14](#14-limitações-e-considerações-éticas)).
 
 ### 2.2 Hierarquia de unidades
 
@@ -55,8 +58,8 @@ Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mes
 |---|---|---|---|---|
 | 1º estágio (UPA) | Bloco de tempo de 2 h | $j$ | $B$ | $b$ |
 | Estratos (dentro do bloco) | Faixa de buy-in | $h = 1,\dots,H$ | — | — |
-| 2º estágio (USA) | Torneio | $k$ | $N_{jh}$ | $n_{jh}$ |
-| 3º estágio (UTA) | Jogador inscrito | $i$ | $M_k$ | $m_k$ |
+| 2º estágio (USA) | Torneio | $k$ | $`N_{jh}`$ | $`n_{jh}`$ |
+| 3º estágio (UTA) | Jogador distinto inscrito no torneio | $i$ | $`M_k`$ | $`m_k`$ |
 
 ### 2.3 Estratos de buy-in
 
@@ -70,13 +73,16 @@ Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mes
 
 | Variável | Definição | Fonte |
 |---|---|---|
-| $y_{ki}$ — ROI | *Total ROI* (%) do jogador no SharkScope nos **12 meses anteriores à data de coleta**, considerando só o PokerStars | SharkScope |
-| $\ell_{ki}$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
-| $d_{ki}$ — Lucrativo | $d_{ki} = 1$ se $\ell_{ki} > 0$; caso contrário, $0$ | Derivada |
-| $M_k$ | Número de inscritos no torneio $k$ | Lobby do PokerStars |
-| $N_{jh}$ | Número de torneios do estrato $h$ no bloco $j$ | Lobby / agenda |
+| $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope na **janela fixa de 01/10/2025 a 30/09/2026**, considerando só o PokerStars | SharkScope |
+| $`\ell_{ki}`$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
+| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`\ell_{ki} > 0`$; caso contrário, $0$ | Derivada |
+| $`M_k`$ | Número de **jogadores distintos** inscritos no torneio $k$ (re-entries contadas uma vez) | Lista de inscritos, deduplicada |
+| `n_entradas` | Número de entradas do jogador sorteado no torneio (auxiliar) | Lista de inscritos |
+| $`N_{jh}`$ | Número de torneios do estrato $h$ no bloco $j$ | Lobby / agenda |
 
-> O filtro do SharkScope (período e rede) deve ser **idêntico** para todos os jogadores e registrado na planilha.
+> O filtro do SharkScope (período e rede) deve ser **idêntico** para todos os jogadores e registrado na planilha. Por isso a janela do ROI é fixada em datas absolutas, e não relativa ao dia da consulta.
+>
+> **Atenção:** o número exibido no lobby costuma ser o total de *entradas*, incluindo re-entries. Ele **não** deve ser usado diretamente como $`M_k`$.
 
 ---
 
@@ -110,7 +116,7 @@ População: inscrições em MTTs do PokerStars no período
 │      AAS sem reposição de n_jh torneios entre N_jh, em cada (bloco, estrato)
 │
 └── 3º estágio — UTA: jogadores
-       AAS sem reposição de m_k jogadores entre os M_k inscritos de cada torneio
+       AAS sem reposição de m_k jogadores entre os M_k jogadores distintos de cada torneio
        → consulta de ROI e lucro no SharkScope
 ```
 
@@ -120,7 +126,7 @@ Todos os sorteios usam **amostragem aleatória simples sem reposição (AASs)**,
 
 ## 5. Tamanho e alocação da amostra
 
-Restrição: $n_{\text{total}} = \sum_j \sum_h \sum_k m_k \le 100$ consultas no SharkScope.
+Restrição: $`n_{\text{total}} = \sum_j \sum_h \sum_k m_k \le 100`$ consultas no SharkScope.
 
 **Alocação proposta:**
 
@@ -129,13 +135,13 @@ Restrição: $n_{\text{total}} = \sum_j \sum_h \sum_k m_k \le 100$ consultas no 
 | $B$ | 168 | 14 dias × 12 blocos de 2 h |
 | $b$ | 6 | Mínimo razoável para estimar a variância entre blocos |
 | $H$ | 3 | Faixas de buy-in |
-| $n_{jh}$ | 2 | **Mínimo de 2** para estimar a variância entre torneios no estrato |
-| $m_k$ | 2 | **Mínimo de 2** para estimar a variância dentro do torneio |
+| $`n_{jh}`$ | 2 | **Mínimo de 2** para estimar a variância entre torneios no estrato |
+| $`m_k`$ | 2 | **Mínimo de 2** para estimar a variância dentro do torneio |
 | **Total** | $6 \times 3 \times 2 \times 2 = \mathbf{72}$ jogadores | Cabe na cota de 10 dias de coleta |
 
-> Com $n_{jh} = 1$ ou $m_k = 1$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio.
+> Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio.
 
-**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. Se a cota permitir, prefira aumentar $n_{jh}$ a aumentar $m_k$.
+**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. Se a cota permitir, prefira aumentar $`n_{jh}`$ a aumentar $`m_k`$.
 
 Também é preciso sortear jogadores de **reserva** em cada torneio (por exemplo, 3 extras) para cobrir perfis privados (ver [§11](#11-erros-não-amostrais)).
 
@@ -150,19 +156,22 @@ Também é preciso sortear jogadores de **reserva** em cada torneio (por exemplo
 
 ### Fase 1 — Listagem dos torneios dentro dos blocos sorteados
 
-3. Para cada bloco sorteado, listar **todos** os MTTs com início no intervalo, usando o lobby do cliente do PokerStars (abas *Concluídos* / *Em andamento*). Registrar ID, buy-in, horário de início e número de inscritos ($M_k$).
-4. **Descartar** freerolls e torneios com buy-in abaixo de US\$ 1,00, registrando quantos foram descartados por bloco. Depois, classificar os torneios restantes nos estratos e contar $N_{jh}$.
-5. Sortear $n_{jh}$ torneios por estrato.
+3. Para cada bloco sorteado, listar **todos** os MTTs com início no intervalo, usando o lobby do cliente do PokerStars (abas *Concluídos* / *Em andamento*). Registrar ID, buy-in, horário de início e número total de entradas.
+
+   > **Disponibilidade da listagem:** como o período (01/10 a 14/10/2026) já terminou, verifique antes do sorteio se a aba *Concluídos* do lobby ainda mostra os torneios dos blocos sorteados. Se não mostrar, use a busca de torneios do SharkScope (que consome cota) ou a agenda oficial do PokerStars, e registre a fonte usada em cada bloco.
+4. **Descartar** freerolls e torneios com buy-in abaixo de US\$ 1,00, registrando quantos foram descartados por bloco. Depois, classificar os torneios restantes nos estratos e contar $`N_{jh}`$.
+5. Sortear $`n_{jh}`$ torneios por estrato.
 
 ### Fase 2 — Sorteio dos jogadores
 
-6. Em cada torneio sorteado, exportar ou transcrever a lista de inscritos (numerada de $1$ a $M_k$).
-7. Sortear $m_k$ jogadores titulares e uma ordem de reservas.
+6. Em cada torneio sorteado, exportar ou transcrever a lista de inscritos.
+7. **Deduplicar** a lista: cada nickname aparece uma vez, com o número de entradas anotado em `n_entradas`. Numerar os jogadores distintos de $1$ a $`M_k`$.
+8. Sortear $`m_k`$ jogadores titulares e uma ordem de reservas.
 
 ### Fase 3 — Consulta no SharkScope
 
-8. Consultar, por dia, no máximo o número de nicknames permitido pela cota, seguindo uma ordem aleatória (não agrupar por estrato, para que a passagem do tempo não se confunda com o estrato).
-9. Registrar ROI, lucro, número de torneios no período, data da consulta e o filtro usado.
+9. Consultar, por dia, no máximo o número de nicknames permitido pela cota, seguindo uma ordem aleatória (não agrupar por estrato, para que a passagem do tempo não se confunda com o estrato).
+10. Registrar ROI, lucro, número de torneios no período, data da consulta e o filtro usado.
 
 ### Registro
 
@@ -192,11 +201,11 @@ A probabilidade de inclusão de cada inscrição $(j,h,k,i)$ é
 
 $$\pi_{jhki} = \frac{b}{B}\cdot\frac{n_{jh}}{N_{jh}}\cdot\frac{m_k}{M_k},$$
 
-e $\hat{Y} = \sum w_{jhki}\, y_{jhki}$, com peso amostral $w = 1/\pi$.
+e $`\hat{Y} = \sum w_{jhki}\, y_{jhki}`$, com peso amostral $w = 1/\pi$.
 
 ### 7.5 Número de inscrições e média (estimador razão)
 
-O número total de inscrições $M_0$ é desconhecido e também é estimado, aplicando a mesma fórmula com $y_{ki} \equiv 1$:
+O número total de inscrições $`M_0`$ é desconhecido e também é estimado, aplicando a mesma fórmula com $`y_{ki} \equiv 1`$:
 
 $$\hat{M}_0 = \frac{B}{b}\sum_{j}\sum_{h}\frac{N_{jh}}{n_{jh}}\sum_{k} M_k$$
 
@@ -206,7 +215,7 @@ $$\boxed{\;\hat{\bar{Y}} = \hat{R} = \frac{\hat{Y}}{\hat{M}_0} = \frac{\sum w\,y
 
 ### 7.6 Proporção de lucrativos
 
-É o mesmo estimador, aplicado à variável indicadora $d_{ki}$:
+É o mesmo estimador, aplicado à variável indicadora $`d_{ki}`$:
 
 $$\hat{P} = \frac{\sum w\, d}{\sum w}$$
 
@@ -225,7 +234,7 @@ $$
 \frac{B}{b}\sum_{j=1}^{b}\widehat{\mathrm{Var}}(\hat{Y}_j)
 $$
 
-onde $s_u^2 = \frac{1}{b-1}\sum_j \left(\hat{Y}_j - \bar{\hat{Y}}\right)^2$ é a variância amostral dos totais estimados dos blocos e
+onde $`s_u^2 = \frac{1}{b-1}\sum_j \left(\hat{Y}_j - \bar{\hat{Y}}\right)^2`$ é a variância amostral dos totais estimados dos blocos e
 
 $$
 \widehat{\mathrm{Var}}(\hat{Y}_j) = \sum_{h=1}^{H}\left[
@@ -237,16 +246,16 @@ $$
 
 com
 
-- $s_{1jh}^2$: variância amostral dos $\hat{T}_k$ entre os torneios sorteados do estrato $h$ no bloco $j$;
-- $s_{2k}^2$: variância amostral de $y_{ki}$ entre os jogadores sorteados no torneio $k$.
+- $`s_{1jh}^2`$: variância amostral dos $`\hat{T}_k`$ entre os torneios sorteados do estrato $h$ no bloco $j$;
+- $`s_{2k}^2`$: variância amostral de $`y_{ki}`$ entre os jogadores sorteados no torneio $k$.
 
-Os fatores $(1 - b/B)$, $(1 - n_{jh}/N_{jh})$ e $(1 - m_k/M_k)$ são as **correções para população finita** de cada estágio.
+Os fatores $(1 - b/B)$, $`(1 - n_{jh}/N_{jh})`$ e $`(1 - m_k/M_k)`$ são as **correções para população finita** de cada estágio.
 
 > **Aproximação por conglomerado último.** Quando $b/B$ é pequeno (aqui, $6/168 \approx 3,6\%$), o primeiro termo sozinho, sem o fator $(1 - b/B)$, já captura quase toda a variância e é um estimador ligeiramente conservador. É o que fazem `survey` (R) e `samplics` (Python) por padrão. Vale reportar as duas versões.
 
 ### 8.2 Variância da média (linearização de Taylor)
 
-Como $\hat{R} = \hat{Y}/\hat{M}_0$ é uma razão, linearizamos usando a variável resíduo
+Como $`\hat{R} = \hat{Y}/\hat{M}_0`$ é uma razão, linearizamos usando a variável resíduo
 
 $$z_{ki} = y_{ki} - \hat{R}$$
 
@@ -258,7 +267,7 @@ $$\widehat{\mathrm{Var}}(\hat{R}) \approx \frac{\widehat{\mathrm{Var}}(\hat{Z})}
 
 $$\hat{R} \pm t_{\,gl;\,0{,}975}\,\sqrt{\widehat{\mathrm{Var}}(\hat{R})}$$
 
-Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 5$ ($t_{5;0{,}975} \approx 2{,}571$) em vez de $z = 1{,}96$. Para $\hat{P}$, também é recomendável o intervalo de Wilson ou o logit, adaptados ao tamanho efetivo de amostra $n_{\text{ef}} = n / \text{EPA}$.
+Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 5$ ($`t_{5;0{,}975} \approx 2{,}571`$) em vez de $z = 1{,}96$. Para $\hat{P}$, também é recomendável o intervalo de Wilson ou o logit, adaptados ao tamanho efetivo de amostra $`n_{\text{ef}} = n / \text{EPA}`$.
 
 ---
 
@@ -271,7 +280,7 @@ $$\text{EPA} = \frac{\widehat{\mathrm{Var}}(\hat{R})}{\widehat{\mathrm{Var}}_{\t
 - $\text{EPA} > 1$: o desenho complexo é **menos** eficiente que uma AAS com o mesmo $n$, por efeito dos conglomerados.
 - $\text{EPA} < 1$: a estratificação compensa a perda causada pelos conglomerados.
 
-Com $m_k$ constante, vale a aproximação de Kish, que relaciona o EPA à correlação intraclasse $\rho$:
+Com $`m_k`$ constante, vale a aproximação de Kish, que relaciona o EPA à correlação intraclasse $\rho$:
 
 $$\text{EPA} \approx 1 + (m - 1)\,\rho \quad\Rightarrow\quad \hat{\rho} \approx \frac{\text{EPA} - 1}{m - 1}$$
 
@@ -284,7 +293,7 @@ Uma hipótese a investigar é se jogadores do mesmo torneio têm desempenho corr
 O dataset do Kaggle é tratado como **população finita conhecida**, o que permite simular repetidamente os planos amostrais.
 
 1. Aplicar o **mesmo corte de população** usado em campo: excluir freerolls e registros com buy-in abaixo de US\$ 1,00 e usar as mesmas faixas de estrato da §2.3.
-2. Calcular os parâmetros verdadeiros: $\bar{Y}_{\text{Kaggle}}$ e $P_{\text{Kaggle}}$.
+2. Calcular os parâmetros verdadeiros: $`\bar{Y}_{\text{Kaggle}}`$ e $`P_{\text{Kaggle}}`$.
 3. Rodar $R = 5\,000$ réplicas de:
    - **AASs** de tamanho $n = 72$;
    - **Estratificada simples** por faixa de buy-in, com alocação proporcional e de Neyman.
@@ -302,9 +311,11 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 | **Perfil privado / opt-out** no SharkScope | Substituição pelo próximo jogador da lista de reservas do **mesmo torneio**. Registrar a taxa de substituição por estrato. Se ela for alta, considerar ajuste de não resposta por célula (torneio). |
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
-| **Torneio cancelado ou com poucos inscritos** ($M_k < m_k$) | Excluir da lista do bloco antes do sorteio e documentar o critério. |
+| **Torneio cancelado ou com poucos inscritos** ($`M_k < m_k`$) | Excluir da lista do bloco antes do sorteio e documentar o critério. |
 | **Erro na listagem do bloco** (torneio omitido) | Fazer uma dupla listagem (lobby e agenda oficial) e reconciliar. |
-| **Defasagem temporal** (o ROI muda entre os dias de consulta) | Fixar o período do filtro em datas absolutas, não em "últimos 12 meses" relativo à data da consulta. |
+| **Defasagem temporal** (o ROI muda entre os dias de consulta) | Usar a janela fixa de 01/10/2025 a 30/09/2026 para todos os jogadores (§2.4), em vez de "últimos 12 meses" relativo à data da consulta. |
+| **Re-entry** (jogador com várias entradas no mesmo torneio) | Contar o jogador uma vez na lista deduplicada e registrar `n_entradas` (§2.1). |
+| **Torneios do período fora do lobby** (listagem indisponível) | Usar a busca do SharkScope ou a agenda oficial como fonte alternativa e registrar a fonte por bloco (§6). |
 
 ---
 
@@ -320,7 +331,7 @@ SEMENTE = 164363
 rng = np.random.default_rng(SEMENTE)
 
 # 1º estágio: blocos de 2 h em 14 dias
-blocos = pd.date_range("2026-10-20 00:00", periods=14 * 12, freq="2h")
+blocos = pd.date_range("2026-10-01 00:00", periods=14 * 12, freq="2h")  # 01/10 a 14/10/2026
 blocos_sorteados = rng.choice(blocos, size=6, replace=False)
 
 # 2º estágio: dentro de cada (bloco, estrato)
@@ -421,7 +432,8 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 | `torneio` | str | ID do torneio no PokerStars |
 | `buyin` | float | Buy-in em US\$ |
 | `N_jh` | int | Nº de torneios do estrato no bloco |
-| `M_k` | int | Nº de inscritos no torneio |
+| `M_k` | int | Nº de jogadores distintos inscritos no torneio |
+| `n_entradas` | int | Nº de entradas do jogador no torneio (re-entries) |
 | `jogador_id` | str | Hash do nickname (ver §14) |
 | `posicao_lista` | int | Posição sorteada na lista de inscritos |
 | `substituto` | bool | Se é reserva de um titular com perfil privado |
@@ -435,7 +447,7 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 
 ## 14. Limitações e considerações éticas
 
-- **Unidade de inscrição × jogador.** Jogadores frequentes têm maior probabilidade de inclusão. Para estimar o ROI *por jogador distinto*, seria preciso ponderar cada inscrição por $1/f_i$, onde $f_i$ é o número de inscrições do jogador no período. Esse dado pode ser aproximado pelo próprio SharkScope e fica como extensão do trabalho.
+- **Unidade de inscrição × jogador.** Jogadores frequentes têm maior probabilidade de inclusão. Para estimar o ROI *por jogador distinto*, seria preciso ponderar cada inscrição por $`1/f_i`$, onde $`f_i`$ é o número de inscrições do jogador no período. Esse dado pode ser aproximado pelo próprio SharkScope e fica como extensão do trabalho.
 - **Poucos conglomerados primários** ($b = 6$): os graus de liberdade são baixos e o IC fica largo. Isso é esperado, e discutir esse ponto faz parte da análise.
 - **ROI histórico tem alta variância** e cauda pesada. Considere reportar também a mediana e fazer análise de sensibilidade com ROI winsorizado.
 - **Validade externa:** os resultados valem para MTTs do PokerStars.com no período escolhido, e não para o poker online em geral.
