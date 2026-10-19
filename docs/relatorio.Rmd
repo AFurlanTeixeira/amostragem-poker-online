@@ -1,0 +1,77 @@
+---
+title: "Comparação de Planos Amostrais no Poker Online"
+subtitle: "AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em dois estágios (SharkScope)"
+author: "Arthur Agostinho Furlan Teixeira"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include = FALSE}
+knitr::opts_knit$set(root.dir = "..")
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r carregar-funcoes}
+for (arquivo in list.files("R", pattern = "\\.R$", full.names = TRUE)) source(arquivo)
+SEED <- as.integer(Sys.getenv("RANDOM_SEED", 42))
+
+caminho_kaggle <- Sys.getenv("KAGGLE_PATH", "data/raw/kaggle/poker_tournament_survival.csv")
+caminho_moldura <- "data/raw/sharkscope/moldura_torneios.csv"
+caminho_coleta <- "data/raw/sharkscope/coleta_jogadores.csv"
+tem_kaggle <- file.exists(caminho_kaggle)
+tem_campo <- file.exists(caminho_moldura) && file.exists(caminho_coleta)
+```
+
+# Introdução
+
+<!-- Objetivos e parâmetros de interesse (plano §1). -->
+
+# Delineamentos amostrais
+
+<!-- Plano §2-3: Kaggle como população conhecida; SharkScope em dois estágios. -->
+
+# Simulação no dataset do Kaggle
+
+```{r kaggle, eval = tem_kaggle}
+n_amostra <- as.integer(Sys.getenv("TAMANHO_AMOSTRA", 60))
+n_rep <- as.integer(Sys.getenv("N_REPLICAS", 5000))
+
+# Estratificacao por buy-in (a mesma do campo) e por quartis de skill (didatico).
+resumos_kaggle <- lapply(c(buyin = "buyin", skill = "skill"), function(criterio) {
+  populacao <- carregar_populacao_kaggle(caminho_kaggle, estratificar_por = criterio)
+  lapply(c(roi = "roi", lucrativo = "lucrativo"), function(v) {
+    sims <- simular_planos(populacao, v, n_amostra, n_rep, SEED)
+    resumir_simulacao(sims, mean(populacao[[v]]))
+  })
+})
+resumos_kaggle
+```
+
+<!-- Interpretação: viés, EQM, cobertura e EPA empírico da estratificação. -->
+
+# Coleta de campo no SharkScope
+
+```{r campo, eval = tem_campo}
+moldura <- carregar_moldura(caminho_moldura)
+coleta <- carregar_coleta(caminho_coleta)
+taxa_nao_resposta(coleta)
+
+resultados_campo <- lapply(c(roi = "roi", lucrativo = "lucrativo"), function(v) {
+  res <- estimar_media_dois_estagios(coleta, moldura, v)
+  list(estimativa = res, epa = calcular_epa(res, coleta, moldura, v))
+})
+resultados_campo
+```
+
+<!-- Interpretação: componentes entre/dentro, IC 95%, EPA, rho_int, não resposta. -->
+
+# Comparação e discussão
+
+<!-- Plano §4.5: tabela comparativa e limitações (populações diferentes, cauda pesada do ROI, viés de não resposta). -->
+
+# Referências
+
+Ver `docs/referencias.md`.

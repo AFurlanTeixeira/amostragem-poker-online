@@ -1,0 +1,20 @@
+Package: amostragem.poker
+Title: Comparacao de Planos Amostrais no Poker Online
+Version: 0.1.0
+Description: Compara amostragem aleatoria simples e estratificada (simuladas
+    por Monte Carlo sobre um dataset do Kaggle) com uma amostragem
+    estratificada em dois estagios aplicada em campo no SharkScope
+    (torneios como unidades primarias, jogadores como secundarias). Estima o
+    ROI medio, a proporcao de jogadores lucrativos, a variancia em dois
+    estagios e o efeito do planejamento (EPA/DEFF).
+License: MIT
+Encoding: UTF-8
+Imports:
+    optparse
+Suggests:
+    testthat (>= 3.0.0),
+    covr,
+    rmarkdown,
+    knitr,
+    lintr
+Config/testthat/edition: 3
