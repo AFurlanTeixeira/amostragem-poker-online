@@ -33,6 +33,9 @@ tem_campo <- file.exists(caminho_moldura) && file.exists(caminho_coleta)
 
 <!-- Plano §2-3: Kaggle como população conhecida; SharkScope em dois estágios. -->
 
+```{r estratificacao, child = "docs/notas/estratificacao_buyin.md"}
+```
+
 # Simulação no dataset do Kaggle
 
 ```{r kaggle, eval = tem_kaggle}
