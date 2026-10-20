@@ -167,9 +167,9 @@ Também é preciso sortear jogadores de **reserva** em cada torneio (por exemplo
 
 ### Fase 2 — Sorteio dos jogadores
 
-6. Em cada torneio sorteado, exportar ou transcrever a lista de inscritos.
-7. **Deduplicar** a lista: cada nickname aparece uma vez, com o número de entradas anotado em `n_entradas`. O sorteio é feito nessa lista. O $`M_k`$ usado nos estimadores continua sendo o total de entradas da listagem (§2.4).
-8. Sortear $`m_k`$ jogadores titulares e uma ordem de reservas.
+6. Em cada torneio sorteado, sortear uma ordem de posições de 1 a $`M_k`$ na lista de resultados do SharkScope (1 = campeão), que já tem ordem fixa antes do sorteio. As $`m_k`$ primeiras são os titulares e as seguintes, a ordem de reservas. Assim, não é preciso transcrever a lista inteira. O $`M_k`$ usado nos estimadores continua sendo o total de entradas da listagem (§2.4).
+7. Anotar o nickname de cada posição, seguindo a ordem. Se a posição não existir na lista (a lista pode ter menos linhas que $`M_k`$ por causa das re-entries) ou repetir um jogador já sorteado no torneio, ela é pulada e entra a próxima da ordem. Cada jogador conta uma vez por torneio.
+8. Anotar também os 10 primeiros colocados de cada torneio sorteado (`top10_torneios.csv`), para uma comparação futura com a amostra aleatória. Esse grupo **não** é uma amostra probabilística e não entra nos estimadores.
 
 ### Fase 3 — Consulta no SharkScope
 

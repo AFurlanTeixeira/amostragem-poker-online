@@ -3,7 +3,7 @@
 #' Sem transformacao de negocio aqui -- so leitura, tipagem e validacao
 #' estrutural. Duas fontes:
 #'   - Kaggle (populacao conhecida, `data/raw/kaggle/`);
-#'   - SharkScope (listagem de torneios, inscritos e coleta de campo,
+#'   - SharkScope (listagem de torneios, top 10 e coleta de campo,
 #'     `data/raw/sharkscope/`).
 
 COLUNAS_LISTAGEM <- c(
@@ -11,7 +11,7 @@ COLUNAS_LISTAGEM <- c(
   "tipo", "buy_in", "n_entradas_fonte", "status", "motivo_exclusao", "fonte",
   "data_listagem", "observacao"
 )
-COLUNAS_INSCRITOS <- c("torneio_id", "nickname")
+COLUNAS_TOP10 <- c("bloco_id", "torneio_id", "posicao", "nickname", "data_anotacao")
 COLUNAS_COLETA <- c(
   "estrato", "torneio_id", "n_inscritos", "nickname", "respondeu", "roi", "lucro"
 )
@@ -136,15 +136,23 @@ montar_moldura <- function(listagem) {
   )
 }
 
-#' Le a lista de inscritos dos torneios sorteados (2o estagio).
+#' Le o top 10 dos torneios sorteados (fora do plano amostral).
 #'
-#' @param caminho character, CSV com `torneio_id` e `nickname`.
-#' @return data.frame tipado.
-carregar_inscritos <- function(caminho) {
-  inscritos <- read.csv(caminho, stringsAsFactors = FALSE)
-  validar_colunas(inscritos, COLUNAS_INSCRITOS, "lista de inscritos")
-  inscritos$torneio_id <- as.character(inscritos$torneio_id)
-  inscritos
+#' Os 10 primeiros colocados de cada torneio sorteado, anotados para uma
+#' comparacao futura com a amostra aleatoria. Nao entram nos estimadores.
+#'
+#' @param caminho character, CSV com as colunas de `COLUNAS_TOP10`.
+#' @return data.frame tipado; erro se houver posicao fora de 1 a 10 ou
+#'   repetida no mesmo torneio.
+carregar_top10 <- function(caminho) {
+  top10 <- read.csv(caminho, stringsAsFactors = FALSE, colClasses = c(torneio_id = "character"))
+  validar_colunas(top10, COLUNAS_TOP10, "top 10 dos torneios")
+  top10$posicao <- as.integer(top10$posicao)
+  if (any(!top10$posicao %in% 1:10)) stop("posicao fora de 1 a 10 no top 10.")
+  if (anyDuplicated(top10[, c("torneio_id", "posicao")])) {
+    stop("posicao repetida no mesmo torneio no top 10.")
+  }
+  top10
 }
 
 COLUNAS_LOG <- c("registrado_em", "fase", "evento", "detalhe", "seed")

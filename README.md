@@ -118,7 +118,8 @@ Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 60 --n-rep 5000 --
 # 3. Sorteio de campo
 Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 164363
 Rscript scripts/gerar_md_torneios.R          # docs/fase1_torneios_sorteados.md
-Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 4 --n-reserva 4 --seed 42
+Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 2 --n-reserva 3 --seed 164363
+Rscript scripts/sortear_amostra.R top10       # linhas do top 10 dos torneios sorteados
 
 # 4. Estimação a partir da coleta
 Rscript scripts/estimar_campo.R --metodo auto
