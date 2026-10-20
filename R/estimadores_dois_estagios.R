@@ -74,7 +74,7 @@ variancia_entre <- function(N_h, z) {
 #' Para a proporcao de lucrativos, use `variavel = "lucrativo"`.
 #'
 #' @param coleta data.frame (ver `carregar_coleta()`).
-#' @param moldura data.frame (ver `carregar_moldura()`), populacao de torneios.
+#' @param moldura data.frame (ver `montar_moldura()`), populacao de torneios.
 #' @param variavel character, coluna analisada.
 #' @param metodo character, `"auto"`, `"nao_viesado"` ou `"razao"`.
 #' @param nivel numeric, nivel de confianca do IC (t com gl = sum(n_h) - H).
@@ -144,7 +144,7 @@ estimar_media_dois_estagios <- function(coleta, moldura, variavel = "roi",
 #'
 #' @param resultado lista de `estimar_media_dois_estagios()`.
 #' @param coleta data.frame (ver `carregar_coleta()`).
-#' @param moldura data.frame (ver `carregar_moldura()`).
+#' @param moldura data.frame (ver `montar_moldura()`).
 #' @param variavel character, mesma coluna usada em `resultado`.
 #' @return lista com `epa`, `var_aas`, `s2_y`, `n`, `m_medio`, `rho_int`.
 calcular_epa <- function(resultado, coleta, moldura, variavel = "roi") {

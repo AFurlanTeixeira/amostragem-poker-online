@@ -34,7 +34,7 @@ O objetivo é estimar o desempenho médio dos jogadores de torneios de poker onl
 Duas restrições práticas definem o desenho:
 
 - **Não existe uma moldura completa de torneios.** O PokerStars realiza centenas de milhares de torneios por ano e não publica uma lista com todos eles.
-- **A coleta de desempenho é cara.** O SharkScope limita as consultas a cerca de 5–10 jogadores por dia, então a amostra final fica entre 50 e 100 jogadores.
+- **A coleta de desempenho é cara.** O SharkScope limita o número de consultas por dia (50 no plano pago usado no projeto), e o prazo de entrega deixa só alguns dias de coleta, então a amostra final fica perto de 70 a 100 jogadores.
 
 Por isso o desenho evita depender de uma lista completa e concentra o esforço de coleta em poucos conglomerados.
 
@@ -44,9 +44,9 @@ Por isso o desenho evita depender de uma lista completa e concentra o esforço d
 
 ### 2.1 População-alvo
 
-> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go e torneios satélite assim como Cash Game) do **PokerStars.com**, com início entre **11/10/2026 00:00** e **21/10/2026 00:00** (10 dias corridos, horário de Brasília).
+> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go e torneios satélite assim como Cash Game) do **PokerStars.com**, com início entre **17/10/2026 20:00** e **21/10/2026 00:00** (76 h, horário de Brasília).
 >
-> O período começa em 11/10 porque o lobby do PokerStars não mostra os torneios de 01/10 a 10/10/2026, e um bloco sem listagem não pode ser observado. O período original (01/10 a 14/10) foi abandonado antes da Fase 1 (ver [`fase0_sorteio_blocos.md`](fase0_sorteio_blocos.md)). Os torneios de 21/09 a 30/09, que o lobby também mostra, ficam fora porque estão dentro da janela do ROI (§2.4): o resultado desses torneios entraria no próprio ROI medido.
+> O período é limitado pela fonte da listagem. O lobby do PokerStars só mostra parte dos torneios já encerrados (em 13/10/2026, apenas 9 no dia inteiro), então não serve como moldura. A busca de torneios do SharkScope mostra todos, mas só a partir de 17/10/2026 18:24. O período começa às 20:00 de 17/10, o primeiro início de bloco de 2 h dentro dessa janela, e termina antes do prazo da análise (23/10). Os períodos anteriores (01/10 a 14/10 e 11/10 a 20/10) foram abandonados antes de qualquer sorteio de torneios (ver [`fase0_sorteio_blocos.md`](fase0_sorteio_blocos.md)).
 >
 > Os torneios abaixo de US\$ 1,00 ficam fora pois têm comportamento atípico (muitos inscritos, na maioria jogadores recreativos, prêmios irrisórios e ROI pouco informativo). Eles também são **descartados na listagem** de cada bloco, antes do sorteio do 2º estágio.
 
@@ -92,7 +92,7 @@ Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mes
 
 Na versão anterior do plano, a primeira etapa era sortear torneios dentro de cada estrato. Para isso seria preciso listar **todos** os torneios do período, o que não é viável.
 
-A solução é sortear **blocos de tempo** antes dos torneios. Construir a lista de todos os blocos é fácil: 10 dias × 12 blocos de 2 h dão $B = 120$ blocos. A lista de torneios só precisa ser montada **dentro dos blocos sorteados**. Essa é a lógica clássica da amostragem por áreas, aplicada ao tempo: em vez de listar a população inteira, listamos só as áreas sorteadas.
+A solução é sortear **blocos de tempo** antes dos torneios. Construir a lista de todos os blocos é fácil: 76 h divididas em blocos de 2 h dão $B = 38$ blocos. A lista de torneios só precisa ser montada **dentro dos blocos sorteados**. Essa é a lógica clássica da amostragem por áreas, aplicada ao tempo: em vez de listar a população inteira, listamos só as áreas sorteadas.
 
 Ganhos adicionais:
 
@@ -134,12 +134,12 @@ Restrição: $`n_{\text{total}} = \sum_j \sum_h \sum_k m_k \le 100`$ consultas n
 
 | Parâmetro | Valor | Justificativa |
 |---|---|---|
-| $B$ | 120 | 10 dias × 12 blocos de 2 h |
+| $B$ | 38 | 76 h (17/10 20:00 a 21/10 00:00) em blocos de 2 h |
 | $b$ | 6 | Mínimo razoável para estimar a variância entre blocos |
 | $H$ | 3 | Faixas de buy-in |
 | $`n_{jh}`$ | 2 | **Mínimo de 2** para estimar a variância entre torneios no estrato |
 | $`m_k`$ | 2 | **Mínimo de 2** para estimar a variância dentro do torneio |
-| **Total** | $6 \times 3 \times 2 \times 2 = \mathbf{72}$ jogadores | Cabe na cota de 10 dias de coleta |
+| **Total** | $6 \times 3 \times 2 \times 2 = \mathbf{72}$ jogadores | Cabe em 2 dias de coleta com a cota de 50 consultas por dia, com folga para as reservas |
 
 > Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio.
 
@@ -158,9 +158,9 @@ Também é preciso sortear jogadores de **reserva** em cada torneio (por exemplo
 
 ### Fase 1 — Listagem dos torneios dentro dos blocos sorteados
 
-3. Para cada bloco sorteado, listar **todos** os MTTs com início no intervalo, usando o lobby do cliente do PokerStars (abas *Concluídos* / *Em andamento*). Registrar ID, buy-in, horário de início e número total de entradas.
+3. Para cada bloco sorteado, listar **todos** os MTTs com início no intervalo, usando a busca de torneios do SharkScope. Registrar ID, buy-in, horário de início e número total de entradas.
 
-   > **Disponibilidade da listagem:** só liste um bloco depois que ele terminar, e confira se a aba *Concluídos* do lobby ainda mostra os torneios dos blocos sorteados (o lobby não guarda o histórico inteiro: de 01/10 a 10/10/2026 não há torneios listados). Se não mostrar, use a busca de torneios do SharkScope (que consome cota) ou a agenda oficial do PokerStars, e registre a fonte usada em cada bloco.
+   > **Disponibilidade da listagem:** só liste um bloco depois que ele terminar. O lobby do PokerStars **não** serve como fonte, porque mostra só parte dos torneios encerrados. A janela de torneios do SharkScope parece andar com o tempo (em 19/10/2026 às 23:24, começava em 17/10 18:24, cerca de 53 h antes). Por isso, liste cada bloco o quanto antes, começando pelos mais antigos, e registre a fonte e a data de cada listagem.
 4. **Descartar** freerolls e torneios com buy-in abaixo de US\$ 1,00, registrando quantos foram descartados por bloco. Depois, classificar os torneios restantes nos estratos e contar $`N_{jh}`$.
 5. Sortear $`n_{jh}`$ torneios por estrato.
 
@@ -253,7 +253,7 @@ com
 
 Os fatores $(1 - b/B)$, $`(1 - n_{jh}/N_{jh})`$ e $`(1 - m_k/M_k)`$ são as **correções para população finita** de cada estágio.
 
-> **Aproximação por conglomerado último.** Quando $b/B$ é pequeno (aqui, $6/120 = 5\%$), o primeiro termo sozinho, sem o fator $(1 - b/B)$, já captura quase toda a variância e é um estimador ligeiramente conservador. É o que fazem `survey` (R) e `samplics` (Python) por padrão. Vale reportar as duas versões.
+> **Aproximação por conglomerado último.** Quando $b/B$ é pequeno, o primeiro termo sozinho, sem o fator $(1 - b/B)$, já captura quase toda a variância e é um estimador ligeiramente conservador. Aqui $b/B = 6/38 \approx 16\%$, então a diferença entre as duas versões não é desprezível. É o que fazem `survey` (R) e `samplics` (Python) por padrão. Vale reportar as duas versões.
 
 ### 8.2 Variância da média (linearização de Taylor)
 
@@ -314,10 +314,10 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
 | **Torneio cancelado ou com poucos inscritos** ($`M_k < m_k`$) | Excluir da lista do bloco antes do sorteio e documentar o critério. |
-| **Erro na listagem do bloco** (torneio omitido) | Fazer uma dupla listagem (lobby e agenda oficial) e reconciliar. |
+| **Erro na listagem do bloco** (torneio omitido) | Conferir a listagem do SharkScope com a agenda oficial do PokerStars e reconciliar. |
 | **Defasagem temporal** (o ROI muda entre os dias de consulta) | Usar a janela fixa de 01/10/2025 a 30/09/2026 para todos os jogadores (§2.4), em vez de "últimos 12 meses" relativo à data da consulta. |
 | **Re-entry** (jogador com várias entradas no mesmo torneio) | Contar o jogador uma vez na lista deduplicada e registrar `n_entradas` (§2.1). |
-| **Torneios do período fora do lobby** (listagem indisponível) | Usar a busca do SharkScope ou a agenda oficial como fonte alternativa e registrar a fonte por bloco (§6). Se a falta de listagem atingir um trecho inteiro do período, como aconteceu de 01/10 a 10/10/2026, redefinir o período **antes** da Fase 1 e refazer o sorteio dos blocos (§2.1). |
+| **Listagem indisponível ou incompleta** | O período foi redefinido duas vezes porque a fonte não cobria todos os blocos (lobby sem 01/10 a 10/10; lobby incompleto; SharkScope só a partir de 17/10 18:24). A regra é redefinir o período **antes** do sorteio dos torneios e refazer o sorteio dos blocos com a mesma semente (§2.1). Durante a coleta, listar cada bloco antes que ele saia da janela do SharkScope (§6). |
 
 ---
 
@@ -332,8 +332,8 @@ import pandas as pd
 SEMENTE = 164363
 rng = np.random.default_rng(SEMENTE)
 
-# 1º estágio: blocos de 2 h em 10 dias
-blocos = pd.date_range("2026-10-11 00:00", periods=10 * 12, freq="2h")  # 11/10 a 20/10/2026
+# 1º estágio: blocos de 2 h em 76 h
+blocos = pd.date_range("2026-10-17 20:00", periods=38, freq="2h")  # 17/10 20:00 a 21/10 00:00
 blocos_sorteados = rng.choice(blocos, size=6, replace=False)
 
 # 2º estágio: dentro de cada (bloco, estrato)
@@ -393,8 +393,8 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 # Uso:
 # df = pd.read_csv("data/processed/amostra_sharkscope.csv")
 # df["lucrativo"] = (df["lucro"] > 0).astype(float)
-# estimar_media(df, "roi", B=120)
-# estimar_media(df, "lucrativo", B=120)
+# estimar_media(df, "roi", B=38)
+# estimar_media(df, "lucrativo", B=38)
 ```
 
 > **Validação cruzada:** confira o estimador pontual e o EP com o pacote `survey` do R. Use `svydesign(ids = ~bloco + torneio, weights = ~peso, data = df)`, com `peso = (B/b) * (N_jh/n_jh) * (M_k/m_k)`. Essa é a aproximação por conglomerado último; ela deve ficar próxima do resultado de `estimar_media`.
@@ -411,7 +411,7 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 │   ├── raw/
 │   │   ├── kaggle/                    # dataset original (não versionar se a licença proibir)
 │   │   ├── blocos_sorteados.csv
-│   │   ├── torneios_listados.csv      # moldura do 2º estágio
+│   │   ├── listagem_torneios.csv      # Fase 1: torneios dos blocos (a moldura é derivada daqui)
 │   │   ├── jogadores_sorteados.csv
 │   │   └── log_coleta.csv
 │   └── processed/
@@ -452,7 +452,7 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 - **Unidade de inscrição × jogador.** Jogadores frequentes têm maior probabilidade de inclusão. Para estimar o ROI *por jogador distinto*, seria preciso ponderar cada inscrição por $`1/f_i`$, onde $`f_i`$ é o número de inscrições do jogador no período. Esse dado pode ser aproximado pelo próprio SharkScope e fica como extensão do trabalho.
 - **Poucos conglomerados primários** ($b = 6$): os graus de liberdade são baixos e o IC fica largo. Isso é esperado, e discutir esse ponto faz parte da análise.
 - **ROI histórico tem alta variância** e cauda pesada. Considere reportar também a mediana e fazer análise de sensibilidade com ROI winsorizado.
-- **Validade externa:** os resultados valem para MTTs do PokerStars.com no período escolhido, e não para o poker online em geral.
+- **Validade externa:** os resultados valem para MTTs do PokerStars.com no período escolhido, e não para o poker online em geral. O período tem só 76 h (sábado à noite, domingo, segunda e terça), limitado pela janela do SharkScope e pelo prazo. Não cobre uma semana inteira nem eventos que acontecem só em outros dias.
 - **Termos de uso:** toda a coleta no SharkScope é **manual e respeita a cota da conta**. Não se usa scraping automatizado nem do SharkScope nem do PokerStars.
 - **Privacidade:** nicknames são dados públicos, mas no repositório devem ser **pseudonimizados** (hash com sal mantido fora do Git). Os nicknames originais não devem ser publicados.
 
