@@ -37,6 +37,8 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 
 | Arquivo | Conteúdo | Quem gera |
 |---|---|---|
+| `blocos_sorteados.csv` | Blocos de 2 h sorteados na Fase 0 (estágio temporal), com fuso, `B`, `b` e `seed` | `scripts/sortear_amostra.R blocos` |
+| `log_coleta.csv` | Um evento por linha: sorteios, substituições e não respostas | Scripts de sorteio e anotações à mão |
 | `moldura_torneios.csv` | Todos os torneios do período de referência: `estrato`, `torneio_id`, `buy_in`, `n_inscritos` | Montado à mão a partir do lobby |
 | `torneios_sorteados.csv` | Torneios do 1º estágio | `scripts/sortear_amostra.R torneios` |
 | `inscritos.csv` | Inscritos dos torneios sorteados: `torneio_id`, `nickname` | Montado à mão |
