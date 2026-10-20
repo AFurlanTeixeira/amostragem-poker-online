@@ -63,6 +63,19 @@ test_that("perfis privados sao excluidos e minimos sao exigidos", {
   expect_equal(taxa_nao_resposta(coleta)$taxa_nao_resposta, 1 / 6)
 })
 
+test_that("reservas nao consultadas (respondeu ausente) nao entram", {
+  coleta <- coleta_thompson()
+  reserva <- coleta[1, ]
+  reserva$respondeu <- NA
+  reserva$roi <- NA
+  com_reserva <- rbind(coleta, reserva)
+  expect_equal(taxa_nao_resposta(com_reserva), taxa_nao_resposta(coleta))
+  expect_equal(
+    estimar_media_dois_estagios(com_reserva, moldura_thompson())$estimativa,
+    estimar_media_dois_estagios(coleta, moldura_thompson())$estimativa
+  )
+})
+
 test_that("estratos se somam e EPA e coerente com rho_int", {
   c1 <- coleta_thompson()
   c2 <- coleta_thompson()

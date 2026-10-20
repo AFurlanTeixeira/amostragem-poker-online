@@ -175,9 +175,13 @@ calcular_epa <- function(resultado, coleta, moldura, variavel = "roi") {
 
 #' Taxa de nao resposta (perfis privados) por estrato.
 #'
+#' Linhas com `respondeu` ausente (reservas que nao chegaram a ser
+#' consultadas) ficam de fora.
+#'
 #' @param coleta data.frame (ver `carregar_coleta()`).
 #' @return data.frame com `estrato`, `consultados`, `privados`, `taxa_nao_resposta`.
 taxa_nao_resposta <- function(coleta) {
+  coleta <- coleta[!is.na(coleta$respondeu), , drop = FALSE]
   consultados <- tapply(coleta$respondeu, coleta$estrato, length)
   privados <- tapply(!coleta$respondeu, coleta$estrato, sum)
   data.frame(

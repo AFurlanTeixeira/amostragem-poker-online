@@ -7,8 +7,12 @@
 # Fase 1 -- torneios, por (bloco, estrato), a partir da listagem dos blocos:
 #   Rscript scripts/sortear_amostra.R torneios --n-por-estrato 2 --seed 42
 #
-# Fase 2 -- jogadores, a partir dos inscritos dos torneios sorteados:
-#   Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 4 --n-reserva 4 --seed 42
+# Fase 2 -- jogadores, por posicao na lista de resultados dos torneios sorteados:
+#   Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 2 --n-reserva 3 --seed 164363
+#
+# Top 10 dos torneios sorteados (fora do plano): acrescenta a top10_torneios.csv
+# 10 linhas em branco para cada torneio sorteado que ainda nao esta nele:
+#   Rscript scripts/sortear_amostra.R top10
 
 suppressPackageStartupMessages(library(optparse))
 
@@ -24,14 +28,15 @@ option_list <- list(
   make_option("--n-blocos", default = 6L, help = "Blocos sorteados, b [%default]"),
   make_option("--log", default = "data/raw/sharkscope/log_coleta.csv"),
   make_option("--listagem", default = "data/raw/sharkscope/listagem_torneios.csv"),
-  make_option("--inscritos", default = "data/raw/sharkscope/inscritos.csv"),
+  make_option("--torneios", default = "data/raw/sharkscope/torneios_sorteados.csv"),
+  make_option("--top10", default = "data/raw/sharkscope/top10_torneios.csv"),
   make_option("--n-por-estrato", default = as.integer(Sys.getenv("N_POR_ESTRATO", 5))),
   make_option("--m-por-torneio", default = as.integer(Sys.getenv("M_POR_TORNEIO", 4))),
   make_option("--n-reserva", default = as.integer(Sys.getenv("N_RESERVA", 4))),
   make_option("--seed", default = as.integer(Sys.getenv("RANDOM_SEED", 42)))
 )
 parser <- OptionParser(
-  usage = "%prog [blocos|torneios|jogadores] [opcoes]",
+  usage = "%prog [blocos|torneios|jogadores|top10] [opcoes]",
   option_list = option_list
 )
 entrada <- parse_args(
@@ -69,12 +74,26 @@ if (etapa == "blocos") {
   write.csv(sorteados, saida, row.names = FALSE)
   cat(sprintf("%d torneios sorteados (seed = %d) -> %s\n", nrow(sorteados), args$seed, saida))
 } else if (etapa == "jogadores") {
+  torneios <- read.csv(args$torneios, colClasses = c(torneio_id = "character"))
   sorteados <- sortear_jogadores(
-    carregar_inscritos(args$inscritos), args$m_por_torneio, args$n_reserva, args$seed
+    torneios[, c("bloco_id", "estrato", "torneio_id", "n_inscritos")],
+    args$m_por_torneio, args$n_reserva, args$seed
   )
   saida <- "data/raw/sharkscope/jogadores_sorteados.csv"
   write.csv(sorteados, saida, row.names = FALSE)
-  cat(sprintf("%d jogadores sorteados (seed = %d) -> %s\n", nrow(sorteados), args$seed, saida))
+  cat(sprintf("%d posicoes sorteadas (seed = %d) -> %s\n", nrow(sorteados), args$seed, saida))
+} else if (etapa == "top10") {
+  torneios <- read.csv(args$torneios, colClasses = c(torneio_id = "character"))
+  existente <- if (file.exists(args$top10)) carregar_top10(args$top10) else NULL
+  novos <- torneios[!torneios$torneio_id %in% existente$torneio_id, c("bloco_id", "torneio_id")]
+  n_linhas <- 10 * nrow(novos)
+  linhas <- data.frame(
+    bloco_id = rep(novos$bloco_id, each = 10), torneio_id = rep(novos$torneio_id, each = 10),
+    posicao = rep(1:10, times = nrow(novos)), nickname = rep("", n_linhas),
+    data_anotacao = rep("", n_linhas), stringsAsFactors = FALSE
+  )
+  write.csv(rbind(existente, linhas), args$top10, row.names = FALSE, na = "")
+  cat(sprintf("%d torneios acrescentados -> %s\n", nrow(novos), args$top10))
 } else {
-  stop("Etapa invalida: use 'blocos', 'torneios' ou 'jogadores'.")
+  stop("Etapa invalida: use 'blocos', 'torneios', 'jogadores' ou 'top10'.")
 }

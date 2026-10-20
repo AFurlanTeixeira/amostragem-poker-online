@@ -3,8 +3,8 @@
 #' Estagio temporal (Metodologia §6, Fase 0): AAS sem reposicao de blocos de
 #' tempo de 2 h do periodo de referencia.
 #' Torneios: AAS sem reposicao dentro de cada celula (bloco, estrato).
-#' Jogadores: AAS sem reposicao dentro de cada torneio sorteado,
-#' mais uma lista ordenada de reserva para substituir perfis privados
+#' Jogadores: AAS sem reposicao de posicoes da lista de resultados de cada
+#' torneio sorteado, mais uma lista ordenada de reserva para substituir perfis privados
 #' (plano §3.2, §3.3 e §5.1).
 
 B_MINIMO <- 2 # necessario para estimar a variancia entre blocos (Metodologia §8.1)
@@ -116,40 +116,46 @@ sortear_torneios <- function(moldura, n_por_estrato, seed) {
   resultado
 }
 
-#' Sorteia os jogadores (USA) dentro de cada torneio sorteado.
+#' Sorteia os jogadores (USA) dentro de cada torneio sorteado, por posicao.
 #'
-#' Sorteia uma permutacao aleatoria dos inscritos: os `m` primeiros sao os
-#' titulares e os `n_reserva` seguintes, a lista de reserva (na ordem em que
-#' devem ser usados). Cada torneio usa uma semente derivada de `seed` e do
-#' `torneio_id`, entao o sorteio de um torneio nao depende dos outros
-#' torneios presentes no arquivo (desde que a ordem dos inscritos dele nao
-#' mude).
+#' Em vez de transcrever a lista de inscritos, sorteia posicoes de 1 a M_k
+#' (`n_inscritos`) na lista de resultados da fonte, que ja tem ordem fixa
+#' (1 = campeao). Os `m` primeiros sorteados sao os titulares e os
+#' `n_reserva` seguintes, a reserva (na ordem em que deve ser usada). Na
+#' coleta, a posicao que nao existir na lista ou repetir um jogador ja
+#' sorteado no torneio e pulada, e a proxima da ordem e usada.
 #'
-#' @param inscritos data.frame (ver `carregar_inscritos()`).
+#' Cada torneio usa uma semente derivada de `seed` e do `torneio_id`, entao o
+#' sorteio de um torneio nao depende dos outros torneios do arquivo. Como
+#' `sample.int()` sem reposicao sorteia em sequencia, aumentar `n_reserva`
+#' depois so acrescenta posicoes ao fim da ordem, sem mudar as anteriores.
+#'
+#' @param torneios data.frame com `torneio_id` e `n_inscritos` (ver
+#'   `torneios_sorteados.csv`); as demais colunas sao mantidas.
 #' @param m_por_torneio integer, jogadores titulares por torneio.
 #' @param n_reserva integer, tamanho da lista de reserva por torneio.
 #' @param seed integer, semente do sorteio.
-#' @return data.frame com `torneio_id`, `nickname`, `ordem` e `tipo`
-#'   (`"titular"` ou `"reserva"`).
-sortear_jogadores <- function(inscritos, m_por_torneio, n_reserva, seed) {
+#' @return data.frame com as colunas de `torneios` mais `ordem`, `posicao`
+#'   e `tipo` (`"titular"` ou `"reserva"`), uma linha por posicao sorteada.
+sortear_jogadores <- function(torneios, m_por_torneio, n_reserva, seed) {
   if (m_por_torneio < M_MINIMO_POR_TORNEIO) {
     stop(sprintf("Sorteie ao menos %d jogadores por torneio.", M_MINIMO_POR_TORNEIO))
   }
-  torneios <- sort(unique(inscritos$torneio_id))
 
-  partes <- lapply(torneios, function(k) {
-    nomes <- inscritos$nickname[inscritos$torneio_id == k]
-    tamanho <- min(length(nomes), m_por_torneio + n_reserva)
-    escolhidos <- nomes[withr_seed(semente_derivada(seed, k), sample.int(length(nomes), tamanho))]
-    data.frame(
-      torneio_id = k,
-      nickname = escolhidos,
-      ordem = seq_len(tamanho),
-      tipo = ifelse(seq_len(tamanho) <= m_por_torneio, "titular", "reserva"),
-      stringsAsFactors = FALSE
-    )
+  partes <- lapply(seq_len(nrow(torneios)), function(i) {
+    k <- torneios$torneio_id[i]
+    M_k <- torneios$n_inscritos[i]
+    tamanho <- min(M_k, m_por_torneio + n_reserva)
+    posicoes <- withr_seed(semente_derivada(seed, k), sample.int(M_k, tamanho))
+    linhas <- torneios[rep(i, tamanho), , drop = FALSE]
+    linhas$ordem <- seq_len(tamanho)
+    linhas$posicao <- posicoes
+    linhas$tipo <- ifelse(seq_len(tamanho) <= m_por_torneio, "titular", "reserva")
+    linhas
   })
-  do.call(rbind, partes)
+  resultado <- do.call(rbind, partes)
+  rownames(resultado) <- NULL
+  resultado
 }
 
 #' Deriva uma semente para uma unidade (celula ou torneio) a partir de `seed`.
