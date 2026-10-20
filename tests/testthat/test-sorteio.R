@@ -39,26 +39,27 @@ test_that("sorteia titulares e reserva sem repetir jogador", {
   expect_error(sortear_jogadores(inscritos, 1, 0, seed = 3), "ao menos 2")
 })
 
-test_that("gera os B = 168 blocos de 2 h do periodo", {
-  blocos <- gerar_blocos("2026-10-01", n_dias = 14, horas_por_bloco = 2)
-  expect_equal(nrow(blocos), 168)
-  expect_equal(blocos$inicio[1], "2026-10-01 00:00")
-  expect_equal(blocos$fim[168], "2026-10-15 00:00")
-  expect_equal(blocos$inicio_utc[1], "2026-10-01T03:00:00Z") # Brasilia fica 3 h atras de UTC
-  expect_equal(blocos$dia_semana[1], 4) # 01/10/2026 e quinta-feira
-  expect_equal(sum(blocos$fim_de_semana), 4 * 12) # 03-04/10 e 10-11/10
-  expect_error(gerar_blocos("2026-10-01", 14, horas_por_bloco = 5), "dividir 24")
+test_that("gera os B = 120 blocos de 2 h do periodo", {
+  blocos <- gerar_blocos("2026-10-11", n_dias = 10, horas_por_bloco = 2)
+  expect_equal(nrow(blocos), 120)
+  expect_equal(blocos$inicio[1], "2026-10-11 00:00")
+  expect_equal(blocos$fim[120], "2026-10-21 00:00")
+  expect_equal(blocos$inicio_utc[1], "2026-10-11T03:00:00Z") # Brasilia fica 3 h atras de UTC
+  expect_equal(blocos$dia_semana[1], 7) # 11/10/2026 e domingo
+  expect_equal(sum(blocos$fim_de_semana), 3 * 12) # 11/10 e 17-18/10
+  expect_error(gerar_blocos("2026-10-11", 10, horas_por_bloco = 5), "dividir 24")
 })
 
 test_that("sorteia b blocos distintos, de forma reprodutivel", {
-  blocos <- gerar_blocos("2026-10-01", 14)
+  blocos <- gerar_blocos("2026-10-11", 10)
   a <- sortear_blocos(blocos, 6, seed = 164363)
   expect_identical(a, sortear_blocos(blocos, 6, seed = 164363))
+  expect_equal(a$bloco_id, c(30, 34, 63, 100, 105, 109)) # sorteio oficial da Fase 0
   expect_equal(nrow(a), 6)
   expect_false(anyDuplicated(a$bloco_id) > 0)
   expect_true(all(diff(a$bloco_id) > 0))
   expect_setequal(a$ordem_sorteio, 1:6)
-  expect_equal(unique(a$B), 168)
+  expect_equal(unique(a$B), 120)
   expect_error(sortear_blocos(blocos, 1, seed = 1), "ao menos 2")
   expect_error(sortear_blocos(blocos[1:3, ], 4, seed = 1), "so 3 blocos")
 })

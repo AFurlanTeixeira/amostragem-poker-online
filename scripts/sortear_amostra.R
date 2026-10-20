@@ -17,8 +17,8 @@ for (arquivo in list.files("R", pattern = "\\.R$", full.names = TRUE)) {
 }
 
 option_list <- list(
-  make_option("--inicio", default = "2026-10-01", help = "Primeiro dia do periodo [%default]"),
-  make_option("--dias", default = 14L, help = "Dias corridos do periodo [%default]"),
+  make_option("--inicio", default = "2026-10-11", help = "Primeiro dia do periodo [%default]"),
+  make_option("--dias", default = 10L, help = "Dias corridos do periodo [%default]"),
   make_option("--horas-bloco", default = 2L, help = "Duracao de cada bloco, em horas [%default]"),
   make_option("--fuso", default = "America/Sao_Paulo", help = "Fuso dos horarios [%default]"),
   make_option("--n-blocos", default = 6L, help = "Blocos sorteados, b [%default]"),

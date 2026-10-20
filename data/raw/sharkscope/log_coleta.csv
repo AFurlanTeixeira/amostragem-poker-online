@@ -1,2 +1,6 @@
 "registrado_em","fase","evento","detalhe","seed"
 "2026-10-20T00:27:29Z","0","sorteio_blocos","AASs de b = 6 entre B = 168 blocos de 2 h a partir de 2026-10-01 (America/Sao_Paulo); sorteados (bloco_id): 162 158 100 72 152 5",164363
+"2026-10-20T01:09:55Z","0","sorteio_blocos","AASs de b = 6 entre B = 120 blocos de 2 h a partir de 2026-10-11 (America/Sao_Paulo); sorteados (bloco_id): 106 103 51 94 17 56",675598
+"2026-10-20T01:10:35Z","0","anulacao_sorteio_blocos","Sorteio de 2026-10-01 a 2026-10-14 (seed 164363) anulado antes da Fase 1: o lobby do PokerStars nao mostra torneios de 01/10 a 10/10/2026 (blocos 5, 72 e 100 sem listagem). Periodo de referencia redefinido para 2026-10-11 00:00 a 2026-10-21 00:00 (America/Sao_Paulo).",164363
+"2026-10-20T01:17:27Z","0","anulacao_sorteio_blocos","Sorteio de 2026-10-11 a 2026-10-20 com seed 675598 anulado antes da Fase 1: a seed 164363, registrada antes do primeiro sorteio, e mantida para o novo periodo, em vez de uma seed escolhida depois de ver o primeiro resultado.",675598
+"2026-10-20T01:17:27Z","0","sorteio_blocos","AASs de b = 6 entre B = 120 blocos de 2 h a partir de 2026-10-11 (America/Sao_Paulo); sorteados (bloco_id): 34 105 30 100 109 63",164363

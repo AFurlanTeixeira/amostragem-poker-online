@@ -15,7 +15,7 @@ M_MINIMO_POR_TORNEIO <- 2 # necessario para estimar a variancia dentro do tornei
 #'
 #' Moldura do estagio temporal (Metodologia §3): o periodo e dividido em
 #' blocos consecutivos de `horas_por_bloco` horas, com
-#' B = n_dias * 24 / horas_por_bloco (14 * 12 = 168 no plano).
+#' B = n_dias * 24 / horas_por_bloco (10 * 12 = 120 no plano).
 #'
 #' @param inicio character, data de inicio do periodo (`"AAAA-MM-DD"`).
 #' @param n_dias integer, numero de dias corridos do periodo.
