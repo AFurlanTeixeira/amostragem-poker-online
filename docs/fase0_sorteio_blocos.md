@@ -83,6 +83,20 @@ O período de referência foi redefinido três vezes, sempre porque a fonte da l
 - **Local dos arquivos.** Os arquivos de sorteio e o log ficam em `data/raw/sharkscope/`, junto com os demais arquivos da coleta de campo.
 - **Composição da amostra.** Dois blocos caem no domingo (5 e 8), um na segunda e três na terça. Dois estão de madrugada ou no início da manhã (5 e 30).
 
-## 6. Próximo passo (Fase 1)
+## 6. Andamento da Fase 1
 
-Listar no SharkScope os blocos 5 e 8 o quanto antes, de preferência hoje à noite, e no máximo até ~09:00 de 20/10 no caso do bloco 5. Logo em seguida, sortear os torneios desses blocos e copiar os inscritos dos torneios sorteados. Depois, listar o bloco 24 e, a partir das 20:00 de 20/10, os blocos 30, 34 e 36.
+Situação em 20/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios sorteados em [`fase1_torneios_sorteados.md`](fase1_torneios_sorteados.md)):
+
+| Bloco | Listado | Torneios elegíveis | Torneios sorteados | Inscritos copiados |
+|---|---|---:|---:|---|
+| 5 | 19/10 | 18 | 6 | não |
+| 8 | 19/10 | 21 | 6 | não |
+| 24 | 19/10 | 27 | 6 | não |
+| 30 | 20/10 | 17 | 6 | não |
+| 34 | — | — | — | — |
+| 36 | — | — | — | — |
+
+Próximos passos:
+
+1. Copiar os inscritos dos torneios sorteados, começando pelo bloco 8 (sai da janela por volta das 15:00 de 20/10). Conferir se os torneios do bloco 5, cujo prazo era ~09:00 de 20/10, ainda abrem no SharkScope; se não abrirem, registrar no log.
+2. Listar o bloco 34 a partir das 16:00 de 20/10 e o bloco 36 a partir das 20:00, sortear os torneios deles com a mesma semente e copiar os inscritos.
