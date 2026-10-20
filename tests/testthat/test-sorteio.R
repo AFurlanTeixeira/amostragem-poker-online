@@ -38,14 +38,23 @@ test_that("sorteio de um bloco nao muda quando outros blocos entram depois", {
   expect_equal(so_30$torneio_id, completo$torneio_id[completo$bloco_id == 30])
 })
 
-test_that("sorteio de jogadores de um torneio nao depende dos outros torneios", {
-  inscritos <- data.frame(
-    torneio_id = rep(c("t1", "t2"), each = 10), nickname = paste0("p", 1:20),
-    stringsAsFactors = FALSE
+torneios_exemplo <- function() {
+  data.frame(
+    bloco_id = 30, estrato = "micro", torneio_id = c("t1", "t2", "t3"),
+    n_inscritos = c(114L, 10L, 4L), stringsAsFactors = FALSE
   )
-  completo <- sortear_jogadores(inscritos, 2, 3, seed = 7)
-  so_t1 <- sortear_jogadores(inscritos[1:10, ], 2, 3, seed = 7)
-  expect_equal(so_t1$nickname, completo$nickname[completo$torneio_id == "t1"])
+}
+
+test_that("sorteio de jogadores de um torneio nao depende dos outros torneios", {
+  completo <- sortear_jogadores(torneios_exemplo(), 2, 3, seed = 7)
+  so_t1 <- sortear_jogadores(torneios_exemplo()[1, ], 2, 3, seed = 7)
+  expect_equal(so_t1$posicao, completo$posicao[completo$torneio_id == "t1"])
+})
+
+test_that("aumentar a reserva so acrescenta posicoes ao fim da ordem", {
+  curta <- sortear_jogadores(torneios_exemplo()[1, ], 2, 3, seed = 7)
+  longa <- sortear_jogadores(torneios_exemplo()[1, ], 2, 8, seed = 7)
+  expect_equal(longa$posicao[1:5], curta$posicao)
 })
 
 test_that("aceita n_h nomeado e exige minimo de 2", {
@@ -54,17 +63,18 @@ test_that("aceita n_h nomeado e exige minimo de 2", {
   expect_error(sortear_torneios(moldura_exemplo(), 1, seed = 2), "ao menos 2")
 })
 
-test_that("sorteia titulares e reserva sem repetir jogador", {
-  inscritos <- data.frame(
-    torneio_id = rep(c("t1", "t2"), each = 10),
-    nickname = paste0("p", 1:20),
-    stringsAsFactors = FALSE
-  )
-  s <- sortear_jogadores(inscritos, m_por_torneio = 4, n_reserva = 3, seed = 3)
-  expect_equal(sum(s$tipo == "titular"), 8)
-  expect_equal(sum(s$tipo == "reserva"), 6)
-  expect_false(anyDuplicated(s$nickname) > 0)
-  expect_error(sortear_jogadores(inscritos, 1, 0, seed = 3), "ao menos 2")
+test_that("sorteia posicoes distintas de 1 a M_k, com titulares e reserva", {
+  s <- sortear_jogadores(torneios_exemplo(), m_por_torneio = 2, n_reserva = 3, seed = 3)
+  expect_equal(as.numeric(table(s$torneio_id)), c(5, 5, 4)) # t3 tem so 4 entradas
+  expect_equal(sum(s$tipo == "titular"), 6)
+  for (k in c("t1", "t2", "t3")) {
+    no_k <- s[s$torneio_id == k, ]
+    expect_false(anyDuplicated(no_k$posicao) > 0)
+    expect_true(all(no_k$posicao >= 1 & no_k$posicao <= no_k$n_inscritos))
+    expect_equal(no_k$ordem, seq_len(nrow(no_k)))
+  }
+  expect_equal(unique(s$bloco_id), 30) # colunas do torneio sao mantidas
+  expect_error(sortear_jogadores(torneios_exemplo(), 1, 0, seed = 3), "ao menos 2")
 })
 
 test_that("gera os B = 38 blocos de 2 h do periodo", {

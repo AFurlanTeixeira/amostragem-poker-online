@@ -41,13 +41,38 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 | `log_coleta.csv` | Um evento por linha: sorteios, substituições e não respostas | Scripts de sorteio e anotações à mão |
 | `listagem_torneios.csv` | Fase 1: **todos** os torneios com início dentro dos blocos sorteados, inclusive os excluídos (ver abaixo) | Preenchido à mão a partir da busca de torneios do SharkScope |
 | `torneios_sorteados.csv` | Torneios sorteados em cada (bloco, estrato), com `N_jh` e `n_jh` | `scripts/sortear_amostra.R torneios` |
-| `inscritos.csv` | Inscritos dos torneios sorteados: `torneio_id`, `nickname` | Montado à mão |
-| `jogadores_sorteados.csv` | Titulares e reservas do 2º estágio | `scripts/sortear_amostra.R jogadores` |
+| `jogadores_sorteados.csv` | 2º estágio: posições sorteadas na lista de resultados de cada torneio (2 titulares + 3 reservas, em `ordem`) | `scripts/sortear_amostra.R jogadores` |
 | `coleta_jogadores.csv` | Resultado de cada consulta ao SharkScope | Preenchido à mão durante a coleta |
+| `top10_torneios.csv` | Os 10 primeiros colocados de cada torneio sorteado, para comparação futura. **Fora do plano amostral**: não entra nos estimadores | Linhas criadas por `scripts/sortear_amostra.R top10`; `nickname` e `data_anotacao` preenchidos à mão |
 
-Os arquivos `*_modelo.csv` mostram o cabeçalho esperado de cada planilha. Na coleta:
+Os arquivos `*_modelo.csv` mostram o cabeçalho esperado de cada planilha.
 
-- `respondeu = FALSE` marca um perfil privado. Nesse caso, consulte o próximo jogador da reserva do **mesmo** torneio.
+### `top10_torneios.csv`
+
+Levantamento completo, sem sorteio: todo nome do top 10 que puder ser consultado entra na análise. O `nickname` é guardado como a fonte mostra, inclusive com o sufixo `[n]` que alguns trazem (ex.: `baradavid[2]`). Para consultar ou comparar jogadores, use o nome sem o sufixo.
+
+- **Anônimo:** jogadores que aparecem como `Anônimo` (ou `Anônimo[n]`) não podem ser consultados nem distinguidos entre si, então ficam fora da análise.
+- **Repetidos:** um mesmo jogador pode aparecer no top 10 de mais de um torneio. Não é erro; cada aparição é mantida.
+
+Situação com os blocos 5, 8, 24 e 30 (24 torneios):
+
+| | Linhas |
+|---|---:|
+| Total | 240 |
+| `Anônimo` | 15 |
+| Consultáveis | 225 |
+| Jogadores distintos entre os consultáveis | 217 |
+
+Os 8 jogadores que aparecem em dois torneios são: `baradavid` e `comistus` (4039581390 e 4038334524), `CrazySezya` (4039581390 e 4039581475), `judem96` e `JusuBoi` (4040087674 e 4040085499), `liova777` (4038334525 e 4040087659), `Mind_ze` (4040092095 e 4040093464) e `törski` (4040092085 e 4040085499).
+
+Na lista de inscritos não se transcreve nada além das posições sorteadas. A posição é a da lista de resultados do torneio no SharkScope (1 = campeão), e vai de 1 a `M_k` (`n_inscritos`). Em cada torneio, siga a `ordem` de `jogadores_sorteados.csv`:
+
+- Anote o `nickname` da posição em `coleta_jogadores.csv`, com a `ordem` e a `posicao`.
+- Se a posição não existir na lista (a lista tem menos linhas que `M_k` por causa das re-entries) ou repetir um jogador já sorteado no torneio, pule para a próxima da ordem e registre o pulo em `log_coleta.csv`.
+
+Na coleta:
+
+- `respondeu = FALSE` marca um perfil privado. Nesse caso, consulte a próxima posição da reserva do **mesmo** torneio.
 - `roi` vai em %; `lucro`, em US$.
 
 ### `listagem_torneios.csv` (Fase 1)
@@ -76,7 +101,7 @@ Regras:
 - **Limite do bloco:** o intervalo é fechado no início e aberto no fim. Um torneio que começa às 12:00 pertence ao bloco 12:00–14:00, e não ao bloco 10:00–12:00.
 - **Separador:** o arquivo usa vírgula como separador e ponto como decimal (`5.50`). Se um `nome` tiver vírgula, coloque-o entre aspas. No Excel em português, salve como "CSV UTF-8" e confira se ele não trocou as vírgulas por ponto e vírgula.
 - **Moeda:** se aparecer um torneio com buy-in em outra moeda, converta para US\$ e explique a conversão em `observacao`.
-- **Prazo:** a janela do SharkScope parece andar com o tempo (cerca de 53 h de histórico). Liste cada bloco, sorteie os torneios dele e copie os inscritos dos sorteados antes que ele saia da janela. Os prazos por bloco estão em [`docs/fase0_sorteio_blocos.md`](../../docs/fase0_sorteio_blocos.md) §5. Os sorteios podem ser feitos em lotes, com a mesma semente, que o resultado de um bloco não muda.
+- **Prazo:** a janela do SharkScope parece andar com o tempo (cerca de 53 h de histórico). Liste cada bloco, sorteie os torneios dele e anote os nicknames das posições sorteadas e o top 10 dos sorteados antes que ele saia da janela. Os prazos por bloco estão em [`docs/fase0_sorteio_blocos.md`](../../docs/fase0_sorteio_blocos.md) §5. Os sorteios podem ser feitos em lotes, com a mesma semente, que o resultado de um bloco não muda.
 - **Bloco sem torneios disponíveis:** registre o fato em `log_coleta.csv`, com a fonte alternativa usada.
 
 Exemplo de linha (dados fictícios):

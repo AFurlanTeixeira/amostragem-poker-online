@@ -71,6 +71,21 @@ test_that("montar_moldura fica com os elegiveis e classifica o estrato", {
   expect_equal(moldura$n_inscritos, c(100L, 20L)) # M_k = entradas da fonte
 })
 
+top10_fabricado <- function(posicao = 1:10) {
+  data.frame(
+    bloco_id = 30, torneio_id = "0040", posicao = posicao, nickname = paste0("p", posicao),
+    data_anotacao = "2026-10-20"
+  )
+}
+
+test_that("carregar_top10 tipa as colunas e rejeita posicao invalida", {
+  top10 <- carregar_top10(escrever_csv(top10_fabricado()))
+  expect_equal(top10$torneio_id[1], "0040")
+  expect_type(top10$posicao, "integer")
+  expect_error(carregar_top10(escrever_csv(top10_fabricado(c(1:9, 11)))), "fora de 1 a 10")
+  expect_error(carregar_top10(escrever_csv(top10_fabricado(c(1:9, 9)))), "repetida")
+})
+
 test_that("carregar_coleta cria a variavel lucrativo", {
   caminho <- escrever_csv(data.frame(
     estrato = "micro", torneio_id = "1", n_inscritos = 10, nickname = c("a", "b"),
