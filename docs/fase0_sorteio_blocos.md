@@ -87,16 +87,16 @@ O período de referência foi redefinido três vezes, sempre porque a fonte da l
 
 Situação em 20/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios sorteados em [`fase1_torneios_sorteados.md`](fase1_torneios_sorteados.md)):
 
-| Bloco | Listado | Torneios elegíveis | Torneios sorteados | Inscritos copiados |
-|---|---|---:|---:|---|
-| 5 | 19/10 | 18 | 6 | não |
-| 8 | 19/10 | 21 | 6 | não |
-| 24 | 19/10 | 27 | 6 | não |
-| 30 | 20/10 | 17 | 6 | não |
-| 34 | — | — | — | — |
-| 36 | — | — | — | — |
+| Bloco | Listado | Torneios elegíveis | Torneios sorteados | Top 10 anotado | Nicknames das posições sorteadas |
+|---|---|---:|---:|---|---|
+| 5 | 19/10 | 18 | 6 | sim (20/10) | não |
+| 8 | 19/10 | 21 | 6 | sim (20/10) | não |
+| 24 | 19/10 | 27 | 6 | sim (20/10) | não |
+| 30 | 20/10 | 17 | 6 | sim (20/10) | não |
+| 34 | — | — | — | — | — |
+| 36 | — | — | — | — | — |
 
 Próximos passos:
 
-1. Copiar os inscritos dos torneios sorteados, começando pelo bloco 8 (sai da janela por volta das 15:00 de 20/10). Conferir se os torneios do bloco 5, cujo prazo era ~09:00 de 20/10, ainda abrem no SharkScope; se não abrirem, registrar no log.
-2. Listar o bloco 34 a partir das 16:00 de 20/10 e o bloco 36 a partir das 20:00, sortear os torneios deles com a mesma semente e copiar os inscritos.
+1. As posições dos jogadores já foram sorteadas para os 24 torneios ([`jogadores_sorteados.csv`](../data/raw/sharkscope/jogadores_sorteados.csv)). Anotar os nicknames dessas posições, começando pelo bloco 8 (sai da janela por volta das 15:00 de 20/10).
+2. Listar o bloco 34 a partir das 16:00 de 20/10 e o bloco 36 a partir das 20:00, sortear os torneios e as posições deles com a mesma semente, rodar `Rscript scripts/sortear_amostra.R top10` e anotar os nicknames e o top 10.
