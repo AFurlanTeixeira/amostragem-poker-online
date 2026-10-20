@@ -116,7 +116,8 @@ bash scripts/baixar_kaggle.sh
 Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 60 --n-rep 5000 --seed 42
 
 # 3. Sorteio de campo
-Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 42
+Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 164363
+Rscript scripts/gerar_md_torneios.R          # docs/fase1_torneios_sorteados.md
 Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 4 --n-reserva 4 --seed 42
 
 # 4. Estimação a partir da coleta
@@ -154,7 +155,8 @@ docs/
 scripts/
   baixar_kaggle.sh                # Download do dataset
   simular_kaggle.R                # Monte Carlo de AAS / AAS estratificada
-  sortear_amostra.R               # Sorteio do 1º e 2º estágios
+  sortear_amostra.R               # Sorteio dos blocos, torneios e jogadores
+  gerar_md_torneios.R             # Tabela dos torneios sorteados em Markdown
   estimar_campo.R                 # Estimação em dois estágios, IC, EPA
 R/
   dados.R                         # Leitura e validação das fontes

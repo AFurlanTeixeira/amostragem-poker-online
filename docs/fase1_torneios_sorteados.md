@@ -1,6 +1,6 @@
 # Fase 1 — Torneios sorteados
 
-Versão em Markdown de [`data/raw/sharkscope/torneios_sorteados.csv`](../data/raw/sharkscope/torneios_sorteados.csv), com o nome, o horário e o formato de cada torneio tirados de [`listagem_torneios.csv`](../data/raw/sharkscope/listagem_torneios.csv). O CSV é a fonte oficial; este arquivo é só para leitura.
+Versão em Markdown de [`data/raw/sharkscope/torneios_sorteados.csv`](../data/raw/sharkscope/torneios_sorteados.csv), com o nome, o horário e o formato de cada torneio tirados de [`listagem_torneios.csv`](../data/raw/sharkscope/listagem_torneios.csv). O CSV é a fonte oficial; este arquivo é só para leitura e é gerado por `Rscript scripts/gerar_md_torneios.R`.
 
 Sorteio: AAS sem reposição de $`n_{jh}`$ = 2 torneios por (bloco, estrato), semente 164363 com sementes derivadas por célula ([`R/sorteio.R`](../R/sorteio.R)). $`M_k`$ é o total de entradas da fonte, com re-entries ([Metodologia §2.4](Metodologia.md#24-variáveis-de-interesse)). Horários de Brasília.
 
