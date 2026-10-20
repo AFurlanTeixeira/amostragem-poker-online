@@ -78,13 +78,13 @@ Como a unidade elementar é a **inscrição** (o par jogador × torneio), um mes
 | $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope na **janela fixa de 01/10/2025 a 30/09/2026**, considerando só o PokerStars | SharkScope |
 | $`\ell_{ki}`$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
 | $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`\ell_{ki} > 0`$; caso contrário, $0$ | Derivada |
-| $`M_k`$ | Número de **jogadores distintos** inscritos no torneio $k$ (re-entries contadas uma vez) | Lista de inscritos, deduplicada |
+| $`M_k`$ | Número de inscritos no torneio $k$, **aproximado pelo total de entradas** mostrado pela fonte (ver nota abaixo) | Listagem do SharkScope (`n_entradas_fonte`) |
 | `n_entradas` | Número de entradas do jogador sorteado no torneio (auxiliar) | Lista de inscritos |
 | $`N_{jh}`$ | Número de torneios do estrato $h$ no bloco $j$ | Lobby / agenda |
 
 > O filtro do SharkScope (período e rede) deve ser **idêntico** para todos os jogadores e registrado na planilha. Por isso a janela do ROI é fixada em datas absolutas, e não relativa ao dia da consulta.
 >
-> **Atenção:** o número exibido no lobby costuma ser o total de *entradas*, incluindo re-entries. Ele **não** deve ser usado diretamente como $`M_k`$.
+> **Simplificação adotada:** o número exibido pela fonte é o total de *entradas*, incluindo re-entries. No projeto, ele é usado como $`M_k`$, ou seja, número de inscritos e número de entradas são tratados como a mesma coisa. Em torneios com re-entry (Bounty Builder, Progressive KO etc.), isso superestima o número de jogadores distintos e dá mais peso a esses torneios. A limitação é discutida na [§14](#14-limitações-e-considerações-éticas).
 
 ---
 
@@ -118,7 +118,8 @@ População: inscrições em MTTs do PokerStars no período
 │      AAS sem reposição de n_jh torneios entre N_jh, em cada (bloco, estrato)
 │
 └── 3º estágio — UTA: jogadores
-       AAS sem reposição de m_k jogadores entre os M_k jogadores distintos de cada torneio
+       AAS sem reposição de m_k jogadores na lista de jogadores distintos de cada torneio
+       (M_k aproximado pelo total de entradas, §2.4)
        → consulta de ROI e lucro no SharkScope
 ```
 
@@ -167,7 +168,7 @@ Também é preciso sortear jogadores de **reserva** em cada torneio (por exemplo
 ### Fase 2 — Sorteio dos jogadores
 
 6. Em cada torneio sorteado, exportar ou transcrever a lista de inscritos.
-7. **Deduplicar** a lista: cada nickname aparece uma vez, com o número de entradas anotado em `n_entradas`. Numerar os jogadores distintos de $1$ a $`M_k`$.
+7. **Deduplicar** a lista: cada nickname aparece uma vez, com o número de entradas anotado em `n_entradas`. O sorteio é feito nessa lista. O $`M_k`$ usado nos estimadores continua sendo o total de entradas da listagem (§2.4).
 8. Sortear $`m_k`$ jogadores titulares e uma ordem de reservas.
 
 ### Fase 3 — Consulta no SharkScope
@@ -450,6 +451,7 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 2.571):
 ## 14. Limitações e considerações éticas
 
 - **Unidade de inscrição × jogador.** Jogadores frequentes têm maior probabilidade de inclusão. Para estimar o ROI *por jogador distinto*, seria preciso ponderar cada inscrição por $`1/f_i`$, onde $`f_i`$ é o número de inscrições do jogador no período. Esse dado pode ser aproximado pelo próprio SharkScope e fica como extensão do trabalho.
+- **$`M_k`$ aproximado pelas entradas.** O tamanho de cada torneio é o total de entradas, com re-entries (§2.4). Em torneios com re-entry, $`M_k`$ fica maior que o número de jogadores distintos, e o peso $`M_k/m_k`$ desses torneios fica inflado. O sorteio dos jogadores continua sendo feito na lista sem repetições.
 - **Poucos conglomerados primários** ($b = 6$): os graus de liberdade são baixos e o IC fica largo. Isso é esperado, e discutir esse ponto faz parte da análise.
 - **ROI histórico tem alta variância** e cauda pesada. Considere reportar também a mediana e fazer análise de sensibilidade com ROI winsorizado.
 - **Validade externa:** os resultados valem para MTTs do PokerStars.com no período escolhido, e não para o poker online em geral. O período tem só 76 h (sábado à noite, domingo, segunda e terça), limitado pela janela do SharkScope e pelo prazo. Não cobre uma semana inteira nem eventos que acontecem só em outros dias.

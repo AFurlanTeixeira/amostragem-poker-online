@@ -49,7 +49,7 @@ listagem_fabricada <- function(torneio_id = c("0012", "13", "14", "15")) {
     bloco_id = c(30, 30, 34, 34), torneio_id = torneio_id, nome = "MTT",
     inicio_fonte = "2026-10-13 10:15", fuso_fonte = "America/Sao_Paulo",
     inicio_brasilia = "2026-10-13 10:15", tipo = c("mtt", "mtt", "freeroll", "mtt"),
-    buy_in = c(5.50, 0.55, 0, 109), n_entradas_fonte = 100, status = "concluido",
+    buy_in = c(5.50, 0.55, 0, 109), n_entradas_fonte = c(100, 50, 30, 20), status = "concluido",
     motivo_exclusao = c(NA, "buyin_abaixo_1", "freeroll", NA), fonte = "sharkscope",
     data_listagem = "2026-10-20", observacao = NA
   )
@@ -68,7 +68,7 @@ test_that("montar_moldura fica com os elegiveis e classifica o estrato", {
   expect_equal(moldura$torneio_id, c("0012", "15"))
   expect_equal(moldura$bloco_id, c(30L, 34L))
   expect_equal(moldura$estrato, c("low", "mid_high"))
-  expect_true(all(is.na(moldura$n_inscritos)))
+  expect_equal(moldura$n_inscritos, c(100L, 20L)) # M_k = entradas da fonte
 })
 
 test_that("carregar_coleta cria a variavel lucrativo", {

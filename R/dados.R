@@ -117,9 +117,9 @@ carregar_listagem <- function(caminho) {
 #' Monta a moldura de torneios elegiveis a partir da listagem.
 #'
 #' Fica so com os torneios sem `motivo_exclusao` e classifica cada um no
-#' estrato de buy-in. `n_inscritos` (M_k, jogadores distintos) so e conhecido
-#' para os torneios sorteados, depois da Fase 2, por isso fica `NA`: os
-#' estimadores usam entao o estimador razao (M0 desconhecido).
+#' estrato de buy-in. `n_inscritos` (M_k) e o total de entradas da fonte
+#' (`n_entradas_fonte`), com re-entries: simplificacao adotada no projeto
+#' (Metodologia §2.4).
 #'
 #' @param listagem data.frame (ver `carregar_listagem()`).
 #' @return data.frame com `bloco_id`, `estrato`, `torneio_id`, `buy_in` e
@@ -131,7 +131,7 @@ montar_moldura <- function(listagem) {
     estrato = estratificar_buyin(elegiveis$buy_in),
     torneio_id = elegiveis$torneio_id,
     buy_in = elegiveis$buy_in,
-    n_inscritos = rep(NA_integer_, nrow(elegiveis)),
+    n_inscritos = elegiveis$n_entradas_fonte,
     stringsAsFactors = FALSE
   )
 }
