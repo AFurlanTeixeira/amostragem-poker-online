@@ -44,11 +44,31 @@ test_that("carregar_populacao_kaggle padroniza colunas e estratifica", {
   expect_error(carregar_populacao_kaggle(incompleto), "faltando")
 })
 
-test_that("carregar_moldura rejeita torneio duplicado", {
-  caminho <- escrever_csv(data.frame(
-    estrato = "micro", torneio_id = c("1", "1"), buy_in = 1, n_inscritos = 10
-  ))
-  expect_error(carregar_moldura(caminho), "duplicado")
+listagem_fabricada <- function(torneio_id = c("0012", "13", "14", "15")) {
+  data.frame(
+    bloco_id = c(30, 30, 34, 34), torneio_id = torneio_id, nome = "MTT",
+    inicio_fonte = "2026-10-13 10:15", fuso_fonte = "America/Sao_Paulo",
+    inicio_brasilia = "2026-10-13 10:15", tipo = c("mtt", "mtt", "freeroll", "mtt"),
+    buy_in = c(5.50, 0.55, 0, 109), n_entradas_fonte = c(100, 50, 30, 20), status = "concluido",
+    motivo_exclusao = c(NA, "buyin_abaixo_1", "freeroll", NA), fonte = "sharkscope",
+    data_listagem = "2026-10-20", observacao = NA
+  )
+}
+
+test_that("carregar_listagem marca os elegiveis e rejeita torneio duplicado", {
+  listagem <- carregar_listagem(escrever_csv(listagem_fabricada()))
+  expect_equal(listagem$elegivel, c(TRUE, FALSE, FALSE, TRUE))
+  expect_equal(listagem$torneio_id[1], "0012") # ID lido como texto, sem perder zeros
+  duplicada <- escrever_csv(listagem_fabricada(c("1", "1", "2", "3")))
+  expect_error(carregar_listagem(duplicada), "duplicado")
+})
+
+test_that("montar_moldura fica com os elegiveis e classifica o estrato", {
+  moldura <- montar_moldura(carregar_listagem(escrever_csv(listagem_fabricada())))
+  expect_equal(moldura$torneio_id, c("0012", "15"))
+  expect_equal(moldura$bloco_id, c(30L, 34L))
+  expect_equal(moldura$estrato, c("low", "mid_high"))
+  expect_equal(moldura$n_inscritos, c(100L, 20L)) # M_k = entradas da fonte
 })
 
 test_that("carregar_coleta cria a variavel lucrativo", {

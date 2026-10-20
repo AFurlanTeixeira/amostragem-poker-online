@@ -32,7 +32,7 @@ Rscript -e 'rmarkdown::render("docs/relatorio.Rmd")'    # relatório
 ## Architecture
 
 ```
-R/dados.R                     leitura/validação (Kaggle, moldura, inscritos, coleta)
+R/dados.R                     leitura/validação (Kaggle, listagem → moldura, inscritos, coleta)
 R/sorteio.R                   1º estágio (torneios) e 2º estágio (jogadores + reserva)
 R/estimadores_aas.R           AAS, AAS estratificada, gl de Satterthwaite
 R/estimadores_dois_estagios.R tau_h, mu (não viesado / razão), variância, EPA, rho_int

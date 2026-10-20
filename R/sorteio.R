@@ -2,8 +2,8 @@
 #'
 #' Estagio temporal (Metodologia §6, Fase 0): AAS sem reposicao de blocos de
 #' tempo de 2 h do periodo de referencia.
-#' 1o estagio: AAS sem reposicao de torneios dentro de cada estrato.
-#' 2o estagio: AAS sem reposicao de jogadores dentro de cada torneio sorteado,
+#' Torneios: AAS sem reposicao dentro de cada celula (bloco, estrato).
+#' Jogadores: AAS sem reposicao dentro de cada torneio sorteado,
 #' mais uma lista ordenada de reserva para substituir perfis privados
 #' (plano §3.2, §3.3 e §5.1).
 
@@ -13,22 +13,27 @@ M_MINIMO_POR_TORNEIO <- 2 # necessario para estimar a variancia dentro do tornei
 
 #' Gera a lista dos B blocos de tempo do periodo (Fase 0, passo 1).
 #'
-#' Moldura do estagio temporal (Metodologia §3): o periodo e dividido em
-#' blocos consecutivos de `horas_por_bloco` horas, com
-#' B = n_dias * 24 / horas_por_bloco (14 * 12 = 168 no plano).
+#' Moldura do estagio temporal (Metodologia §3): o periodo [inicio, fim) e
+#' dividido em blocos consecutivos de `horas_por_bloco` horas, com
+#' B = (fim - inicio) / horas_por_bloco (76 h / 2 h = 38 no plano).
 #'
-#' @param inicio character, data de inicio do periodo (`"AAAA-MM-DD"`).
-#' @param n_dias integer, numero de dias corridos do periodo.
+#' @param inicio,fim character, `"AAAA-MM-DD"` ou `"AAAA-MM-DD HH:MM"` no
+#'   `fuso`; a duracao do periodo deve ser multipla de `horas_por_bloco`.
 #' @param horas_por_bloco integer, duracao de cada bloco (divisor de 24).
 #' @param fuso character, fuso horario dos horarios (nome IANA).
 #' @return data.frame com `bloco_id` (1 a B, em ordem cronologica), `inicio`
 #'   e `fim` (`"AAAA-MM-DD HH:MM"` no `fuso`), `inicio_utc` (ISO 8601),
 #'   `dia_semana` (1 = segunda, 7 = domingo), `fim_de_semana` e `fuso`.
-gerar_blocos <- function(inicio, n_dias, horas_por_bloco = 2, fuso = "America/Sao_Paulo") {
+gerar_blocos <- function(inicio, fim, horas_por_bloco = 2, fuso = "America/Sao_Paulo") {
   if (24 %% horas_por_bloco != 0) stop("horas_por_bloco deve dividir 24.")
-  B <- as.integer(n_dias * 24 / horas_por_bloco)
   passo <- horas_por_bloco * 3600
-  inicios <- as.POSIXct(inicio, tz = fuso) + passo * (seq_len(B) - 1)
+  primeiro <- as.POSIXct(inicio, tz = fuso)
+  duracao <- as.numeric(difftime(as.POSIXct(fim, tz = fuso), primeiro, units = "secs"))
+  if (duracao <= 0 || duracao %% passo != 0) {
+    stop("A duracao do periodo deve ser multipla positiva de horas_por_bloco.")
+  }
+  B <- as.integer(duracao / passo)
+  inicios <- primeiro + passo * (seq_len(B) - 1)
   fins <- inicios + passo
   dia_semana <- as.integer(format(inicios, "%u"))
 
@@ -69,31 +74,42 @@ sortear_blocos <- function(blocos, b, seed) {
   sorteados
 }
 
-#' Sorteia os torneios (UPA) em cada estrato.
+#' Sorteia os torneios em cada celula (bloco, estrato) (Metodologia §6, passo 5).
 #'
-#' @param moldura data.frame (ver `carregar_moldura()`).
+#' AAS sem reposicao de n_jh torneios entre os N_jh da celula. Se a celula
+#' tiver N_jh <= n_jh torneios, todos entram (censo da celula, com fator de
+#' correcao para populacao finita igual a zero).
+#'
+#' Cada celula usa uma semente derivada de `seed` e da propria celula
+#' (`semente_derivada()`), entao o sorteio de um bloco nao muda quando outros
+#' blocos entram na listagem depois (coleta em lotes).
+#'
+#' @param moldura data.frame (ver `montar_moldura()`), com `bloco_id`,
+#'   `estrato` e `torneio_id`.
 #' @param n_por_estrato integer: um valor para todos os estratos ou um vetor
-#'   nomeado por estrato.
+#'   nomeado por estrato; vale em cada bloco.
 #' @param seed integer, semente do sorteio.
-#' @return subconjunto de `moldura` com os torneios sorteados e a coluna
-#'   `N_h` (numero de torneios do estrato na moldura).
+#' @return subconjunto de `moldura` com os torneios sorteados e as colunas
+#'   `N_jh` (torneios da celula na moldura) e `n_jh` (sorteados na celula).
 sortear_torneios <- function(moldura, n_por_estrato, seed) {
   estratos <- sort(unique(moldura$estrato))
   n_h <- expandir_por_estrato(n_por_estrato, estratos)
   if (any(n_h < N_MINIMO_POR_ESTRATO)) {
     stop(sprintf("Sorteie ao menos %d torneios por estrato.", N_MINIMO_POR_ESTRATO))
   }
+  celulas <- unique(moldura[order(moldura$bloco_id, moldura$estrato), c("bloco_id", "estrato")])
 
-  withr_seed(seed, {
-    partes <- lapply(estratos, function(h) {
-      do_estrato <- moldura[moldura$estrato == h, , drop = FALSE]
-      if (n_h[[h]] > nrow(do_estrato)) {
-        stop(sprintf("Estrato %s tem so %d torneios.", h, nrow(do_estrato)))
-      }
-      sorteados <- do_estrato[sample.int(nrow(do_estrato), n_h[[h]]), , drop = FALSE]
-      sorteados$N_h <- nrow(do_estrato)
-      sorteados
-    })
+  partes <- lapply(seq_len(nrow(celulas)), function(i) {
+    h <- celulas$estrato[i]
+    na_celula <- moldura$bloco_id == celulas$bloco_id[i] & moldura$estrato == h
+    da_celula <- moldura[na_celula, , drop = FALSE]
+    tamanho <- min(n_h[[h]], nrow(da_celula))
+    semente <- semente_derivada(seed, paste(celulas$bloco_id[i], h))
+    linhas <- withr_seed(semente, sample.int(nrow(da_celula), tamanho))
+    sorteados <- da_celula[linhas, , drop = FALSE]
+    sorteados$N_jh <- nrow(da_celula)
+    sorteados$n_jh <- tamanho
+    sorteados
   })
   resultado <- do.call(rbind, partes)
   rownames(resultado) <- NULL
@@ -104,7 +120,10 @@ sortear_torneios <- function(moldura, n_por_estrato, seed) {
 #'
 #' Sorteia uma permutacao aleatoria dos inscritos: os `m` primeiros sao os
 #' titulares e os `n_reserva` seguintes, a lista de reserva (na ordem em que
-#' devem ser usados).
+#' devem ser usados). Cada torneio usa uma semente derivada de `seed` e do
+#' `torneio_id`, entao o sorteio de um torneio nao depende dos outros
+#' torneios presentes no arquivo (desde que a ordem dos inscritos dele nao
+#' mude).
 #'
 #' @param inscritos data.frame (ver `carregar_inscritos()`).
 #' @param m_por_torneio integer, jogadores titulares por torneio.
@@ -118,21 +137,33 @@ sortear_jogadores <- function(inscritos, m_por_torneio, n_reserva, seed) {
   }
   torneios <- sort(unique(inscritos$torneio_id))
 
-  withr_seed(seed, {
-    partes <- lapply(torneios, function(k) {
-      nomes <- inscritos$nickname[inscritos$torneio_id == k]
-      tamanho <- min(length(nomes), m_por_torneio + n_reserva)
-      escolhidos <- nomes[sample.int(length(nomes), tamanho)]
-      data.frame(
-        torneio_id = k,
-        nickname = escolhidos,
-        ordem = seq_len(tamanho),
-        tipo = ifelse(seq_len(tamanho) <= m_por_torneio, "titular", "reserva"),
-        stringsAsFactors = FALSE
-      )
-    })
+  partes <- lapply(torneios, function(k) {
+    nomes <- inscritos$nickname[inscritos$torneio_id == k]
+    tamanho <- min(length(nomes), m_por_torneio + n_reserva)
+    escolhidos <- nomes[withr_seed(semente_derivada(seed, k), sample.int(length(nomes), tamanho))]
+    data.frame(
+      torneio_id = k,
+      nickname = escolhidos,
+      ordem = seq_len(tamanho),
+      tipo = ifelse(seq_len(tamanho) <= m_por_torneio, "titular", "reserva"),
+      stringsAsFactors = FALSE
+    )
   })
   do.call(rbind, partes)
+}
+
+#' Deriva uma semente para uma unidade (celula ou torneio) a partir de `seed`.
+#'
+#' Combina `seed` com os codigos dos caracteres de `chave`, ponderados pela
+#' posicao, modulo o maior inteiro do R. E deterministica e so depende da
+#' propria unidade.
+#'
+#' @param seed integer, semente principal.
+#' @param chave character(1), identificador da unidade.
+#' @return integer.
+semente_derivada <- function(seed, chave) {
+  codigos <- utf8ToInt(as.character(chave))
+  as.integer((seed + sum(codigos * seq_along(codigos)) * 7919) %% .Machine$integer.max)
 }
 
 #' Expande um tamanho de amostra escalar ou nomeado para todos os estratos.

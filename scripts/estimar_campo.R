@@ -13,13 +13,13 @@ for (arquivo in list.files("R", pattern = "\\.R$", full.names = TRUE)) {
 }
 
 option_list <- list(
-  make_option("--moldura", default = "data/raw/sharkscope/moldura_torneios.csv"),
+  make_option("--listagem", default = "data/raw/sharkscope/listagem_torneios.csv"),
   make_option("--coleta", default = "data/raw/sharkscope/coleta_jogadores.csv"),
   make_option("--metodo", default = "auto", help = "auto, nao_viesado ou razao.")
 )
 args <- parse_args(OptionParser(option_list = option_list), convert_hyphens_to_underscores = TRUE)
 
-moldura <- carregar_moldura(args$moldura)
+moldura <- montar_moldura(carregar_listagem(args$listagem))
 coleta <- carregar_coleta(args$coleta)
 
 cat("== Nao resposta (perfis privados) ==\n")
