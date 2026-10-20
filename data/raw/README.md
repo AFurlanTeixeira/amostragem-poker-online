@@ -64,7 +64,7 @@ Copie `listagem_torneios_modelo.csv` para `listagem_torneios.csv` e preencha **u
 | `inicio_brasilia` | `AAAA-MM-DD HH:MM` | Início convertido para o horário de Brasília. Deve cair em `[inicio, fim)` do bloco |
 | `tipo` | texto | `mtt`, `freeroll`, `satelite`, `spin`, `sng` ou `outro` |
 | `buy_in` | real (US\$) | Buy-in **total** pago por entrada (prêmio + taxa), ex.: `5.50` para \$5 + \$0,50. Para torneios com bounty, inclui a parte do bounty |
-| `n_entradas_fonte` | inteiro | Total de entradas mostrado pela fonte, **com re-entries**. Não é $`M_k`$: $`M_k`$ vem da lista de inscritos deduplicada, na Fase 2 |
+| `n_entradas_fonte` | inteiro | Total de entradas mostrado pela fonte, **com re-entries**. É usado como $`M_k`$ (`n_inscritos`), por simplificação ([Metodologia §2.4](../../docs/Metodologia.md#24-variáveis-de-interesse)) |
 | `status` | texto | `concluido`, `em_andamento` ou `cancelado` |
 | `motivo_exclusao` | texto | Vazio se o torneio é elegível. Senão: `freeroll`, `buyin_abaixo_1`, `satelite`, `nao_mtt`, `cancelado` ou `poucos_inscritos` |
 | `fonte` | texto | `sharkscope` (padrão) ou `agenda` (de onde veio a linha). O lobby do PokerStars não serve: mostra só parte dos torneios |
