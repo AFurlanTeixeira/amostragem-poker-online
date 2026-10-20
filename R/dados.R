@@ -112,6 +112,36 @@ carregar_inscritos <- function(caminho) {
   inscritos
 }
 
+COLUNAS_LOG <- c("registrado_em", "fase", "evento", "detalhe", "seed")
+
+#' Acrescenta um evento ao log de coleta (Metodologia §6, "Registro").
+#'
+#' Todo sorteio, substituicao e nao resposta vira uma linha. Cria o arquivo
+#' com cabecalho se ele ainda nao existir.
+#'
+#' @param caminho character, caminho de `log_coleta.csv`.
+#' @param fase character, fase do protocolo (ex.: `"0"`).
+#' @param evento character, tipo do evento (ex.: `"sorteio_blocos"`).
+#' @param detalhe character, descricao livre do evento.
+#' @param seed integer ou `NA`, semente usada (se houver).
+#' @return a linha registrada (data.frame), invisivelmente.
+registrar_log_coleta <- function(caminho, fase, evento, detalhe, seed = NA_integer_) {
+  linha <- data.frame(
+    registrado_em = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    fase = as.character(fase),
+    evento = evento,
+    detalhe = detalhe,
+    seed = as.integer(seed),
+    stringsAsFactors = FALSE
+  )
+  existe <- file.exists(caminho)
+  utils::write.table(
+    linha, caminho,
+    sep = ",", row.names = FALSE, col.names = !existe, append = existe, qmethod = "double"
+  )
+  invisible(linha)
+}
+
 #' Le a planilha de coleta de campo no SharkScope.
 #'
 #' Cada linha e um jogador consultado (titular ou reserva). `respondeu` e
