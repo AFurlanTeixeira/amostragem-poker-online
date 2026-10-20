@@ -62,10 +62,10 @@ Neste dataset, estratificar por buy-in praticamente não reduz a variância, por
 ## 🧮 Arquitetura
 
 ```
-data/raw/kaggle/*.csv                       data/raw/sharkscope/moldura_torneios.csv
+data/raw/kaggle/*.csv                       data/raw/sharkscope/listagem_torneios.csv
         │                                                │
         ▼                                                ▼
- carregar_populacao_kaggle()              sortear_torneios()   ── 1º estágio (UPA)
+ carregar_populacao_kaggle()              montar_moldura() → sortear_torneios()  ── por (bloco, estrato)
         │                                                │
         ▼                                                ▼
  simular_planos()  ── AAS / AAS estrat.   sortear_jogadores()  ── 2º estágio (USA) + reserva
@@ -116,7 +116,7 @@ bash scripts/baixar_kaggle.sh
 Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 60 --n-rep 5000 --seed 42
 
 # 3. Sorteio de campo
-Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 5 --seed 42
+Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 42
 Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 4 --n-reserva 4 --seed 42
 
 # 4. Estimação a partir da coleta
@@ -145,7 +145,7 @@ Os testes dos estimadores reproduzem os exemplos resolvidos do Thompson (§11.2�
 data/
   raw/
     kaggle/                       # Dataset do Kaggle (fora do git)
-    sharkscope/                   # Moldura, sorteios e coleta de campo (versionados)
+    sharkscope/                   # Blocos, listagem, sorteios e coleta de campo (versionados)
   processed/                      # Resultados gerados (fora do git)
 docs/
   plano_projeto.md                # Plano de projeto v2 (fórmulas + referências)
@@ -187,7 +187,9 @@ tests/
 
 [x] Simulações de Monte Carlo no Kaggle (AAS vs. AAS estratificada por buy-in e por skill)
 
-[ ] Moldura de torneios do período de referência + sorteio do 1º estágio
+[x] Sorteio dos blocos de tempo (Fase 0)
+
+[ ] Listagem dos torneios dos blocos sorteados + sorteio dos torneios (Fase 1)
 
 [ ] Sorteio do 2º estágio + coleta no SharkScope
 

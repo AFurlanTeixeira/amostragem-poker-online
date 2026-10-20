@@ -3,10 +3,14 @@
 #' Sem transformacao de negocio aqui -- so leitura, tipagem e validacao
 #' estrutural. Duas fontes:
 #'   - Kaggle (populacao conhecida, `data/raw/kaggle/`);
-#'   - SharkScope (moldura de torneios, inscritos e coleta de campo,
+#'   - SharkScope (listagem de torneios, inscritos e coleta de campo,
 #'     `data/raw/sharkscope/`).
 
-COLUNAS_MOLDURA <- c("estrato", "torneio_id", "buy_in", "n_inscritos")
+COLUNAS_LISTAGEM <- c(
+  "bloco_id", "torneio_id", "nome", "inicio_fonte", "fuso_fonte", "inicio_brasilia",
+  "tipo", "buy_in", "n_entradas_fonte", "status", "motivo_exclusao", "fonte",
+  "data_listagem", "observacao"
+)
 COLUNAS_INSCRITOS <- c("torneio_id", "nickname")
 COLUNAS_COLETA <- c(
   "estrato", "torneio_id", "n_inscritos", "nickname", "respondeu", "roi", "lucro"
@@ -86,19 +90,50 @@ carregar_populacao_kaggle <- function(caminho, estratificar_por = c("buyin", "sk
   populacao[!is.na(populacao$roi), , drop = FALSE]
 }
 
-#' Le a moldura de torneios do periodo de referencia (1o estagio).
+#' Le a listagem dos torneios dos blocos sorteados (Metodologia §6, Fase 1).
 #'
-#' @param caminho character, CSV com `estrato`, `torneio_id`, `buy_in`,
-#'   `n_inscritos` (uma linha por torneio da populacao).
-#' @return data.frame tipado.
-carregar_moldura <- function(caminho) {
-  moldura <- read.csv(caminho, stringsAsFactors = FALSE)
-  validar_colunas(moldura, COLUNAS_MOLDURA, "moldura de torneios")
-  moldura$estrato <- as.character(moldura$estrato)
-  moldura$torneio_id <- as.character(moldura$torneio_id)
-  moldura$n_inscritos <- as.integer(moldura$n_inscritos)
-  if (anyDuplicated(moldura$torneio_id)) stop("torneio_id duplicado na moldura.")
-  moldura
+#' Uma linha por torneio com inicio dentro de um bloco sorteado, inclusive os
+#' excluidos da populacao (`motivo_exclusao` preenchido). Formato em
+#' `data/raw/README.md`.
+#'
+#' @param caminho character, CSV com as colunas de `COLUNAS_LISTAGEM`.
+#' @return data.frame tipado, com a coluna derivada `elegivel`.
+carregar_listagem <- function(caminho) {
+  listagem <- read.csv(
+    caminho,
+    colClasses = c(torneio_id = "character", motivo_exclusao = "character"),
+    stringsAsFactors = FALSE
+  )
+  validar_colunas(listagem, COLUNAS_LISTAGEM, "listagem de torneios")
+  listagem$bloco_id <- as.integer(listagem$bloco_id)
+  listagem$buy_in <- as.numeric(listagem$buy_in)
+  listagem$n_entradas_fonte <- as.integer(listagem$n_entradas_fonte)
+  listagem$motivo_exclusao[is.na(listagem$motivo_exclusao)] <- ""
+  listagem$elegivel <- trimws(listagem$motivo_exclusao) == ""
+  if (anyDuplicated(listagem$torneio_id)) stop("torneio_id duplicado na listagem.")
+  listagem
+}
+
+#' Monta a moldura de torneios elegiveis a partir da listagem.
+#'
+#' Fica so com os torneios sem `motivo_exclusao` e classifica cada um no
+#' estrato de buy-in. `n_inscritos` (M_k, jogadores distintos) so e conhecido
+#' para os torneios sorteados, depois da Fase 2, por isso fica `NA`: os
+#' estimadores usam entao o estimador razao (M0 desconhecido).
+#'
+#' @param listagem data.frame (ver `carregar_listagem()`).
+#' @return data.frame com `bloco_id`, `estrato`, `torneio_id`, `buy_in` e
+#'   `n_inscritos`.
+montar_moldura <- function(listagem) {
+  elegiveis <- listagem[listagem$elegivel, , drop = FALSE]
+  data.frame(
+    bloco_id = elegiveis$bloco_id,
+    estrato = estratificar_buyin(elegiveis$buy_in),
+    torneio_id = elegiveis$torneio_id,
+    buy_in = elegiveis$buy_in,
+    n_inscritos = rep(NA_integer_, nrow(elegiveis)),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Le a lista de inscritos dos torneios sorteados (2o estagio).

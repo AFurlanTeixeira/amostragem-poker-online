@@ -19,10 +19,10 @@ for (arquivo in list.files("R", pattern = "\\.R$", full.names = TRUE)) source(ar
 SEED <- as.integer(Sys.getenv("RANDOM_SEED", 42))
 
 caminho_kaggle <- Sys.getenv("KAGGLE_PATH", "data/raw/kaggle/poker_tournament_survival.csv")
-caminho_moldura <- "data/raw/sharkscope/moldura_torneios.csv"
+caminho_listagem <- "data/raw/sharkscope/listagem_torneios.csv"
 caminho_coleta <- "data/raw/sharkscope/coleta_jogadores.csv"
 tem_kaggle <- file.exists(caminho_kaggle)
-tem_campo <- file.exists(caminho_moldura) && file.exists(caminho_coleta)
+tem_campo <- file.exists(caminho_listagem) && file.exists(caminho_coleta)
 ```
 
 # Introdução
@@ -58,7 +58,7 @@ resumos_kaggle
 # Coleta de campo no SharkScope
 
 ```{r campo, eval = tem_campo}
-moldura <- carregar_moldura(caminho_moldura)
+moldura <- montar_moldura(carregar_listagem(caminho_listagem))
 coleta <- carregar_coleta(caminho_coleta)
 taxa_nao_resposta(coleta)
 
