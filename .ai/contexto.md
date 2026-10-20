@@ -18,7 +18,8 @@ e [`README.md`](../README.md) para rodar o projeto.
 
 ```
 Kaggle (população conhecida) → Monte Carlo AAS / AAS estratificada → viés, EQM, cobertura, EPA empírico
-SharkScope: moldura → sorteio torneios → sorteio jogadores (+ reserva) → coleta
+SharkScope: sorteio blocos → listagem dos blocos → sorteio torneios (bloco × estrato)
+  → sorteio jogadores (+ reserva) → coleta
   → estimação em dois estágios → IC 95% → EPA e rho_int
 ```
 
