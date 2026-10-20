@@ -37,11 +37,22 @@ Sorteio: AAS sem reposição de $`n_{jh}`$ = 2 torneios por (bloco, estrato), se
 | Mid/High | 4040087750 | Bounty Builder 44 | 18:09 | 44,00 | 106 | 7 | 2 | Bounty Builder |
 | Mid/High | 4040086613 | Bounty Builder 530 | 19:30 | 530,00 | 50 | 7 | 2 | High Roller |
 
+## Bloco 30 — 20/10 06:00 a 08:00 (terça)
+
+| Estrato | `torneio_id` | Nome | Início | Buy-in (US$) | $`M_k`$ (entradas) | $`N_{jh}`$ | $`n_{jh}`$ | Formato |
+|---|---|---|---|---:|---:|---:|---:|---|
+| Micro | 4040093464 | NLHE | 07:05 | 2,20 | 92 | 3 | 2 | Turbo |
+| Micro | 4040092095 | Hot Hyper | 07:16 | 4,40 | 64 | 3 | 2 | Hyper |
+| Low | 4040087659 | Bounty Builder 22 | 07:16 | 22,00 | 61 | 9 | 2 | Bounty Builder |
+| Low | 4040092085 | Hot 16.5 | 07:35 | 16,50 | 53 | 9 | 2 | Progressive KO |
+| Mid/High | 4040085499 | Pacific Rim Special | 06:24 | 109,00 | 23 | 5 | 2 | MTT |
+| Mid/High | 4040087674 | Bounty Builder 82 | 07:52 | 82,00 | 26 | 5 | 2 | Bounty Builder |
+
 ## Resumo por estrato
 
 | Estrato | Torneios sorteados | Soma de $`M_k`$ |
 |---|---:|---:|
-| Micro | 6 | 959 |
-| Low | 6 | 1258 |
-| Mid/High | 6 | 333 |
-| **Total** | **18** | **2550** |
+| Micro | 8 | 1115 |
+| Low | 8 | 1372 |
+| Mid/High | 8 | 382 |
+| **Total** | **24** | **2869** |
