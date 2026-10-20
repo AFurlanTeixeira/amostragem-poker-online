@@ -83,6 +83,20 @@ O período de referência foi redefinido três vezes, sempre porque a fonte da l
 - **Local dos arquivos.** Os arquivos de sorteio e o log ficam em `data/raw/sharkscope/`, junto com os demais arquivos da coleta de campo.
 - **Composição da amostra.** Dois blocos caem no domingo (5 e 8), um na segunda e três na terça. Dois estão de madrugada ou no início da manhã (5 e 30).
 
-## 6. Próximo passo (Fase 1)
+## 6. Andamento da Fase 1
 
-Listar no SharkScope os blocos 5 e 8 o quanto antes, de preferência hoje à noite, e no máximo até ~09:00 de 20/10 no caso do bloco 5. Logo em seguida, sortear os torneios desses blocos e copiar os inscritos dos torneios sorteados. Depois, listar o bloco 24 e, a partir das 20:00 de 20/10, os blocos 30, 34 e 36.
+Situação em 20/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios sorteados em [`fase1_torneios_sorteados.md`](fase1_torneios_sorteados.md)):
+
+| Bloco | Listado | Torneios elegíveis | Torneios sorteados | Top 10 anotado | Nicknames das posições sorteadas |
+|---|---|---:|---:|---|---|
+| 5 | 19/10 | 18 | 6 | sim (20/10) | sim (20/10) |
+| 8 | 19/10 | 21 | 6 | sim (20/10) | sim (20/10) |
+| 24 | 19/10 | 27 | 6 | sim (20/10) | sim (20/10) |
+| 30 | 20/10 | 17 | 6 | sim (20/10) | sim (20/10) |
+| 34 | — | — | — | — | — |
+| 36 | — | — | — | — | — |
+
+Próximos passos:
+
+1. Consultar no SharkScope os titulares dos 24 torneios ([`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv)), dentro da cota diária. Os 4 titulares "Anônimo" já estão marcados como não resposta; nesses torneios, consultar a próxima reserva.
+2. Listar o bloco 34 a partir das 16:00 de 20/10 e o bloco 36 a partir das 20:00, sortear os torneios e as posições deles com a mesma semente, rodar `Rscript scripts/sortear_amostra.R top10` e anotar os nicknames e o top 10.
