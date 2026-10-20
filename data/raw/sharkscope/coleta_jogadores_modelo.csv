@@ -1,1 +1,1 @@
-estrato,torneio_id,n_inscritos,ordem,posicao,nickname,tipo,data_consulta,respondeu,roi,lucro
+estrato,bloco_id,torneio_id,n_inscritos,ordem,posicao,nickname,tipo,respondeu,roi,lucro,n_jogos_dia

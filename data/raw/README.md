@@ -72,7 +72,21 @@ Na lista de inscritos não se transcreve nada além das posições sorteadas. A 
 
 Na coleta:
 
+- `coleta_jogadores.csv` já traz as 5 posições sorteadas de cada torneio. Consulte os titulares e, só se for preciso, as reservas, na `ordem`.
+- `respondeu` em branco marca uma linha ainda não consultada (por exemplo, uma reserva que não foi usada). Essas linhas não entram nos estimadores nem na taxa de não resposta.
 - `respondeu = FALSE` marca um perfil privado. Nesse caso, consulte a próxima posição da reserva do **mesmo** torneio.
+- **Anônimo:** uma posição que cai num jogador `Anônimo` não pode ser consultada e é tratada como perfil privado (`respondeu = FALSE`, registrado no log). Uma reserva `Anônimo` é pulada do mesmo jeito.
+- Um mesmo jogador sorteado em dois torneios fica nos dois registros, e a consulta é reaproveitada sem gastar cota ([Metodologia §11](../../docs/Metodologia.md#11-erros-não-amostrais)).
+
+Colunas de `coleta_jogadores.csv` preenchidas na consulta:
+
+| Coluna | Tipo | Como preencher |
+|---|---|---|
+| `data_consulta` | `AAAA-MM-DD` | Dia da consulta no SharkScope |
+| `respondeu` | `TRUE`/`FALSE` | `FALSE` se o perfil é privado ou `Anônimo`; em branco se a linha não foi consultada |
+| `roi` | real (%) | Total ROI no filtro definido |
+| `lucro` | real (US$) | Profit no filtro definido |
+| `n_jogos_dia` | real | Média de jogos por dia do jogador, como o SharkScope mostra |
 - `roi` vai em %; `lucro`, em US$.
 
 ### `listagem_torneios.csv` (Fase 1)

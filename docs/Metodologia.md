@@ -312,6 +312,7 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 | Problema | Tratamento |
 |---|---|
 | **Perfil privado / opt-out** no SharkScope | Substituição pelo próximo jogador da lista de reservas do **mesmo torneio**. Registrar a taxa de substituição por estrato. Se ela for alta, considerar ajuste de não resposta por célula (torneio). |
+| **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado: não resposta e substituição pela próxima reserva do mesmo torneio (pulando reservas "Anônimo"). Entra na taxa de não resposta. |
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
 | **Torneio cancelado ou com poucos inscritos** ($`M_k < m_k`$) | Excluir da lista do bloco antes do sorteio e documentar o critério. |
