@@ -44,7 +44,7 @@ test_that("gera os B = 168 blocos de 2 h do periodo", {
   expect_equal(nrow(blocos), 168)
   expect_equal(blocos$inicio[1], "2026-10-01 00:00")
   expect_equal(blocos$fim[168], "2026-10-15 00:00")
-  expect_equal(blocos$inicio_utc[1], "2026-10-01T03:00:00Z") # Brasilia = UTC-3
+  expect_equal(blocos$inicio_utc[1], "2026-10-01T03:00:00Z") # Brasilia fica 3 h atras de UTC
   expect_equal(blocos$dia_semana[1], 4) # 01/10/2026 e quinta-feira
   expect_equal(sum(blocos$fim_de_semana), 4 * 12) # 03-04/10 e 10-11/10
   expect_error(gerar_blocos("2026-10-01", 14, horas_por_bloco = 5), "dividir 24")
