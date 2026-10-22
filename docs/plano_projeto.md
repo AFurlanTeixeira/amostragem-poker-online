@@ -2,6 +2,8 @@
 
 *Versão 2 — revisada com base em Thompson (2012) e Bolfarine & Bussab (2005).*
 
+> **Documento histórico.** Este é o plano inicial, em dois estágios (torneio → jogador). O delineamento executado tem três estágios (blocos de tempo → torneios → jogadores), porque não havia como listar todos os torneios do período. Ele está em [`Metodologia.md`](Metodologia.md), junto com o cálculo do tamanho da amostra (n = 120), o parâmetro por jogador distinto e a cota real de consultas. As decisões estão em [`.ai/modelagem.md`](../.ai/modelagem.md). As fórmulas de dois estágios abaixo continuam valendo **dentro de cada bloco**.
+
 ---
 
 ## Visão geral

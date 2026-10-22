@@ -1,6 +1,6 @@
 ---
 title: "Comparação de Planos Amostrais no Poker Online"
-subtitle: "AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em dois estágios (SharkScope)"
+subtitle: "AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três estágios (SharkScope)"
 author: "Arthur Agostinho Furlan Teixeira"
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
 output:
@@ -21,6 +21,7 @@ SEED <- as.integer(Sys.getenv("RANDOM_SEED", 42))
 caminho_kaggle <- Sys.getenv("KAGGLE_PATH", "data/raw/kaggle/poker_tournament_survival.csv")
 caminho_listagem <- "data/raw/sharkscope/listagem_torneios.csv"
 caminho_coleta <- "data/raw/sharkscope/coleta_jogadores.csv"
+caminho_blocos <- "data/raw/sharkscope/blocos_sorteados.csv"
 tem_kaggle <- file.exists(caminho_kaggle)
 tem_campo <- file.exists(caminho_listagem) && file.exists(caminho_coleta)
 ```
@@ -31,7 +32,7 @@ tem_campo <- file.exists(caminho_listagem) && file.exists(caminho_coleta)
 
 # Delineamentos amostrais
 
-<!-- Plano §2-3: Kaggle como população conhecida; SharkScope em dois estágios. -->
+<!-- Kaggle como população conhecida; SharkScope em três estágios: blocos de tempo → torneios (estratificados por buy-in dentro do bloco) → jogadores (Metodologia §4). Perda dos blocos 34 e 36 (b = 4). -->
 
 ```{r estratificacao, child = "docs/notas/estratificacao_buyin.md"}
 ```
@@ -39,7 +40,7 @@ tem_campo <- file.exists(caminho_listagem) && file.exists(caminho_coleta)
 # Simulação no dataset do Kaggle
 
 ```{r kaggle, eval = tem_kaggle}
-n_amostra <- as.integer(Sys.getenv("TAMANHO_AMOSTRA", 60))
+n_amostra <- as.integer(Sys.getenv("TAMANHO_AMOSTRA", 120)) # mesmo n do campo
 n_rep <- as.integer(Sys.getenv("N_REPLICAS", 5000))
 
 # Estratificacao por buy-in (a mesma do campo) e por quartis de skill (didatico).
@@ -60,16 +61,17 @@ resumos_kaggle
 ```{r campo, eval = tem_campo}
 moldura <- montar_moldura(carregar_listagem(caminho_listagem))
 coleta <- carregar_coleta(caminho_coleta)
+B <- read.csv(caminho_blocos)$B[1]
 taxa_nao_resposta(coleta)
 
 resultados_campo <- lapply(c(roi = "roi", lucrativo = "lucrativo"), function(v) {
-  res <- estimar_media_dois_estagios(coleta, moldura, v)
-  list(estimativa = res, epa = calcular_epa(res, coleta, moldura, v))
+  res <- estimar_media_tres_estagios(coleta, moldura, B, v, unidade = "jogador")
+  list(estimativa = res, epa = calcular_epa_tres_estagios(res))
 })
 resultados_campo
 ```
 
-<!-- Interpretação: componentes entre/dentro, IC 95%, EPA, rho_int, não resposta. -->
+<!-- Interpretação: componentes entre blocos/entre torneios/dentro, IC 95% (gl = b - 1 = 3), EPA, rho_int, não resposta; sensibilidade por inscrição vs. por jogador. -->
 
 # Comparação e discussão
 

@@ -4,7 +4,7 @@
 
 | Estrato | Faixa de buy-in |
 |---|---|
-| Micro/Nano | US\$ 0,00 a US\$ 4,99 |
+| Micro | US\$ 1,00 a US\$ 4,99 (abaixo de US\$ 1,00 fica fora da população de campo; no Kaggle não há buy-in médio abaixo de US\$ 1,00) |
 | Low | US\$ 5,00 a US\$ 24,99 |
 | Mid/High | US\$ 25,00 ou mais |
 

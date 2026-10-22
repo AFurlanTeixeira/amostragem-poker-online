@@ -1,4 +1,7 @@
-#' Estimadores da amostragem estratificada em dois estagios (coleta de campo).
+#' Estimadores da amostragem estratificada em dois estagios.
+#'
+#' Nucleo validado contra o Thompson e usado dentro de cada bloco pelo plano
+#' de campo em tres estagios (`R/estimadores_tres_estagios.R`).
 #'
 #' Notacao do plano (docs/plano_projeto.md, §4): estrato h, torneio k,
 #' jogador i; N_h/n_h torneios (populacao/amostra); M_hk/m_hk jogadores.
@@ -155,14 +158,27 @@ calcular_epa <- function(resultado, coleta, moldura, variavel = "roi") {
   m_k <- table(chave)[chave]
 
   w <- as.numeric(N_h[resp$estrato] / n_h[resp$estrato]) * resp$n_inscritos / as.numeric(m_k)
-  y <- resp[[variavel]]
+  epa_ponderado(resultado$variancia, resp[[variavel]], w, chave, resultado$M0)
+}
+
+#' EPA a partir da variancia do plano e dos pesos amostrais.
+#'
+#' Var_AAS = (1 - n/N) s_y^2 / n, com s_y^2 ponderada pelos pesos `w`
+#' (Bolfarine & Bussab §3.4); rho_int = (EPA - 1)/(mbar - 1) (eq. 8.26).
+#'
+#' @param variancia numeric, variancia do estimador sob o plano.
+#' @param y,w numeric, valor e peso amostral de cada respondente.
+#' @param conglomerado character, torneio de cada respondente.
+#' @param N numeric, tamanho da populacao de elementos.
+#' @return lista com `epa`, `var_aas`, `s2_y`, `n`, `m_medio`, `rho_int`.
+epa_ponderado <- function(variancia, y, w, conglomerado, N) {
   n <- length(y)
   media_w <- sum(w * y) / sum(w)
   s2_y <- (n / (n - 1)) * sum(w * (y - media_w)^2) / sum(w)
 
-  var_aas <- (1 - n / resultado$M0) * s2_y / n
-  epa <- resultado$variancia / var_aas
-  m_medio <- n / length(unique(chave))
+  var_aas <- (1 - n / N) * s2_y / n
+  epa <- variancia / var_aas
+  m_medio <- n / length(unique(conglomerado))
   list(
     epa = epa,
     var_aas = var_aas,

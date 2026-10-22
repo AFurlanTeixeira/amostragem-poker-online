@@ -9,6 +9,9 @@
 | Média por jogador μ̂ = τ̂/M0 | `metodo = "nao_viesado"` | Thompson §13.1, p. 174 |
 | Estimador razão μ̂_R | `metodo = "razao"` | Thompson p. 175; Bolfarine eq. 8.13, Prop. 8.1 |
 | Proporção como média de indicadora | `variavel = "lucrativo"` | Bolfarine §7.5 |
+| Plano em três estágios: total HT e variância por estágio (entre blocos + Σ dentro dos blocos) | `total_tres_estagios()` | Cochran cap. 10–11; Metodologia §7–8 |
+| Razão por jogador com peso de multiplicidade 1/f_i; linearização | `estimar_media_tres_estagios()` | Metodologia §7.5 e §8.2; Lohr cap. 9 |
+| Tamanho da amostra com EPA ≈ 1 + ρ(m − 1) | Metodologia §5.1 | Kish (1965); Bolfarine eq. 8.26 |
 | AAS com FCPF | `estimar_media_aas()` | Thompson cap. 2; Bolfarine cap. 3 |
 | AAS estratificada | `combinar_estratos()` | Thompson eq. 11.1–11.3; Bolfarine cap. 4 |
 | gl de Satterthwaite | `gl_satterthwaite()` | Thompson eq. 11.4 |
@@ -20,4 +23,7 @@
 
 - THOMPSON, S. K. *Sampling*. 3. ed. Hoboken: Wiley, 2012.
 - BOLFARINE, H.; BUSSAB, W. O. *Elementos de Amostragem*. São Paulo: Blucher, 2005.
+- COCHRAN, W. G. *Sampling Techniques*. 3. ed. New York: Wiley, 1977.
+- KISH, L. *Survey Sampling*. New York: Wiley, 1965.
+- LOHR, S. L. *Sampling: Design and Analysis*. 3. ed. Boca Raton: CRC Press, 2022.
 - NEFEDOV, S. *Poker Tournament Survival — Skill vs. Variance* [conjunto de dados]. Kaggle. <https://www.kaggle.com/datasets/sergionefedov/poker-tournament-survivorship>.
