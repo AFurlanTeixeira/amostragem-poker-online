@@ -5,10 +5,11 @@
 #   Rscript scripts/sortear_amostra.R blocos --n-blocos 6 --seed 164363
 #
 # Fase 1 -- torneios, por (bloco, estrato), a partir da listagem dos blocos:
-#   Rscript scripts/sortear_amostra.R torneios --n-por-estrato 2 --seed 42
+#   Rscript scripts/sortear_amostra.R torneios --n-por-estrato 2 --seed 164363
 #
-# Fase 2 -- jogadores, por posicao na lista de resultados dos torneios sorteados:
-#   Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 2 --n-reserva 3 --seed 164363
+# Fase 2 -- jogadores, por posicao na lista de resultados dos torneios sorteados
+# (m_k = 5 titulares, sem reserva; ADR-010):
+#   Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 5 --n-reserva 0 --seed 164363
 #
 # Top 10 dos torneios sorteados (fora do plano): acrescenta a top10_torneios.csv
 # 10 linhas em branco para cada torneio sorteado que ainda nao esta nele:
@@ -30,9 +31,9 @@ option_list <- list(
   make_option("--listagem", default = "data/raw/sharkscope/listagem_torneios.csv"),
   make_option("--torneios", default = "data/raw/sharkscope/torneios_sorteados.csv"),
   make_option("--top10", default = "data/raw/sharkscope/top10_torneios.csv"),
-  make_option("--n-por-estrato", default = as.integer(Sys.getenv("N_POR_ESTRATO", 5))),
-  make_option("--m-por-torneio", default = as.integer(Sys.getenv("M_POR_TORNEIO", 4))),
-  make_option("--n-reserva", default = as.integer(Sys.getenv("N_RESERVA", 4))),
+  make_option("--n-por-estrato", default = as.integer(Sys.getenv("N_POR_ESTRATO", 2))),
+  make_option("--m-por-torneio", default = as.integer(Sys.getenv("M_POR_TORNEIO", 5))),
+  make_option("--n-reserva", default = as.integer(Sys.getenv("N_RESERVA", 0))),
   make_option("--seed", default = as.integer(Sys.getenv("RANDOM_SEED", 42)))
 )
 parser <- OptionParser(

@@ -1,11 +1,11 @@
-#' Sorteio da amostra de campo (estratificada em dois estagios).
+#' Sorteio da amostra de campo (estratificada em tres estagios, Metodologia §4).
 #'
-#' Estagio temporal (Metodologia §6, Fase 0): AAS sem reposicao de blocos de
+#' 1o estagio (Metodologia §6, Fase 0): AAS sem reposicao de blocos de
 #' tempo de 2 h do periodo de referencia.
-#' Torneios: AAS sem reposicao dentro de cada celula (bloco, estrato).
-#' Jogadores: AAS sem reposicao de posicoes da lista de resultados de cada
-#' torneio sorteado, mais uma lista ordenada de reserva para substituir perfis privados
-#' (plano §3.2, §3.3 e §5.1).
+#' 2o estagio: torneios, AAS sem reposicao dentro de cada celula (bloco, estrato).
+#' 3o estagio: jogadores, AAS sem reposicao de posicoes da lista de resultados de
+#' cada torneio sorteado, com lista ordenada de reserva opcional (no projeto,
+#' m_k = 5 e nenhuma reserva; ADR-010).
 
 B_MINIMO <- 2 # necessario para estimar a variancia entre blocos (Metodologia §8.1)
 N_MINIMO_POR_ESTRATO <- 2 # necessario para estimar a variancia entre torneios

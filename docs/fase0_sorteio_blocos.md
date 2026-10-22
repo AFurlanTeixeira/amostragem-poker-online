@@ -19,6 +19,7 @@ Data de execução do sorteio oficial: 19/10/2026, 23:29 (horário de Brasília)
 | Semente | 164363 |
 | Probabilidade de inclusão de cada bloco | $b/B = 6/38 \approx 0{,}158$ |
 | Peso do 1º estágio | $B/b = 38/6 \approx 6{,}33$ |
+| $b$ efetivo (após a perda dos blocos 34 e 36, §7) | 4, peso do 1º estágio $38/4 = 9{,}5$ |
 
 ## 2. Procedimento
 
@@ -68,7 +69,7 @@ O período de referência foi redefinido três vezes, sempre porque a fonte da l
 
 - **Janela móvel do SharkScope.** Em 19/10/2026 às 23:24, a busca de torneios do SharkScope começava em 17/10 18:24, cerca de 53 h antes. Se a janela andar com o tempo, cada bloco precisa ser listado, e ter os inscritos dos torneios sorteados copiados, antes de sair dela. Com ~53 h, os prazos aproximados são:
 
-  | Bloco | Pode ser listado a partir de | Sai da janela por volta de |
+  | Bloco | Pode ser listado a partir de (fim do bloco) | Sai da janela por volta de |
   |---|---|---|
   | 5 | já | 20/10 09:00 |
   | 8 | já | 20/10 15:00 |
@@ -81,11 +82,11 @@ O período de referência foi redefinido três vezes, sempre porque a fonte da l
 - **Fuso horário.** Os blocos foram definidos no horário de Brasília. Se o SharkScope mostrar os horários em outro fuso, converta antes de decidir se um torneio pertence ou não a um bloco.
 - **Implementação em R.** A [§12 da Metodologia](Metodologia.md#12-implementação-de-referência-python) traz uma implementação de referência em Python. Com a mesma semente, o `numpy` sorteia blocos diferentes dos que o R sorteia. O sorteio oficial do projeto é o deste documento, feito em R.
 - **Local dos arquivos.** Os arquivos de sorteio e o log ficam em `data/raw/sharkscope/`, junto com os demais arquivos da coleta de campo.
-- **Composição da amostra.** Dois blocos caem no domingo (5 e 8), um na segunda e três na terça. Dois estão de madrugada ou no início da manhã (5 e 30).
+- **Composição da amostra.** No sorteio, dois blocos caem no domingo (5 e 8), um na segunda e três na terça. Depois da perda dos blocos 34 e 36 (§7), fica um bloco na terça (30). Dois dos quatro blocos efetivos estão de madrugada ou no início da manhã (5 e 30).
 
 ## 6. Andamento da Fase 1
 
-Situação em 20/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios sorteados em [`fase1_torneios_sorteados.md`](fase1_torneios_sorteados.md)):
+Situação em 22/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios sorteados em [`fase1_torneios_sorteados.md`](fase1_torneios_sorteados.md)):
 
 | Bloco | Listado | Torneios elegíveis | Torneios sorteados | Top 10 anotado | Nicknames das posições sorteadas |
 |---|---|---:|---:|---|---|
@@ -93,10 +94,25 @@ Situação em 20/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios
 | 8 | 19/10 | 21 | 6 | sim (20/10) | sim (20/10) |
 | 24 | 19/10 | 27 | 6 | sim (20/10) | sim (20/10) |
 | 30 | 20/10 | 17 | 6 | sim (20/10) | sim (20/10) |
-| 34 | — | — | — | — | — |
-| 36 | — | — | — | — | — |
+| 34 | perdido (§7) | — | — | — | — |
+| 36 | perdido (§7) | — | — | — | — |
 
-Próximos passos:
+A amostra de torneios fica em 24 (4 blocos × 3 estratos × 2). Pelo cálculo de $n$ ([Metodologia §5.1](Metodologia.md#51-cálculo-do-tamanho-da-amostra)), as 5 posições sorteadas de cada torneio passam a ser todas titulares ($`m_k = 5`$, sem reservas): 120 posições, das quais 6 são "Anônimo" (já marcadas como não resposta).
 
-1. Consultar no SharkScope os titulares dos 24 torneios ([`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv)), dentro da cota diária. Os 4 titulares "Anônimo" já estão marcados como não resposta; nesses torneios, consultar a próxima reserva.
-2. Listar o bloco 34 a partir das 16:00 de 20/10 e o bloco 36 a partir das 20:00, sortear os torneios e as posições deles com a mesma semente, rodar `Rscript scripts/sortear_amostra.R top10` e anotar os nicknames e o top 10.
+Próximo passo: consultar no SharkScope as 114 posições restantes de [`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv) (cota de 140 por dia), anotando `roi`, `lucro` e `n_jogos_dia` em todas.
+
+## 7. Perda dos blocos 34 e 36
+
+Em 22/10/2026 os blocos 34 (20/10 14:00–16:00) e 36 (20/10 18:00–20:00) já não podiam ser listados: o custo de busca do SharkScope não alcança mais esses horários, mesmo usando toda a cota de buscas da conta.
+
+Nesse dia foi feita uma listagem de 16:00–17:48 e de 20:00–21:57 de 20/10, porque a coluna "Pode ser listado a partir de" da §5 (o fim de cada bloco) foi lida como o início do intervalo a listar. Esses horários são dos blocos 35 e 37, que não foram sorteados. A listagem foi descartada e não entrou em [`listagem_torneios.csv`](../data/raw/sharkscope/listagem_torneios.csv).
+
+**Decisão:** os blocos 34 e 36 são tratados como não resposta de UPA ([ADR-008](../.ai/modelagem.md#adr-008-perda-dos-blocos-34-e-36-não-resposta-de-upa)).
+
+- A estimação usa os $b = 4$ blocos listados (5, 8, 24 e 30), com peso do 1º estágio $B/b = 38/4 = 9{,}5$ e variância entre blocos com 3 graus de liberdade.
+- Não há substituição. Usar os blocos 35 e 37, que já estavam listados, seria uma troca escolhida, não sorteada, e a probabilidade de inclusão deixaria de ser conhecida. Um sorteio de reposição também não resolve, porque só os blocos 35, 37 e 38 ainda podiam ser listados.
+- O período não é redefinido: os torneios e os jogadores dos outros quatro blocos já foram sorteados.
+
+**Hipótese e ressalva:** a perda veio do acesso à fonte e não tem relação com o ROI dos jogadores, então os 4 blocos restantes são tratados como uma AAS de 4 entre os 38. Mesmo assim, os dois blocos perdidos são de terça à tarde e à noite, e o horário de dia útil depois das 14h fica representado só pelo bloco 24 (segunda, 18:00–20:00). Isso precisa ser discutido no relatório.
+
+O evento está registrado no [log](../data/raw/sharkscope/log_coleta.csv) (`perda_upa`). O [`blocos_sorteados.csv`](../data/raw/sharkscope/blocos_sorteados.csv) continua com os 6 blocos, porque é o registro do sorteio.

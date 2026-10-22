@@ -199,5 +199,6 @@ carregar_coleta <- function(caminho) {
   coleta$torneio_id <- as.character(coleta$torneio_id)
   coleta$respondeu <- as.logical(coleta$respondeu)
   coleta$lucrativo <- as.integer(coleta$roi > 0)
+  if ("n_jogos_dia" %in% names(coleta)) coleta$n_jogos_dia <- as.numeric(coleta$n_jogos_dia)
   coleta
 }
