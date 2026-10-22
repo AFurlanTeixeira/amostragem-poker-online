@@ -90,16 +90,18 @@ Situação em 22/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios
 
 | Bloco | Listado | Torneios elegíveis | Torneios sorteados | Top 10 anotado | Nicknames das posições sorteadas |
 |---|---|---:|---:|---|---|
-| 5 | 19/10 | 18 | 6 | sim (20/10) | sim (20/10) |
-| 8 | 19/10 | 21 | 6 | sim (20/10) | sim (20/10) |
+| 5 | 19/10 | 18 | 6 + 2 extras (22/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
+| 8 | 19/10 | 21 | 6 + 2 extras (22/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
 | 24 | 19/10 | 27 | 6 | sim (20/10) | sim (20/10) |
 | 30 | 20/10 | 17 | 6 | sim (20/10) | sim (20/10) |
 | 34 | perdido (§7) | — | — | — | — |
 | 36 | perdido (§7) | — | — | — | — |
 
-A amostra de torneios fica em 24 (4 blocos × 3 estratos × 2). Pelo cálculo de $n$ ([Metodologia §5.1](Metodologia.md#51-cálculo-do-tamanho-da-amostra)), as 5 posições sorteadas de cada torneio passam a ser todas titulares ($`m_k = 5`$, sem reservas): 120 posições, das quais 6 são "Anônimo" (já marcadas como não resposta).
+A amostra de torneios era de 24 (4 blocos × 3 estratos × 2). Pelo cálculo de $n$ ([Metodologia §5.1](Metodologia.md#51-cálculo-do-tamanho-da-amostra)), as 5 posições sorteadas de cada torneio passam a ser todas titulares ($`m_k = 5`$, sem reservas): 120 posições, das quais 6 são "Anônimo" (já marcadas como não resposta).
 
-Próximo passo: consultar no SharkScope as 114 posições restantes de [`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv) (cota de 140 por dia), anotando `roi`, `lucro` e `n_jogos_dia` em todas.
+Em 22/10, depois da primeira rodada de consultas (20 respondentes em 51), três células ficaram com menos de 2 torneios com $`m_k \ge 2`$, e receberam torneios extras da mesma permutação ([ADR-011](../.ai/modelagem.md)): bloco 5 low (4039583266), bloco 5 micro (4039582664) e bloco 8 low (4039582706 e 4039581466). A amostra passa a 28 torneios e 140 posições. O top 10 e os nicknames das posições dos extras ainda não foram anotados.
+
+Próximo passo: conferir se a lista de resultados dos torneios extras abre pelo ID no SharkScope (a busca dos blocos 5 e 8 já saiu da janela), anotar os nicknames e consultar as posições ainda em branco de [`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv) (cota de 140 por dia), anotando `roi`, `lucro` e `n_jogos_dia` em todas.
 
 ## 7. Perda dos blocos 34 e 36
 
@@ -115,4 +117,4 @@ Nesse dia foi feita uma listagem de 16:00–17:48 e de 20:00–21:57 de 20/10, p
 
 **Hipótese e ressalva:** a perda veio do acesso à fonte e não tem relação com o ROI dos jogadores, então os 4 blocos restantes são tratados como uma AAS de 4 entre os 38. Mesmo assim, os dois blocos perdidos são de terça à tarde e à noite, e o horário de dia útil depois das 14h fica representado só pelo bloco 24 (segunda, 18:00–20:00). Isso precisa ser discutido no relatório.
 
-O evento está registrado no [log](../data/raw/sharkscope/log_coleta.csv) (`perda_upa`). O [`blocos_sorteados.csv`](../data/raw/sharkscope/blocos_sorteados.csv) continua com os 6 blocos, porque é o registro do sorteio.
+O evento está registrado no [log](../data/raw/sharkscope/log_coleta.csv) (`perda_upa`). O [`blocos_sorteados.csv`](../data/raw/sharkscope/blocos_sorteados.csv) continua com os 6 blocos, porque é o registro do sorteio, e marca a perda nas colunas `situacao` (`efetivo` ou `perdido`) e `b_efetivo` (4). A coluna `n_torneios_sorteados` traz os torneios sorteados em cada bloco, já com os extras do ADR-011.

@@ -119,6 +119,7 @@ Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 120 --n-rep 5000 -
 Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 164363
 Rscript scripts/gerar_md_torneios.R          # docs/fase1_torneios_sorteados.md
 Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 5 --n-reserva 0 --seed 164363
+Rscript scripts/sortear_amostra.R torneio-extra --bloco 5 --estrato low --seed 164363  # ADR-011
 Rscript scripts/sortear_amostra.R top10       # linhas do top 10 dos torneios sorteados
 
 # 4. Estimação a partir da coleta
