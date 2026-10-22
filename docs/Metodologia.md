@@ -139,13 +139,15 @@ Restrição: cota de 140 consultas por dia no SharkScope.
 | $B$ | 38 | 76 h (17/10 20:00 a 21/10 00:00) em blocos de 2 h |
 | $b$ | 6 sorteados, **4 efetivos** | Mínimo razoável para estimar a variância entre blocos. Os blocos 34 e 36 não puderam ser listados e foram perdidos (ver [§11](#11-erros-não-amostrais)) |
 | $H$ | 3 | Faixas de buy-in |
-| $`n_{jh}`$ | 2 | **Mínimo de 2** para estimar a variância entre torneios no estrato |
+| $`n_{jh}`$ | 2, mais torneios extras se preciso | **Mínimo de 2** com respondentes para estimar a variância entre torneios no estrato (torneios extras: ver abaixo) |
 | $`m_k`$ | 5 | Cálculo de $n$ da §5.1 (eram 2 titulares e 3 reservas) |
 | **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições | Cerca de 110 respondentes depois de "Anônimo" e perfis privados; cabe em 1 dia de coleta |
 
 > Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio, também depois da não resposta.
 
-**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. Aqui não dá para aumentar $`n_{jh}`$: os torneios dos blocos 5 e 8 já saíram da janela do SharkScope, e só as 5 posições já anotadas de cada torneio estão disponíveis.
+**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. A busca de torneios dos blocos 5 e 8 já saiu da janela do SharkScope, mas a lista de resultados de um torneio pode continuar acessível pelo ID.
+
+**Torneios extras (22/10, antes de novas consultas).** A taxa de resposta observada foi de 20/51 ≈ 39%, e três células ficaram abaixo dos mínimos. Regra: enquanto uma célula tiver menos de 2 torneios com $`m_k \ge 2`$ respondentes, sorteia-se o próximo torneio da mesma permutação da célula (`sortear_amostra.R torneio-extra`) e consultam-se as 5 primeiras posições da permutação dele. Os $n$ primeiros de uma permutação aleatória formam uma AAS de tamanho $n$, então a célula continua sendo uma AAS. Torneios sem lista de resultados acessível ou com menos de 2 respondentes ficam fora da estimação (não resposta de USA), e o peso $`N_{jh}/n_{jh}`$ usa os torneios com respondentes. Se a célula esgotar os $`N_{jh}`$ torneios sem chegar ao mínimo, ela é colapsada com o estrato vizinho do mesmo bloco (low → micro; micro e mid_high → low), somando $`N_{jh}`$ e $`n_{jh}`$, o que superestima um pouco a variância (técnica de estratos colapsados). Ver [ADR-011](../.ai/modelagem.md).
 
 ### 5.1 Cálculo do tamanho da amostra
 
@@ -336,7 +338,7 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 
 | Problema | Tratamento |
 |---|---|
-| **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Se ela for alta, considerar ajuste de não resposta por célula (torneio). |
+| **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Célula com menos de 2 torneios com $`m_k \ge 2`$ recebe torneios extras da mesma permutação, ou é colapsada com o estrato vizinho (§5). |
 | **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas. |
 | **`n_jogos_dia` ausente** | Sem ele não há peso $`1/f_i`$ (§7.5). Anotar em toda consulta. |
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
