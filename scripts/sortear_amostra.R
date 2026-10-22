@@ -11,6 +11,10 @@
 # (m_k = 5 titulares, sem reserva; ADR-010):
 #   Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 5 --n-reserva 0 --seed 164363
 #
+# Torneio extra numa celula (ADR-011): continua a permutacao da celula, sorteia
+# as m_k posicoes do novo torneio e acrescenta as linhas em branco a coleta:
+#   Rscript scripts/sortear_amostra.R torneio-extra --bloco 5 --estrato low --seed 164363
+#
 # Top 10 dos torneios sorteados (fora do plano): acrescenta a top10_torneios.csv
 # 10 linhas em branco para cada torneio sorteado que ainda nao esta nele:
 #   Rscript scripts/sortear_amostra.R top10
@@ -31,13 +35,18 @@ option_list <- list(
   make_option("--listagem", default = "data/raw/sharkscope/listagem_torneios.csv"),
   make_option("--torneios", default = "data/raw/sharkscope/torneios_sorteados.csv"),
   make_option("--top10", default = "data/raw/sharkscope/top10_torneios.csv"),
+  make_option("--jogadores", default = "data/raw/sharkscope/jogadores_sorteados.csv"),
+  make_option("--coleta", default = "data/raw/sharkscope/coleta_jogadores.csv"),
+  make_option("--bloco", default = NA_integer_, help = "Bloco da celula (torneio-extra)"),
+  make_option("--estrato", default = NA_character_, help = "Estrato da celula (torneio-extra)"),
+  make_option("--n-extra", default = 1L, help = "Torneios a acrescentar na celula [%default]"),
   make_option("--n-por-estrato", default = as.integer(Sys.getenv("N_POR_ESTRATO", 2))),
   make_option("--m-por-torneio", default = as.integer(Sys.getenv("M_POR_TORNEIO", 5))),
   make_option("--n-reserva", default = as.integer(Sys.getenv("N_RESERVA", 0))),
   make_option("--seed", default = as.integer(Sys.getenv("RANDOM_SEED", 42)))
 )
 parser <- OptionParser(
-  usage = "%prog [blocos|torneios|jogadores|top10] [opcoes]",
+  usage = "%prog [blocos|torneios|jogadores|torneio-extra|top10] [opcoes]",
   option_list = option_list
 )
 entrada <- parse_args(
@@ -83,6 +92,51 @@ if (etapa == "blocos") {
   saida <- "data/raw/sharkscope/jogadores_sorteados.csv"
   write.csv(sorteados, saida, row.names = FALSE)
   cat(sprintf("%d posicoes sorteadas (seed = %d) -> %s\n", nrow(sorteados), args$seed, saida))
+} else if (etapa == "torneio-extra") {
+  if (is.na(args$bloco) || is.na(args$estrato)) stop("Informe --bloco e --estrato.")
+  moldura <- montar_moldura(carregar_listagem(args$listagem))
+  torneios <- read.csv(args$torneios, colClasses = c(torneio_id = "character"))
+  estendidos <- estender_torneios(
+    moldura, torneios, args$bloco, args$estrato, args$n_extra, args$seed
+  )
+  novos <- estendidos[-seq_len(nrow(torneios)), , drop = FALSE]
+  write.csv(estendidos, args$torneios, row.names = FALSE)
+
+  posicoes <- sortear_jogadores(
+    novos[, c("bloco_id", "estrato", "torneio_id", "n_inscritos")],
+    args$m_por_torneio, 0, args$seed
+  )
+  jogadores <- read.csv(args$jogadores, colClasses = c(torneio_id = "character"))
+  write.csv(rbind(jogadores, posicoes[, names(jogadores)]), args$jogadores, row.names = FALSE)
+
+  colunas_texto <- c(torneio_id = "character", nickname = "character", data_consulta = "character")
+  coleta <- read.csv(args$coleta, colClasses = colunas_texto, fileEncoding = "UTF-8")
+  em_branco <- posicoes[, intersect(names(coleta), names(posicoes))]
+  em_branco[setdiff(names(coleta), names(em_branco))] <- NA
+  em_branco$nickname <- ""
+  em_branco$data_consulta <- ""
+  saida_coleta <- file(args$coleta, "w", encoding = "UTF-8")
+  write.csv(rbind(coleta, em_branco[, names(coleta)]), saida_coleta, row.names = FALSE, na = "")
+  close(saida_coleta)
+
+  registrar_log_coleta(
+    args$log,
+    fase = "1", evento = "torneio_extra",
+    detalhe = sprintf(
+      paste(
+        "Celula (bloco %d, %s): n_jh de %d para %d, continuando a permutacao da celula (ADR-011);",
+        "sorteados (torneio_id): %s; %d posicoes por torneio, sem reserva."
+      ),
+      args$bloco, args$estrato, unique(novos$n_jh) - nrow(novos), unique(novos$n_jh),
+      paste(novos$torneio_id, collapse = " "), args$m_por_torneio
+    ),
+    seed = args$seed
+  )
+  cat(sprintf(
+    "%d torneio(s) e %d posicoes acrescentados (seed = %d) -> %s, %s, %s\n",
+    nrow(novos), nrow(posicoes), args$seed, args$torneios, args$jogadores, args$coleta
+  ))
+  print(posicoes[, c("torneio_id", "n_inscritos", "ordem", "posicao")], row.names = FALSE)
 } else if (etapa == "top10") {
   torneios <- read.csv(args$torneios, colClasses = c(torneio_id = "character"))
   existente <- if (file.exists(args$top10)) carregar_top10(args$top10) else NULL
@@ -96,5 +150,5 @@ if (etapa == "blocos") {
   write.csv(rbind(existente, linhas), args$top10, row.names = FALSE, na = "")
   cat(sprintf("%d torneios acrescentados -> %s\n", nrow(novos), args$top10))
 } else {
-  stop("Etapa invalida: use 'blocos', 'torneios', 'jogadores' ou 'top10'.")
+  stop("Etapa invalida: use 'blocos', 'torneios', 'jogadores', 'torneio-extra' ou 'top10'.")
 }

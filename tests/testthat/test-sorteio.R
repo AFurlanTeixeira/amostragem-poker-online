@@ -38,6 +38,19 @@ test_that("sorteio de um bloco nao muda quando outros blocos entram depois", {
   expect_equal(so_30$torneio_id, completo$torneio_id[completo$bloco_id == 30])
 })
 
+test_that("torneio extra continua a permutacao da celula", {
+  original <- sortear_torneios(moldura_exemplo(), 2, seed = 7)
+  estendido <- estender_torneios(moldura_exemplo(), original, 30, "micro", 2, seed = 7)
+  maior <- sortear_torneios(moldura_exemplo(), c(micro = 4, low = 2, mid_high = 2), seed = 7)
+  celula <- function(x) x$torneio_id[x$bloco_id == 30 & x$estrato == "micro"]
+  expect_equal(celula(estendido), celula(maior))
+  expect_equal(estendido[seq_len(nrow(original)), "torneio_id"], original$torneio_id)
+  expect_equal(unique(estendido$n_jh[estendido$bloco_id == 30 & estendido$estrato == "micro"]), 4)
+  expect_equal(unique(estendido$n_jh[estendido$estrato == "low"]), 2) # outras celulas intactas
+  expect_error(estender_torneios(moldura_exemplo(), original, 34, "low", 2, 7), "so 3 torneios")
+  expect_error(estender_torneios(moldura_exemplo(), original, 30, "micro", 1, 8), "nao reproduz")
+})
+
 torneios_exemplo <- function() {
   data.frame(
     bloco_id = 30, estrato = "micro", torneio_id = c("t1", "t2", "t3"),

@@ -55,7 +55,8 @@ empírico compara a AAS estratificada com a AAS na mesma população.
 
 Sem reservas desde o ADR-010: o jogador que não responde sai, e m_k passa a
 ser o número de respondentes do torneio (mínimo 2). Hipótese: não resposta
-aleatória dentro do torneio. Reportar a taxa por estrato e discutir o viés
+aleatória dentro do torneio. Células abaixo do mínimo recebem torneios
+extras (ADR-011). Reportar a taxa por estrato e discutir o viés
 residual (Thompson §14.5).
 
 ## ADR-007: Dataset do Kaggle
@@ -107,3 +108,21 @@ torneio). Decisão (22/10, antes de qualquer ROI): m_k = 5 titulares, sem
 reserva, cerca de 110 respondentes e margem de ≈ ±0,10. As 5 posições são os
 5 primeiros da mesma permutação, então continuam sendo uma AAS. Cota de 140
 consultas por dia: a coleta cabe em 1 dia. O n não resolve os gl = 3 (ADR-004).
+
+## ADR-011: Torneios extras nas células com não resposta
+
+A taxa de resposta observada em 22/10 foi de 20/51 ≈ 39%, não os ~92% do
+ADR-010, e três células (bloco 5 low, bloco 5 micro, bloco 8 low) ficaram
+abaixo dos mínimos de `validar_tamanhos()`. Regra (22/10, antes de novas
+consultas): enquanto uma célula tiver menos de 2 torneios com m_k ≥ 2
+respondentes, sorteia-se o próximo torneio da permutação da célula
+(`estender_torneios()`, mesma seed) e consultam-se as 5 primeiras posições da
+permutação dele. Torneio sem lista de resultados acessível no SharkScope ou
+com 0 ou 1 respondente fica fora da estimação (não resposta de USA). Os n
+primeiros de uma permutação são uma AAS de tamanho n, e o peso N_jh/n_jh usa
+os torneios com respondentes. Hipótese: não resposta aleatória dentro da
+célula. Se a célula esgotar os N_jh torneios sem chegar ao mínimo, colapsa-se
+com o estrato vizinho do mesmo bloco (low → micro; micro e mid_high → low),
+com N_jh e n_jh somados (técnica de estratos colapsados: a variância fica
+superestimada; citação a conferir em `docs/referencias.md`). Vale também para os blocos 24 e 30. Não resolve os
+gl = 3 nem o viés de perfis privados.
