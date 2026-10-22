@@ -141,7 +141,7 @@ Restrição: cota de 140 consultas por dia no SharkScope.
 | $H$ | 3 | Faixas de buy-in |
 | $`n_{jh}`$ | 2, mais torneios extras se preciso | **Mínimo de 2** com respondentes para estimar a variância entre torneios no estrato (torneios extras: ver abaixo) |
 | $`m_k`$ | 5 | Cálculo de $n$ da §5.1 (eram 2 titulares e 3 reservas) |
-| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições | Cerca de 110 respondentes depois de "Anônimo" e perfis privados; cabe em 1 dia de coleta |
+| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições, **140** com os 4 torneios extras | Esperavam-se cerca de 110 respondentes; a resposta observada (≈ 39%) levou aos torneios extras (abaixo) |
 
 > Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio, também depois da não resposta.
 
@@ -339,7 +339,7 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 | Problema | Tratamento |
 |---|---|
 | **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Célula com menos de 2 torneios com $`m_k \ge 2`$ recebe torneios extras da mesma permutação, ou é colapsada com o estrato vizinho (§5). |
-| **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas. |
+| **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas originalmente. |
 | **`n_jogos_dia` ausente** | Sem ele não há peso $`1/f_i`$ (§7.5). Anotar em toda consulta. |
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
