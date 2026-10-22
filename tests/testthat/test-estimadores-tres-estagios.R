@@ -30,7 +30,9 @@ moldura_bloco <- function(bloco_id) {
 }
 
 test_that("com um unico bloco (b = B = 1) reproduz o Exemplo 2 do Thompson", {
-  res <- estimar_media_tres_estagios(coleta_bloco(1), moldura_bloco(1), B = 1, unidade = "inscricao")
+  res <- estimar_media_tres_estagios(
+    coleta_bloco(1), moldura_bloco(1), B = 1, unidade = "inscricao"
+  )
   expect_equal(res$estimativa * 2500, 11441, tolerance = 1e-4)
   # Var(Z) do estimador razao; Thompson arredonda r = 4,58 e obtem 43.426.788.
   expect_equal(res$variancia * res$N_hat^2, 43426788, tolerance = 5e-3)
