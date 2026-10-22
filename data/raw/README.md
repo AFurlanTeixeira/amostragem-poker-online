@@ -9,7 +9,7 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 - **Como obter:** baixe pelo Kaggle e coloque os dois CSVs nesta pasta, ou rode `bash scripts/baixar_kaggle.sh` (requer a CLI do Kaggle e o token em `~/.kaggle/kaggle.json`).
 - **Por que fica fora do git:** a licença não aparece na página do dataset. Confirme antes de redistribuir.
 - **Natureza:** dados **sintéticos**. A coluna `skill` é a "vantagem verdadeira de longo prazo", uma variável latente que só existe numa simulação.
-- **Limitação:** não há ID de torneio, então o plano em dois estágios não pode ser simulado aqui; só a AAS e a AAS estratificada.
+- **Limitação:** não há ID de torneio, então o plano de campo (com conglomerados) não pode ser simulado aqui; só a AAS e a AAS estratificada.
 
 ### Dicionário (colunas usadas pelo projeto em negrito)
 
@@ -38,10 +38,10 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 | Arquivo | Conteúdo | Quem gera |
 |---|---|---|
 | `blocos_sorteados.csv` | Blocos de 2 h sorteados na Fase 0 (estágio temporal), com fuso, `B`, `b` e `seed` | `scripts/sortear_amostra.R blocos` |
-| `log_coleta.csv` | Um evento por linha: sorteios, substituições e não respostas | Scripts de sorteio e anotações à mão |
+| `log_coleta.csv` | Um evento por linha: sorteios, decisões e não respostas | Scripts de sorteio e anotações à mão |
 | `listagem_torneios.csv` | Fase 1: **todos** os torneios com início dentro dos blocos sorteados, inclusive os excluídos (ver abaixo) | Preenchido à mão a partir da busca de torneios do SharkScope |
 | `torneios_sorteados.csv` | Torneios sorteados em cada (bloco, estrato), com `N_jh` e `n_jh` | `scripts/sortear_amostra.R torneios` |
-| `jogadores_sorteados.csv` | 2º estágio: posições sorteadas na lista de resultados de cada torneio (2 titulares + 3 reservas, em `ordem`) | `scripts/sortear_amostra.R jogadores` |
+| `jogadores_sorteados.csv` | 3º estágio: posições sorteadas na lista de resultados de cada torneio (5 titulares, em `ordem`; eram 2 titulares + 3 reservas até o cálculo de $n$, [Metodologia §5.1](../../docs/Metodologia.md#51-cálculo-do-tamanho-da-amostra)) | `scripts/sortear_amostra.R jogadores` |
 | `coleta_jogadores.csv` | Resultado de cada consulta ao SharkScope | Preenchido à mão durante a coleta |
 | `top10_torneios.csv` | Os 10 primeiros colocados de cada torneio sorteado, para comparação futura. **Fora do plano amostral**: não entra nos estimadores | Linhas criadas por `scripts/sortear_amostra.R top10`; `nickname` e `data_anotacao` preenchidos à mão |
 
@@ -72,10 +72,11 @@ Na lista de inscritos não se transcreve nada além das posições sorteadas. A 
 
 Na coleta:
 
-- `coleta_jogadores.csv` já traz as 5 posições sorteadas de cada torneio. Consulte os titulares e, só se for preciso, as reservas, na `ordem`.
-- `respondeu` em branco marca uma linha ainda não consultada (por exemplo, uma reserva que não foi usada). Essas linhas não entram nos estimadores nem na taxa de não resposta.
-- `respondeu = FALSE` marca um perfil privado. Nesse caso, consulte a próxima posição da reserva do **mesmo** torneio.
-- **Anônimo:** uma posição que cai num jogador `Anônimo` não pode ser consultada e é tratada como perfil privado (`respondeu = FALSE`, registrado no log). Uma reserva `Anônimo` é pulada do mesmo jeito.
+- `coleta_jogadores.csv` já traz as 5 posições sorteadas de cada torneio, todas titulares. Consulte todas (cota de 140 por dia).
+- `respondeu` em branco marca uma linha ainda não consultada. Essas linhas não entram nos estimadores nem na taxa de não resposta.
+- `respondeu = FALSE` marca um perfil privado. Não há substituição: o torneio fica com os respondentes que tiver (mínimo 2).
+- **Anônimo:** uma posição que cai num jogador `Anônimo` não pode ser consultada e é tratada como perfil privado (`respondeu = FALSE`, registrado no log). São 6 das 120 posições.
+- `n_jogos_dia` é obrigatório em todo respondente: é ele que dá o peso do ROI por jogador distinto ([Metodologia §7.5](../../docs/Metodologia.md#75-número-de-inscrições-e-média-estimador-razão)).
 - Um mesmo jogador sorteado em dois torneios fica nos dois registros, e a consulta é reaproveitada sem gastar cota ([Metodologia §11](../../docs/Metodologia.md#11-erros-não-amostrais)).
 
 Colunas de `coleta_jogadores.csv` preenchidas na consulta:
@@ -95,7 +96,7 @@ Copie `listagem_torneios_modelo.csv` para `listagem_torneios.csv` e preencha **u
 
 | Coluna | Tipo | Como preencher |
 |---|---|---|
-| `bloco_id` | inteiro | `bloco_id` do bloco sorteado (5, 8, 24, 30, 34 ou 36) |
+| `bloco_id` | inteiro | `bloco_id` do bloco sorteado (5, 8, 24 ou 30; os blocos 34 e 36 foram perdidos, ver [`fase0_sorteio_blocos.md` §7](../../docs/fase0_sorteio_blocos.md#7-perda-dos-blocos-34-e-36)) |
 | `torneio_id` | texto | ID do torneio no PokerStars (sem `#`) |
 | `nome` | texto | Nome do torneio como aparece na fonte |
 | `inicio_fonte` | `AAAA-MM-DD HH:MM` | Horário de início **exatamente como a fonte mostra** |

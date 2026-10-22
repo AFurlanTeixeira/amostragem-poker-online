@@ -5,9 +5,9 @@
 Trabalho Final de **Técnicas de Amostragem** (ME430-Estatística, Unicamp, 2026). Compara dois tipos de plano para estimar o **ROI médio** e a **proporção de jogadores lucrativos** em torneios de poker online:
 
 1. **Amostragem direta de elementos** (AAS e AAS estratificada), simulada por **Monte Carlo** sobre um dataset do Kaggle tratado como população conhecida.
-2. **Amostragem estratificada em dois estágios**, aplicada em campo no **SharkScope**: estratos por faixa de buy-in, torneios como unidades primárias e jogadores como unidades secundárias.
+2. **Amostragem estratificada em três estágios**, aplicada em campo no **SharkScope**: blocos de tempo de 2 h (unidades primárias), torneios estratificados por faixa de buy-in dentro de cada bloco (secundárias) e jogadores (terciárias).
 
-O plano completo, com fórmulas e referências, está em [`docs/plano_projeto.md`](docs/plano_projeto.md).
+O delineamento de campo, com fórmulas e referências, está em [`docs/Metodologia.md`](docs/Metodologia.md). O [`docs/plano_projeto.md`](docs/plano_projeto.md) é a versão inicial, em dois estágios.
 
 - **Entregáveis:** relatório técnico e apresentação em slides, num ciclo de 20 dias.
 - **Referências principais:** Thompson (2012), *Sampling*, 3ª ed.; Bolfarine & Bussab, *Elementos de Amostragem*.
@@ -19,7 +19,7 @@ O plano completo, com fórmulas e referências, está em [`docs/plano_projeto.md
 | Fonte | Papel | Onde |
 |---|---|---|
 | [Kaggle: *Poker Tournament Survival — Skill vs. Variance*](https://www.kaggle.com/datasets/sergionefedov/poker-tournament-survivorship) | População conhecida (45.000 jogadores, 17 colunas, dados sintéticos) para as simulações de AAS e AAS estratificada | `data/raw/kaggle/` (fora do git) |
-| SharkScope | Coleta de campo do plano em dois estágios (de 5 a 10 consultas por dia; n ≈ 50 a 100) | [`data/raw/sharkscope/`](data/raw/sharkscope) (versionado) |
+| SharkScope | Coleta de campo do plano em três estágios (4 blocos, 24 torneios, 120 posições sorteadas; cota de 140 consultas por dia) | [`data/raw/sharkscope/`](data/raw/sharkscope) (versionado) |
 
 Detalhes, dicionário de dados e cabeçalhos das planilhas de campo: [`data/raw/README.md`](data/raw/README.md).
 
@@ -31,12 +31,12 @@ O arquivo `data/raw/kaggle/poker_tournament_survival.csv`:
 
 - **Tamanho:** 45.000 jogadores × 17 colunas; nenhum valor ausente; `player_id` único.
 - **Natureza:** dados **sintéticos**. O dicionário descreve `skill` como a "vantagem verdadeira de longo prazo", uma variável latente que não é observável em dados reais.
-- **Unidade:** o jogador, com o histórico agregado de 10 a 1.567 torneios (mediana de 111). É análoga a um perfil do SharkScope. **Não há ID de torneio**, então o plano em dois estágios não pode ser simulado neste dataset.
+- **Unidade:** o jogador, com o histórico agregado de 10 a 1.567 torneios (mediana de 111). É análoga a um perfil do SharkScope. **Não há ID de torneio**, então o plano de campo, com conglomerados, não pode ser simulado neste dataset.
 - **Parâmetros verdadeiros:** ROI médio $\mu = -31{,}88\%$ (mediana de −34%, DP de 45,96 p.p.); proporção de lucrativos $P = 0{,}1939$; 50,0% quebraram a banca (`went_broke`).
 - **Distribuição do ROI:** limitada entre −100% e +400%, com cauda direita longa (P99 ≈ 109%). O IC normal funciona bem com n = 60 (cobertura de 94% a 95% nas simulações).
 - **Estratos por buy-in** (`avg_buyin`, mesmas faixas do campo): micro 1.060 (2,4%), low 14.652 (32,6%), mid_high 29.288 (65,1%). O ROI médio é praticamente igual nas três faixas (−31,9%, −32,4% e −31,6%). A correlação entre ROI e buy-in é de 0,0006.
 
-### Resultados preliminares (n = 60, 5.000 réplicas, seed = 42)
+### Resultados preliminares (n = 60, 5.000 réplicas, seed = 42; a rodar de novo com n = 120, o n do campo)
 
 | Estratificação | Parâmetro | EPA empírico (estratificada / AAS) | Cobertura do IC 95% (AAS / estratificada) |
 |---|---|---|---|
@@ -51,9 +51,9 @@ Neste dataset, estratificar por buy-in praticamente não reduz a variância, por
 
 ### 🎯 Perguntas a Responder
 
-1. Qual o ROI médio por jogador ($\mu$) e a proporção de jogadores lucrativos ($P$), com IC de 95%?
-2. Quanto da variância vem da variação **entre torneios** e quanto vem da variação **dentro dos torneios**?
-3. Qual o **Efeito do Planejamento (EPA/DEFF)** do plano em dois estágios e a correlação intraclasse $\rho_{int}$ implícita?
+1. Qual o ROI médio por jogador distinto ($\mu$) e a proporção de jogadores lucrativos ($P$), com IC de 95%?
+2. Quanto da variância vem da variação **entre blocos**, **entre torneios** e **dentro dos torneios**?
+3. Qual o **Efeito do Planejamento (EPA/DEFF)** do plano em três estágios e a correlação intraclasse $\rho_{int}$ implícita?
 4. No Kaggle, quanto a estratificação ganha em relação à AAS (viés, EQM, cobertura do IC)?
 5. Qual a taxa de não resposta (perfis privados) e qual o seu possível impacto?
 
@@ -68,13 +68,13 @@ data/raw/kaggle/*.csv                       data/raw/sharkscope/listagem_torneio
  carregar_populacao_kaggle()              montar_moldura() → sortear_torneios()  ── por (bloco, estrato)
         │                                                │
         ▼                                                ▼
- simular_planos()  ── AAS / AAS estrat.   sortear_jogadores()  ── 2º estágio (USA) + reserva
+ simular_planos()  ── AAS / AAS estrat.   sortear_jogadores()  ── 3º estágio (UTA), m_k = 5
    (Monte Carlo, n_rep réplicas)                         │
         │                                                ▼
-        ▼                                     coleta no SharkScope (5 a 10/dia)
+        ▼                                     coleta no SharkScope (140/dia)
  resumir_simulacao()                                     │
    viés · EQM · cobertura · EPA empírico                 ▼
-        │                              estimar_media_dois_estagios() · calcular_epa()
+        │                       estimar_media_tres_estagios() · calcular_epa_tres_estagios()
         └──────────────► comparação no relatório ◄───────┘
 ```
 
@@ -113,16 +113,16 @@ cp .env.example .env   # semente, caminho e estratificação do Kaggle, tamanhos
 bash scripts/baixar_kaggle.sh
 
 # 2. Monte Carlo no Kaggle (AAS vs. AAS estratificada)
-Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 60 --n-rep 5000 --seed 42
+Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 120 --n-rep 5000 --seed 42
 
 # 3. Sorteio de campo
 Rscript scripts/sortear_amostra.R torneios  --n-por-estrato 2 --seed 164363
 Rscript scripts/gerar_md_torneios.R          # docs/fase1_torneios_sorteados.md
-Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 2 --n-reserva 3 --seed 164363
+Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 5 --n-reserva 0 --seed 164363
 Rscript scripts/sortear_amostra.R top10       # linhas do top 10 dos torneios sorteados
 
 # 4. Estimação a partir da coleta
-Rscript scripts/estimar_campo.R --metodo auto
+Rscript scripts/estimar_campo.R --unidade jogador     # e --unidade inscricao (sensibilidade)
 ```
 
 ### Relatório
@@ -150,7 +150,10 @@ data/
     sharkscope/                   # Blocos, listagem, sorteios e coleta de campo (versionados)
   processed/                      # Resultados gerados (fora do git)
 docs/
-  plano_projeto.md                # Plano de projeto v2 (fórmulas + referências)
+  Metodologia.md                  # Delineamento em três estágios, fórmulas, protocolo
+  fase0_sorteio_blocos.md         # Sorteio dos blocos, andamento e perda dos blocos 34/36
+  fase1_torneios_sorteados.md     # Torneios sorteados (gerado)
+  plano_projeto.md                # Plano inicial v2 (dois estágios)
   referencias.md                  # Mapa fórmula → livro/seção
   relatorio.Rmd                   # Relatório executável (esqueleto)
 scripts/
@@ -158,12 +161,13 @@ scripts/
   simular_kaggle.R                # Monte Carlo de AAS / AAS estratificada
   sortear_amostra.R               # Sorteio dos blocos, torneios e jogadores
   gerar_md_torneios.R             # Tabela dos torneios sorteados em Markdown
-  estimar_campo.R                 # Estimação em dois estágios, IC, EPA
+  estimar_campo.R                 # Estimação em três estágios, IC, EPA
 R/
   dados.R                         # Leitura e validação das fontes
-  sorteio.R                       # Sorteio estratificado em dois estágios + reserva
+  sorteio.R                       # Sorteio de blocos, torneios por (bloco, estrato) e jogadores
   estimadores_aas.R               # AAS e AAS estratificada (Thompson cap. 11)
-  estimadores_dois_estagios.R     # Dois estágios, razão, EPA (Thompson cap. 13; Bolfarine cap. 8)
+  estimadores_dois_estagios.R     # Núcleo de dois estágios, razão, EPA (Thompson cap. 13; Bolfarine cap. 8)
+  estimadores_tres_estagios.R     # Plano de campo: blocos → torneios → jogadores, por jogador (1/f)
   simulacao_kaggle.R              # Monte Carlo sobre a população do Kaggle
 tests/
   testthat/                       # Testes unitários (testthat)
@@ -192,11 +196,15 @@ tests/
 
 [x] Sorteio dos blocos de tempo (Fase 0)
 
-[ ] Listagem dos torneios dos blocos sorteados + sorteio dos torneios (Fase 1)
+[x] Listagem dos torneios dos blocos sorteados + sorteio dos torneios (Fase 1); blocos 34 e 36 perdidos, b efetivo = 4
 
-[ ] Sorteio do 2º estágio + coleta no SharkScope
+[x] Sorteio dos jogadores (3º estágio): m_k = 5 por torneio, 120 posições
 
-[ ] Estimação em dois estágios, IC 95%, EPA e $\rho_{int}$
+[ ] Coleta no SharkScope
+
+[x] Estimadores do plano em três estágios (por jogador e por inscrição)
+
+[ ] Estimação de campo, IC 95%, EPA e $\rho_{int}$
 
 [ ] Relatório técnico
 
