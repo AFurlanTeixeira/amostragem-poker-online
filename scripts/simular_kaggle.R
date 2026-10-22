@@ -23,7 +23,7 @@ option_list <- list(
     default = Sys.getenv("KAGGLE_ESTRATIFICAR_POR", "buyin"),
     help = "buyin (faixas do campo), skill (quartis, didatico) ou nenhum."
   ),
-  make_option("--n", default = as.integer(Sys.getenv("TAMANHO_AMOSTRA", 60))),
+  make_option("--n", default = as.integer(Sys.getenv("TAMANHO_AMOSTRA", 120))),
   make_option("--n-rep", default = as.integer(Sys.getenv("N_REPLICAS", 5000))),
   make_option("--seed", default = as.integer(Sys.getenv("RANDOM_SEED", 42)))
 )
