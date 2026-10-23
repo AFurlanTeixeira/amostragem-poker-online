@@ -103,7 +103,8 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 #' @param nivel numeric, nivel de confianca do IC.
 #' @return lista com `estimativa`, `variancia`, `erro_padrao`, `gl`, `li`,
 #'   `ls`, `unidade`, `N_hat` (inscricoes ou jogadores estimados), `b`,
-#'   `blocos`, `torneios_excluidos` (com 1 respondente) e `amostra` (`y`, peso final `w` e `torneio`, para o EPA).
+#'   `blocos`, `torneios_excluidos` (com 1 respondente) e `amostra` (`y`,
+#'   peso final `w` e `torneio`, para o EPA).
 estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
                                         unidade = c("jogador", "inscricao"),
                                         nivel = 0.95) {
