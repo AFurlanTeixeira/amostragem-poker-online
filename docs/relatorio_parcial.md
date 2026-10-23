@@ -2,7 +2,8 @@
 
 **ME430 — Técnicas de Amostragem** · Estatística, Unicamp · 2º semestre de 2026<br>
 **Situação em:** 23/10/2026 (coleta de campo encerrada; análise preliminar)<br>
-**Grupo:** _a preencher_
+**Grupo:** 
+Arthur Agostinho Furlan Teixeira RA: 164363
 
 ---
 
