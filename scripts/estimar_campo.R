@@ -35,6 +35,10 @@ for (variavel in c("roi", "lucrativo", "lucrativo_estrito")) {
     "Estimativa: %.4f | EP: %.4f | IC 95%%: [%.4f; %.4f] (gl = %d)\n",
     res$estimativa, res$erro_padrao, res$li, res$ls, res$gl
   ))
+  if (variavel != "roi") {
+    ic <- ic_logit(res)
+    cat(sprintf("IC 95%% logit (ADR-012): [%.4f; %.4f]\n", ic[["li"]], ic[["ls"]]))
+  }
   cat(sprintf("EPA: %.3f | rho_int: %.3f | m medio: %.2f\n", epa$epa, epa$rho_int, epa$m_medio))
   cat(sprintf(
     "Torneios fora (1 respondente, ADR-011): %s\n",
