@@ -21,6 +21,12 @@ option_list <- list(
 args <- parse_args(OptionParser(option_list = option_list), convert_hyphens_to_underscores = TRUE)
 
 sorteados <- read.csv(args$sorteados, colClasses = c(torneio_id = "character"))
+# Os torneios extras (ADR-011) vem depois dos 2 originais da celula no CSV.
+celula <- paste(sorteados$bloco_id, sorteados$estrato)
+sorteados$sorteio <- ifelse(
+  stats::ave(seq_along(celula), celula, FUN = seq_along) > N_MINIMO_POR_ESTRATO,
+  "extra", "original"
+)
 listagem <- carregar_listagem(args$listagem)
 blocos <- read.csv(args$blocos, stringsAsFactors = FALSE)
 
@@ -54,6 +60,13 @@ linhas <- c(
     "$`M_k`$ é o total de entradas da fonte, com re-entries",
     "([Metodologia §2.4](Metodologia.md#24-variáveis-de-interesse)). Horários de Brasília."
   ),
+  "",
+  paste(
+    "Torneios extras: nas células que ficaram com menos de 2 torneios com $`m_k \\ge 2`$",
+    "respondentes, o próximo torneio da mesma permutação da célula foi sorteado",
+    "(`sortear_amostra.R torneio-extra`, [ADR-011](../.ai/modelagem.md)). Eles aparecem",
+    "como \"extra\" na coluna Sorteio, e $`n_{jh}`$ é o total sorteado na célula."
+  ),
   ""
 )
 for (id in unique(m$bloco_id)) {
@@ -68,13 +81,14 @@ for (id in unique(m$bloco_id)) {
     "",
     paste(
       "| Estrato | `torneio_id` | Nome | Início | Buy-in (US$) | $`M_k`$ (entradas) |",
-      "$`N_{jh}`$ | $`n_{jh}`$ | Formato |"
+      "$`N_{jh}`$ | $`n_{jh}`$ | Formato | Sorteio |"
     ),
-    "|---|---|---|---|---:|---:|---:|---:|---|",
+    "|---|---|---|---|---:|---:|---:|---:|---|---|",
     sprintf(
-      "| %s | %s | %s | %s | %s | %d | %d | %d | %s |",
+      "| %s | %s | %s | %s | %s | %d | %d | %d | %s | %s |",
       rotulo[d$estrato], d$torneio_id, d$nome, substr(d$inicio_brasilia, 12, 16),
-      reais(d$buy_in), d$n_inscritos, d$N_jh, d$n_jh, sub("^formato: ", "", d$observacao)
+      reais(d$buy_in), d$n_inscritos, d$N_jh, d$n_jh, sub("^formato: ", "", d$observacao),
+      d$sorteio
     ),
     ""
   )

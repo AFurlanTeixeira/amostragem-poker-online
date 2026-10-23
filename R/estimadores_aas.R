@@ -78,3 +78,24 @@ montar_resultado <- function(estimativa, variancia, gl, nivel) {
     ls = estimativa + t_crit * erro_padrao
   )
 }
+
+#' IC logit para uma proporcao (ADR-012).
+#'
+#' Calcula o IC t na escala logit(p) = log(p / (1 - p)), com erro-padrao pelo
+#' metodo delta, EP / (p (1 - p)), e volta para a escala de proporcao. O
+#' intervalo e assimetrico e fica sempre dentro de (0, 1), ao contrario do
+#' IC de Wald (`montar_resultado()`), que pode passar de 0 ou de 1 quando p
+#' esta perto de um extremo ou gl e pequeno. Mesmo metodo de
+#' `survey::svyciprop(method = "logit")`.
+#'
+#' @param resultado lista com `estimativa`, `erro_padrao` e `gl`.
+#' @param nivel numeric, nivel de confianca.
+#' @return vetor com `li` e `ls`; `NA` se a estimativa for 0 ou 1.
+ic_logit <- function(resultado, nivel = 0.95) {
+  p <- resultado$estimativa
+  if (p <= 0 || p >= 1) return(c(li = NA_real_, ls = NA_real_))
+  t_crit <- stats::qt(1 - (1 - nivel) / 2, df = resultado$gl)
+  ep_logit <- resultado$erro_padrao / (p * (1 - p))
+  limites <- stats::qlogis(p) + c(-1, 1) * t_crit * ep_logit
+  stats::setNames(stats::plogis(limites), c("li", "ls"))
+}

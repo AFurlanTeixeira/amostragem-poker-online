@@ -86,12 +86,13 @@ test_that("carregar_top10 tipa as colunas e rejeita posicao invalida", {
   expect_error(carregar_top10(escrever_csv(top10_fabricado(c(1:9, 9)))), "repetida")
 })
 
-test_that("carregar_coleta cria a variavel lucrativo", {
+test_that("carregar_coleta cria as variaveis lucrativo e lucrativo_estrito", {
   caminho <- escrever_csv(data.frame(
-    estrato = "micro", torneio_id = "1", n_inscritos = 10, nickname = c("a", "b"),
-    respondeu = c(TRUE, FALSE), roi = c(15, -100), lucro = c(3, -20)
+    estrato = "micro", torneio_id = "1", n_inscritos = 10, nickname = c("a", "b", "c"),
+    respondeu = c(TRUE, FALSE, TRUE), roi = c(15, -100, 2), lucro = c(3, -20, -50)
   ))
   coleta <- carregar_coleta(caminho)
-  expect_equal(coleta$lucrativo, c(1L, 0L))
+  expect_equal(coleta$lucrativo, c(1L, 0L, 1L))
+  expect_equal(coleta$lucrativo_estrito, c(1L, 0L, 0L)) # ROI > 0 com lucro < 0
   expect_type(coleta$respondeu, "logical")
 })
