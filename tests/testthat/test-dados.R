@@ -14,6 +14,7 @@ kaggle_fabricado <- function() {
   data.frame(
     player_id = paste0("PLR", 1:8),
     skill = c(1, 2, 3, 4, 5, 6, 7, 8),
+    tournaments_played = c(10, 20, 30, 40, 50, 60, 70, 80),
     avg_buyin = c(2, 4.99, 5, 24.99, 25, 100, 3, 30),
     realized_roi = c(-100, -20, 0, 15, 40, -5, NA, 10),
     went_broke = c(1, 0, 0, 0, 0, 0, 1, 0),
@@ -34,6 +35,7 @@ test_that("carregar_populacao_kaggle padroniza colunas e estratifica", {
   expect_equal(nrow(pop), 7) # linha com ROI ausente e descartada
   expect_equal(pop$roi, c(-100, -20, 0, 15, 40, -5, 10))
   expect_equal(pop$lucrativo, as.integer(pop$roi > 0))
+  expect_equal(pop$n_torneios, c(10L, 20L, 30L, 40L, 50L, 60L, 80L))
   expect_equal(pop$estrato, c("micro", "micro", "low", "low", "mid_high", "mid_high", "mid_high"))
 
   pop_skill <- carregar_populacao_kaggle(caminho, estratificar_por = "skill")
