@@ -64,8 +64,8 @@ residual (Thompson §14.5).
 - Colunas: `realized_roi` → `roi`; `profitable` → `lucrativo` (equivale a ROI > 0
   em 100% das linhas); `avg_buyin` → estrato por faixa de buy-in.
 - Dados sintéticos (`skill` é a vantagem verdadeira, latente). Sem ID de torneio:
-  só é possível simular AAS e AAS estratificada; o plano em estágios fica
-  só no campo.
+  diretamente, só é possível simular AAS e AAS estratificada. O plano em
+  estágios é simulado numa população sintética com a estrutura do campo (ADR-013).
 - Estratificação principal: faixas de `avg_buyin` iguais às do campo, para manter
   a comparabilidade. Resultado: EPA ≈ 0,98, porque o ROI não varia entre as faixas.
 - Estratificação alternativa (didática): quartis de `skill`, EPA ≈ 0,95. Ela não
@@ -136,3 +136,23 @@ delta, EP/(P̂(1 − P̂)), mesmos gl, e volta à escala de proporção. É
 assimétrico e fica em (0, 1), como `survey::svyciprop(method = "logit")`.
 O Wald é reportado ao lado. Alternativa mais conservadora não adotada:
 Korn–Graubard. O ROI médio continua com o IC de Wald (sem limites).
+
+## ADR-013: Plano em três estágios no Kaggle (população sintética)
+
+O Kaggle não tem horário nem ID de torneio (ADR-007), então a estrutura do
+campo é construída (`montar_populacao_blocos()`, seed 164363): B = 38 blocos;
+em cada bloco e estrato, N_jh sorteado entre os N_jh observados nos 4 blocos
+listados do SharkScope e M_k reamostrado dos M_k observados no estrato. Cada
+torneio é preenchido por AAS sem reposição, com probabilidade proporcional a
+`tournaments_played`, entre os jogadores do Kaggle do mesmo estrato de
+`avg_buyin`. Um jogador pode estar em vários torneios, e f_i é a contagem
+exata, então o parâmetro por jogador distinto é conhecido. Sorteios e
+estimadores são os do campo. O sorteio oficial (b = 6, n_jh = 2, m_k = 5)
+simula a não resposta com as taxas observadas por estrato, como Bernoulli
+(aleatória dentro da célula), e aplica a regra do ADR-011. O Monte Carlo
+roda sem não resposta, com b = 4, 6 e 12. Limitações: os torneios são
+preenchidos ao acaso dentro do estrato, então não há correlação intraclasse
+real (ρ ≈ 0 por construção), e as diferenças entre blocos vêm só de N_jh e
+M_k. O EPA medido reflete a variação dos pesos e o número de UPAs, não um
+efeito de horário. A população fica só com os jogadores sorteados para algum
+torneio (21.793 dos 45.000).

@@ -337,7 +337,7 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
    - **AASs** de tamanho $n = 120$, o mesmo $n$ do campo (§5);
    - **Estratificada simples** por faixa de buy-in, com alocação proporcional (e, como variante didática, por quartis de `skill`).
 4. Comparar, nas simulações, vício, EQM, erro-padrão médio e cobertura empírica do IC de 95%.
-5. O dataset não tem identificador de torneio, então o desenho em conglomerados não pode ser simulado nele. O EPA do plano em três estágios vem só da amostra de campo.
+5. O dataset não tem identificador de torneio, então o desenho em conglomerados não pode ser simulado diretamente nele. Para isso, monta-se uma **população sintética com a estrutura do campo** ([ADR-013](../.ai/modelagem.md)): 38 blocos com $`N_{jh}`$ e $`M_k`$ reamostrados da listagem do SharkScope, e torneios preenchidos com jogadores do Kaggle do mesmo estrato, com probabilidade proporcional a `tournaments_played`. Nela, $`f_i`$ e os parâmetros por jogador são conhecidos, e os sorteios e estimadores do campo são aplicados sem mudança, tanto num sorteio oficial (com a não resposta e a regra de torneios extras do campo) quanto em Monte Carlo. Resultados em [`kaggle_tres_estagios.md`](kaggle_tres_estagios.md).
 
 > As estimativas do Kaggle e do SharkScope **não** se referem à mesma população. A comparação é **metodológica** (precisão, EPA, comportamento dos estimadores), não uma comparação direta das médias.
 
