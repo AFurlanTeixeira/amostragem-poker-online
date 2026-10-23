@@ -87,11 +87,24 @@ test_that("frequencia tem minimo 1 e n_jogos_dia e exigido por jogador", {
   expect_silent(estimar_media_tres_estagios(coleta, moldura, B = 10, unidade = "inscricao"))
 })
 
+test_that("torneio com 1 respondente sai da estimacao (ADR-011)", {
+  coleta <- rbind(coleta_bloco(1), coleta_bloco(2))
+  coleta <- rbind(coleta, transform(coleta_bloco(1)[1:2, ], torneio_id = "t4_1"))
+  moldura <- rbind(moldura_bloco(1), moldura_bloco(2))
+  moldura$torneio_id[4] <- "t4_1"
+  sem_t4 <- estimar_media_tres_estagios(coleta[1:12, ], moldura, B = 10)
+  coleta$respondeu[13] <- FALSE
+  com_t4 <- estimar_media_tres_estagios(coleta, moldura, B = 10)
+  expect_equal(com_t4$estimativa, sem_t4$estimativa)
+  expect_equal(com_t4$variancia, sem_t4$variancia)
+  expect_equal(com_t4$torneios_excluidos, "t4_1")
+})
+
 test_that("minimos por celula e por bloco sao exigidos", {
   coleta <- rbind(coleta_bloco(1), coleta_bloco(2))
   moldura <- rbind(moldura_bloco(1), moldura_bloco(2))
-  coleta$respondeu[1] <- FALSE
-  expect_error(estimar_media_tres_estagios(coleta, moldura, B = 10), "menos de 2 respondentes")
+  coleta$respondeu[c(1, 3)] <- FALSE # t1_1 e t2_1 ficam com 1 respondente
+  expect_error(estimar_media_tres_estagios(coleta, moldura, B = 10), "menos de 2 torneios")
   expect_error(estimar_media_tres_estagios(coleta_bloco(1), moldura_bloco(1), B = 10), "2 blocos")
 })
 

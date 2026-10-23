@@ -36,5 +36,9 @@ for (variavel in c("roi", "lucrativo")) {
     res$estimativa, res$erro_padrao, res$li, res$ls, res$gl
   ))
   cat(sprintf("EPA: %.3f | rho_int: %.3f | m medio: %.2f\n", epa$epa, epa$rho_int, epa$m_medio))
+  cat(sprintf(
+    "Torneios fora (1 respondente, ADR-011): %s\n",
+    paste(res$torneios_excluidos, collapse = " ")
+  ))
   print(res$blocos, digits = 4)
 }
