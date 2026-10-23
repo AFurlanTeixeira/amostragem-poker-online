@@ -64,7 +64,10 @@ coleta <- carregar_coleta(caminho_coleta)
 B <- read.csv(caminho_blocos)$B[1]
 taxa_nao_resposta(coleta)
 
-resultados_campo <- lapply(c(roi = "roi", lucrativo = "lucrativo"), function(v) {
+variaveis_campo <- c(
+  roi = "roi", lucrativo = "lucrativo", lucrativo_estrito = "lucrativo_estrito"
+)
+resultados_campo <- lapply(variaveis_campo, function(v) {
   res <- estimar_media_tres_estagios(coleta, moldura, B, v, unidade = "jogador")
   list(estimativa = res, epa = calcular_epa_tres_estagios(res))
 })

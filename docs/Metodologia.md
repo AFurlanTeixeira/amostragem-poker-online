@@ -245,6 +245,11 @@ $`f_i`$ é aproximado por `n_jogos_dia` × 76/24, com mínimo 1, porque o jogado
 
 $$\hat{P} = \frac{\sum w\, d_i/f_i}{\sum w/f_i}$$
 
+Duas definições de $`d_i`$ são reportadas:
+
+- `lucrativo`: $`d_i = 1`$ se ROI $> 0$. É a definição principal, a mesma do Kaggle (`profitable`, ADR-007).
+- `lucrativo_estrito`: $`d_i = 1`$ se ROI $> 0$ **e** lucro $> 0$. Um jogador pode ter ROI médio positivo e lucro total negativo quando joga buy-ins de tamanhos diferentes (ganha pouco nos baratos e perde muito nos caros). Essa versão só existe no campo, porque o Kaggle não tem lucro.
+
 ---
 
 ## 8. Estimação da variância
@@ -425,7 +430,8 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 3.182):  # t_{b
 
 # Uso:
 # df = pd.read_csv("data/processed/amostra_sharkscope.csv")
-# df["lucrativo"] = (df["lucro"] > 0).astype(float)
+# df["lucrativo"] = (df["roi"] > 0).astype(float)
+# df["lucrativo_estrito"] = ((df["roi"] > 0) & (df["lucro"] > 0)).astype(float)
 # estimar_media(df, "roi", B=38)
 # estimar_media(df, "lucrativo", B=38)
 ```
