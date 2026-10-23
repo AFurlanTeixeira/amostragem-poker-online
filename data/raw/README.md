@@ -37,10 +37,10 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 
 | Arquivo | Conteúdo | Quem gera |
 |---|---|---|
-| `blocos_sorteados.csv` | Blocos de 2 h sorteados na Fase 0 (estágio temporal), com fuso, `B`, `b` e `seed` | `scripts/sortear_amostra.R blocos` |
+| `blocos_sorteados.csv` | Blocos de 2 h sorteados na Fase 0 (estágio temporal), com fuso, `B`, `b` e `seed`; `situacao` (`efetivo`/`perdido`), `b_efetivo` e `n_torneios_sorteados` (com os extras) | `scripts/sortear_amostra.R blocos`; as três últimas colunas foram preenchidas à mão |
 | `log_coleta.csv` | Um evento por linha: sorteios, decisões e não respostas | Scripts de sorteio e anotações à mão |
 | `listagem_torneios.csv` | Fase 1: **todos** os torneios com início dentro dos blocos sorteados, inclusive os excluídos (ver abaixo) | Preenchido à mão a partir da busca de torneios do SharkScope |
-| `torneios_sorteados.csv` | Torneios sorteados em cada (bloco, estrato), com `N_jh` e `n_jh` | `scripts/sortear_amostra.R torneios` |
+| `torneios_sorteados.csv` | Torneios sorteados em cada (bloco, estrato), com `N_jh` e `n_jh`; os extras ([ADR-011](../../.ai/modelagem.md)) vêm depois dos 2 originais | `scripts/sortear_amostra.R torneios` e `torneio-extra` |
 | `jogadores_sorteados.csv` | 3º estágio: posições sorteadas na lista de resultados de cada torneio (5 titulares, em `ordem`; eram 2 titulares + 3 reservas até o cálculo de $n$, [Metodologia §5.1](../../docs/Metodologia.md#51-cálculo-do-tamanho-da-amostra)) | `scripts/sortear_amostra.R jogadores` |
 | `coleta_jogadores.csv` | Resultado de cada consulta ao SharkScope | Preenchido à mão durante a coleta |
 | `top10_torneios.csv` | Os 10 primeiros colocados de cada torneio sorteado, para comparação futura. **Fora do plano amostral**: não entra nos estimadores | Linhas criadas por `scripts/sortear_amostra.R top10`; `nickname` e `data_anotacao` preenchidos à mão |
@@ -54,7 +54,7 @@ Levantamento completo, sem sorteio: todo nome do top 10 que puder ser consultado
 - **Anônimo:** jogadores que aparecem como `Anônimo` (ou `Anônimo[n]`) não podem ser consultados nem distinguidos entre si, então ficam fora da análise.
 - **Repetidos:** um mesmo jogador pode aparecer no top 10 de mais de um torneio. Não é erro; cada aparição é mantida.
 
-Situação com os blocos 5, 8, 24 e 30 (24 torneios):
+Situação com os 24 torneios originais dos blocos 5, 8, 24 e 30 (os 8 torneios extras de 22/10 e 23/10 já têm as 80 linhas, ainda em branco):
 
 | | Linhas |
 |---|---:|
@@ -74,8 +74,8 @@ Na coleta:
 
 - `coleta_jogadores.csv` já traz as 5 posições sorteadas de cada torneio, todas titulares. Consulte todas (cota de 140 por dia).
 - `respondeu` em branco marca uma linha ainda não consultada. Essas linhas não entram nos estimadores nem na taxa de não resposta.
-- `respondeu = FALSE` marca um perfil privado. Não há substituição: o torneio fica com os respondentes que tiver (mínimo 2).
-- **Anônimo:** uma posição que cai num jogador `Anônimo` não pode ser consultada e é tratada como perfil privado (`respondeu = FALSE`, registrado no log). São 6 das 120 posições.
+- `respondeu = FALSE` marca um perfil privado. Não há substituição de jogadores: o torneio fica com os respondentes que tiver (mínimo 2). Uma célula com menos de 2 torneios com 2 ou mais respondentes recebe um torneio extra (`sortear_amostra.R torneio-extra`, [ADR-011](../../.ai/modelagem.md)), cujas 5 linhas entram em branco, inclusive o `nickname`.
+- **Anônimo:** uma posição que cai num jogador `Anônimo` não pode ser consultada e é tratada como perfil privado (`respondeu = FALSE`, registrado no log). São 6 das 120 posições originais.
 - `n_jogos_dia` é obrigatório em todo respondente: é ele que dá o peso do ROI por jogador distinto ([Metodologia §7.5](../../docs/Metodologia.md#75-número-de-inscrições-e-média-estimador-razão)).
 - Um mesmo jogador sorteado em dois torneios fica nos dois registros, e a consulta é reaproveitada sem gastar cota ([Metodologia §11](../../docs/Metodologia.md#11-erros-não-amostrais)).
 

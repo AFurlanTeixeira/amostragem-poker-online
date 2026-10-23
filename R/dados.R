@@ -191,7 +191,8 @@ registrar_log_coleta <- function(caminho, fase, evento, detalhe, seed = NA_integ
 #' `FALSE` quando o perfil e privado (nao resposta, ver plano §5.1).
 #'
 #' @param caminho character, CSV com as colunas de `COLUNAS_COLETA`.
-#' @return data.frame tipado, com a coluna derivada `lucrativo`.
+#' @return data.frame tipado, com as colunas derivadas `lucrativo` (ROI > 0,
+#'   como no Kaggle) e `lucrativo_estrito` (ROI > 0 e lucro > 0).
 carregar_coleta <- function(caminho) {
   coleta <- read.csv(caminho, stringsAsFactors = FALSE)
   validar_colunas(coleta, COLUNAS_COLETA, "coleta de campo")
@@ -199,6 +200,7 @@ carregar_coleta <- function(caminho) {
   coleta$torneio_id <- as.character(coleta$torneio_id)
   coleta$respondeu <- as.logical(coleta$respondeu)
   coleta$lucrativo <- as.integer(coleta$roi > 0)
+  coleta$lucrativo_estrito <- as.integer(coleta$roi > 0 & coleta$lucro > 0)
   if ("n_jogos_dia" %in% names(coleta)) coleta$n_jogos_dia <- as.numeric(coleta$n_jogos_dia)
   coleta
 }

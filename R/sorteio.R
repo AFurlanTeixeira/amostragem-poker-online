@@ -116,6 +116,39 @@ sortear_torneios <- function(moldura, n_por_estrato, seed) {
   resultado
 }
 
+#' Sorteia mais torneios numa celula (bloco, estrato) ja sorteada (ADR-011).
+#'
+#' Continua a mesma permutacao de `sortear_torneios()`: com a semente da
+#' celula, os n_jh + n_extra primeiros da permutacao comecam pelos n_jh ja
+#' sorteados, entao a celula continua sendo uma AAS, agora de tamanho
+#' n_jh + n_extra. Usado quando a nao resposta deixa a celula com menos de 2
+#' torneios com m_k >= 2 respondentes.
+#'
+#' @param moldura data.frame (ver `montar_moldura()`), a mesma do sorteio original.
+#' @param sorteados data.frame (ver `torneios_sorteados.csv`).
+#' @param bloco_id,estrato identificam a celula.
+#' @param n_extra integer, torneios a acrescentar.
+#' @param seed integer, a semente do sorteio original.
+#' @return `sorteados` com os novos torneios no fim e `n_jh` da celula atualizado.
+estender_torneios <- function(moldura, sorteados, bloco_id, estrato, n_extra, seed) {
+  na_celula <- sorteados$bloco_id == bloco_id & sorteados$estrato == estrato
+  if (!any(na_celula)) stop("Celula sem torneios sorteados: ", bloco_id, " ", estrato)
+  da_moldura <- moldura[moldura$bloco_id == bloco_id & moldura$estrato == estrato, , drop = FALSE]
+  tamanho <- sum(na_celula) + n_extra
+  if (tamanho > nrow(da_moldura)) {
+    stop(sprintf("A celula tem so %d torneios (N_jh).", nrow(da_moldura)))
+  }
+
+  novo <- sortear_torneios(da_moldura, tamanho, seed)
+  if (!identical(novo$torneio_id[seq_len(sum(na_celula))], sorteados$torneio_id[na_celula])) {
+    stop("A permutacao nao reproduz os torneios ja sorteados: moldura ou seed diferentes.")
+  }
+  sorteados$n_jh[na_celula] <- tamanho
+  resultado <- rbind(sorteados, novo[-seq_len(sum(na_celula)), names(sorteados), drop = FALSE])
+  rownames(resultado) <- NULL
+  resultado
+}
+
 #' Sorteia os jogadores (USA) dentro de cada torneio sorteado, por posicao.
 #'
 #' Em vez de transcrever a lista de inscritos, sorteia posicoes de 1 a M_k

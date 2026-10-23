@@ -77,7 +77,7 @@ A unidade sorteada é a **inscrição** (o par jogador × torneio), então um me
 |---|---|---|
 | $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope na **janela fixa de 01/10/2025 a 30/09/2026**, considerando só o PokerStars | SharkScope |
 | $`\ell_{ki}`$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
-| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`\ell_{ki} > 0`$; caso contrário, $0$ | Derivada |
+| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`y_{ki} > 0`$; caso contrário, $0$. Versão estrita: $`d_{ki} = 1`$ se $`y_{ki} > 0`$ e $`\ell_{ki} > 0`$ (§7.6) | Derivada |
 | $`M_k`$ | Número de inscritos no torneio $k$, **aproximado pelo total de entradas** mostrado pela fonte (ver nota abaixo) | Listagem do SharkScope (`n_entradas_fonte`) |
 | `n_entradas` | Número de entradas do jogador sorteado no torneio (auxiliar) | Lista de inscritos |
 | $`f_i`$ | Número de torneios do jogador no período, aproximado por `n_jogos_dia` × 76/24 (mínimo 1) | SharkScope (`n_jogos_dia`, média de jogos por dia) |
@@ -139,13 +139,15 @@ Restrição: cota de 140 consultas por dia no SharkScope.
 | $B$ | 38 | 76 h (17/10 20:00 a 21/10 00:00) em blocos de 2 h |
 | $b$ | 6 sorteados, **4 efetivos** | Mínimo razoável para estimar a variância entre blocos. Os blocos 34 e 36 não puderam ser listados e foram perdidos (ver [§11](#11-erros-não-amostrais)) |
 | $H$ | 3 | Faixas de buy-in |
-| $`n_{jh}`$ | 2 | **Mínimo de 2** para estimar a variância entre torneios no estrato |
+| $`n_{jh}`$ | 2, mais torneios extras se preciso | **Mínimo de 2** com respondentes para estimar a variância entre torneios no estrato (torneios extras: ver abaixo) |
 | $`m_k`$ | 5 | Cálculo de $n$ da §5.1 (eram 2 titulares e 3 reservas) |
-| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições | Cerca de 110 respondentes depois de "Anônimo" e perfis privados; cabe em 1 dia de coleta |
+| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições, **160** com os 8 torneios extras | Esperavam-se cerca de 110 respondentes; a resposta observada (49/120 ≈ 41%) levou aos torneios extras (abaixo) |
 
 > Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio, também depois da não resposta.
 
-**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. Aqui não dá para aumentar $`n_{jh}`$: os torneios dos blocos 5 e 8 já saíram da janela do SharkScope, e só as 5 posições já anotadas de cada torneio estão disponíveis.
+**Trade-off:** para a mesma quantidade de consultas, sortear mais torneios com menos jogadores em cada um reduz a variância quando a correlação intraclasse $\rho$ é positiva. A busca de torneios dos blocos 5 e 8 já saiu da janela do SharkScope, mas a lista de resultados de um torneio pode continuar acessível pelo ID.
+
+**Torneios extras (22/10, antes de novas consultas).** A taxa de resposta observada foi de 20/51 ≈ 39%, e três células ficaram abaixo dos mínimos. Regra: enquanto uma célula tiver menos de 2 torneios com $`m_k \ge 2`$ respondentes, sorteia-se o próximo torneio da mesma permutação da célula (`sortear_amostra.R torneio-extra`) e consultam-se as 5 primeiras posições da permutação dele. Os $n$ primeiros de uma permutação aleatória formam uma AAS de tamanho $n$, então a célula continua sendo uma AAS. Torneios sem lista de resultados acessível ou com menos de 2 respondentes ficam fora da estimação (não resposta de USA), e o peso $`N_{jh}/n_{jh}`$ usa os torneios com respondentes. Se a célula esgotar os $`N_{jh}`$ torneios sem chegar ao mínimo, ela é colapsada com o estrato vizinho do mesmo bloco (low → micro; micro e mid_high → low), somando $`N_{jh}`$ e $`n_{jh}`$, o que superestima um pouco a variância (técnica de estratos colapsados). Ver [ADR-011](../.ai/modelagem.md).
 
 ### 5.1 Cálculo do tamanho da amostra
 
@@ -243,6 +245,11 @@ $`f_i`$ é aproximado por `n_jogos_dia` × 76/24, com mínimo 1, porque o jogado
 
 $$\hat{P} = \frac{\sum w\, d_i/f_i}{\sum w/f_i}$$
 
+Duas definições de $`d_i`$ são reportadas:
+
+- `lucrativo`: $`d_i = 1`$ se ROI $> 0$. É a definição principal, a mesma do Kaggle (`profitable`, ADR-007).
+- `lucrativo_estrito`: $`d_i = 1`$ se ROI $> 0$ **e** lucro $> 0$. Um jogador pode ter ROI médio positivo e lucro total negativo quando joga buy-ins de tamanhos diferentes (ganha pouco nos baratos e perde muito nos caros). Essa versão só existe no campo, porque o Kaggle não tem lucro.
+
 ---
 
 ## 8. Estimação da variância
@@ -293,7 +300,11 @@ Por inscrição, $`f_i = 1`$ e $`\hat{N} = \hat{M}_0`$. Implementação: `estima
 
 $$\hat{R} \pm t_{\,gl;\,0{,}975}\,\sqrt{\widehat{\mathrm{Var}}(\hat{R})}$$
 
-Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 3$ ($`t_{3;0{,}975} \approx 3{,}182`$) em vez de $z = 1{,}96$. Com $b/B$ pequeno, a variância é estimada essencialmente a partir dos $b$ totais de bloco, por isso os gl vêm do número de blocos, e não do número de torneios ou de jogadores. Para $\hat{P}$, também é recomendável o intervalo de Wilson ou o logit, adaptados ao tamanho efetivo de amostra $`n_{\text{ef}} = n / \text{EPA}`$.
+Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 3$ ($`t_{3;0{,}975} \approx 3{,}182`$) em vez de $z = 1{,}96$. Com $b/B$ pequeno, a variância é estimada essencialmente a partir dos $b$ totais de bloco, por isso os gl vêm do número de blocos, e não do número de torneios ou de jogadores. Para $\hat{P}$, o intervalo acima pode passar de 1 (ou ficar abaixo de 0) quando $\hat{P}$ está perto de um extremo e o gl é pequeno. Por isso, para as proporções o IC principal é o **logit** ([ADR-012](../.ai/modelagem.md), `ic_logit()`): com $`\ell = \log\{\hat P/(1-\hat P)\}`$ e $`\mathrm{EP}_\ell = \mathrm{EP}(\hat P)/\{\hat P(1-\hat P)\}`$ (método delta),
+
+$$\left[\,\mathrm{logit}^{-1}\!\left(\ell - t_{\,gl;\,0{,}975}\,\mathrm{EP}_\ell\right);\ \mathrm{logit}^{-1}\!\left(\ell + t_{\,gl;\,0{,}975}\,\mathrm{EP}_\ell\right)\right],$$
+
+que é assimétrico e fica sempre dentro de $(0, 1)$. O IC de Wald é reportado ao lado, para comparação.
 
 ---
 
@@ -336,8 +347,8 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 
 | Problema | Tratamento |
 |---|---|
-| **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Se ela for alta, considerar ajuste de não resposta por célula (torneio). |
-| **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas. |
+| **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Célula com menos de 2 torneios com $`m_k \ge 2`$ recebe torneios extras da mesma permutação, ou é colapsada com o estrato vizinho (§5). |
+| **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas originalmente. |
 | **`n_jogos_dia` ausente** | Sem ele não há peso $`1/f_i`$ (§7.5). Anotar em toda consulta. |
 | **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
@@ -423,7 +434,8 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 3.182):  # t_{b
 
 # Uso:
 # df = pd.read_csv("data/processed/amostra_sharkscope.csv")
-# df["lucrativo"] = (df["lucro"] > 0).astype(float)
+# df["lucrativo"] = (df["roi"] > 0).astype(float)
+# df["lucrativo_estrito"] = ((df["roi"] > 0) & (df["lucro"] > 0)).astype(float)
 # estimar_media(df, "roi", B=38)
 # estimar_media(df, "lucrativo", B=38)
 ```

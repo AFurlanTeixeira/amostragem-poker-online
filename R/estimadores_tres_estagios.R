@@ -90,6 +90,8 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 #' (Metodologia §8.2). IC t com gl = b - 1 (ADR-004).
 #'
 #' Exige b >= 2 blocos com respondentes, salvo b = B (censo dos blocos).
+#' Torneios com menos de 2 respondentes ficam fora (ADR-011), e cada celula
+#' precisa manter ao menos 2 torneios.
 #'
 #' @param coleta data.frame (ver `carregar_coleta()`), com `bloco_id` e, se
 #'   `unidade = "jogador"`, `n_jogos_dia` dos respondentes.
@@ -101,16 +103,23 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 #' @param nivel numeric, nivel de confianca do IC.
 #' @return lista com `estimativa`, `variancia`, `erro_padrao`, `gl`, `li`,
 #'   `ls`, `unidade`, `N_hat` (inscricoes ou jogadores estimados), `b`,
-#'   `blocos` e `amostra` (`y`, peso final `w` e `torneio`, para o EPA).
+#'   `blocos`, `torneios_excluidos` (com 1 respondente) e `amostra` (`y`,
+#'   peso final `w` e `torneio`, para o EPA).
 estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
                                         unidade = c("jogador", "inscricao"),
                                         nivel = 0.95) {
   unidade <- match.arg(unidade)
   resp <- coleta[coleta$respondeu %in% TRUE, , drop = FALSE]
+  # Torneio com menos de 2 respondentes e nao resposta de USA e sai da
+  # estimacao; n_jh passa a contar so os torneios que ficam (ADR-011).
+  chave <- paste(resp$bloco_id, resp$estrato, resp$torneio_id, sep = "|")
+  fica <- as.numeric(table(chave)[chave]) >= M_MINIMO_POR_TORNEIO
+  excluidos <- unique(resp$torneio_id[!fica])
+  resp <- resp[fica, , drop = FALSE]
   celula <- paste(resp$bloco_id, resp$estrato, sep = "|")
   torneio <- paste(celula, resp$torneio_id, sep = "|")
   m_k <- as.numeric(table(torneio)[torneio])
-  # Minimos por celula (n_jh >= 2) e por torneio (m_k >= 2).
+  # Minimo por celula (n_jh >= 2) depois da exclusao.
   por_torneio <- data.frame(estrato = celula, torneio_id = resp$torneio_id, m = m_k)
   validar_tamanhos(por_torneio[!duplicated(torneio), ])
 
@@ -142,6 +151,7 @@ estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
   resultado <- montar_resultado(estimativa, variancia, gl = gl, nivel = nivel)
   c(resultado, list(
     unidade = unidade, N_hat = den$total, b = num$b, blocos = num$blocos,
+    torneios_excluidos = excluidos,
     amostra = data.frame(y = y, w = w, torneio = torneio)
   ))
 }
