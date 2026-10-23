@@ -54,7 +54,7 @@ Levantamento completo, sem sorteio: todo nome do top 10 que puder ser consultado
 - **Anônimo:** jogadores que aparecem como `Anônimo` (ou `Anônimo[n]`) não podem ser consultados nem distinguidos entre si, então ficam fora da análise.
 - **Repetidos:** um mesmo jogador pode aparecer no top 10 de mais de um torneio. Não é erro; cada aparição é mantida.
 
-Situação com os 24 torneios originais dos blocos 5, 8, 24 e 30 (os 4 torneios extras de 22/10 já têm as 40 linhas, ainda em branco):
+Situação com os 24 torneios originais dos blocos 5, 8, 24 e 30 (os 8 torneios extras de 22/10 e 23/10 já têm as 80 linhas, ainda em branco):
 
 | | Linhas |
 |---|---:|

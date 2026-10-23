@@ -36,8 +36,10 @@ Torneios extras: nas células que ficaram com menos de 2 torneios com $`m_k \ge 
 
 | Estrato | `torneio_id` | Nome | Início | Buy-in (US$) | $`M_k`$ (entradas) | $`N_{jh}`$ | $`n_{jh}`$ | Formato | Sorteio |
 |---|---|---|---|---:|---:|---:|---:|---|---|
-| Micro | 4040093393 | NLHE | 18:19 | 3,30 | 90 | 9 | 2 | Turbo | original |
-| Micro | 4040092391 | Hot Hyper | 18:37 | 2,20 | 336 | 9 | 2 | Progressive KO | original |
+| Micro | 4040093364 | NLHE | 18:19 | 1,10 | 207 | 9 | 4 | 6-max | extra |
+| Micro | 4040093393 | NLHE | 18:19 | 3,30 | 90 | 9 | 4 | Turbo | original |
+| Micro | 4040092391 | Hot Hyper | 18:37 | 2,20 | 336 | 9 | 4 | Progressive KO | original |
+| Micro | 4040085450 | Mini Eliminator | 19:17 | 4,40 | 933 | 9 | 4 | Progressive KO | extra |
 | Low | 4040092434 | Hot Hyper | 19:28 | 11,00 | 325 | 11 | 2 | Hyper | original |
 | Low | 4040092383 | Hot 22 | 19:50 | 22,00 | 257 | 11 | 2 | Progressive KO | original |
 | Mid/High | 4040087750 | Bounty Builder 44 | 18:09 | 44,00 | 106 | 7 | 2 | Bounty Builder | original |
@@ -47,10 +49,12 @@ Torneios extras: nas células que ficaram com menos de 2 torneios com $`m_k \ge 
 
 | Estrato | `torneio_id` | Nome | Início | Buy-in (US$) | $`M_k`$ (entradas) | $`N_{jh}`$ | $`n_{jh}`$ | Formato | Sorteio |
 |---|---|---|---|---:|---:|---:|---:|---|---|
-| Micro | 4040093464 | NLHE | 07:05 | 2,20 | 92 | 3 | 2 | Turbo | original |
-| Micro | 4040092095 | Hot Hyper | 07:16 | 4,40 | 64 | 3 | 2 | Hyper | original |
-| Low | 4040087659 | Bounty Builder 22 | 07:16 | 22,00 | 61 | 9 | 2 | Bounty Builder | original |
-| Low | 4040092085 | Hot 16.5 | 07:35 | 16,50 | 53 | 9 | 2 | Progressive KO | original |
+| Micro | 4040093464 | NLHE | 07:05 | 2,20 | 92 | 3 | 3 | Turbo | original |
+| Micro | 4040092069 | Hot 2.20 | 07:09 | 2,20 | 91 | 3 | 3 | MTT | extra |
+| Micro | 4040092095 | Hot Hyper | 07:16 | 4,40 | 64 | 3 | 3 | Hyper | original |
+| Low | 4040087687 | Bounty Adrenaline | 06:53 | 5,50 | 53 | 9 | 3 | Short | extra |
+| Low | 4040087659 | Bounty Builder 22 | 07:16 | 22,00 | 61 | 9 | 3 | Bounty Builder | original |
+| Low | 4040092085 | Hot 16.5 | 07:35 | 16,50 | 53 | 9 | 3 | Progressive KO | original |
 | Mid/High | 4040085499 | Pacific Rim Special | 06:24 | 109,00 | 23 | 5 | 2 | MTT | original |
 | Mid/High | 4040087674 | Bounty Builder 82 | 07:52 | 82,00 | 26 | 5 | 2 | Bounty Builder | original |
 
@@ -58,7 +62,7 @@ Torneios extras: nas células que ficaram com menos de 2 torneios com $`m_k \ge 
 
 | Estrato | Torneios sorteados | Soma de $`M_k`$ |
 |---|---:|---:|
-| Micro | 9 | 1362 |
-| Low | 11 | 1747 |
+| Micro | 12 | 2593 |
+| Low | 12 | 1800 |
 | Mid/High | 8 | 382 |
-| **Total** | **28** | **3491** |
+| **Total** | **32** | **4775** |
