@@ -92,16 +92,16 @@ Situação em 22/10/2026 ([log](../data/raw/sharkscope/log_coleta.csv); torneios
 |---|---|---:|---:|---|---|
 | 5 | 19/10 | 18 | 6 + 2 extras (22/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
 | 8 | 19/10 | 21 | 6 + 2 extras (22/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
-| 24 | 19/10 | 27 | 6 | sim (20/10) | sim (20/10) |
-| 30 | 20/10 | 17 | 6 | sim (20/10) | sim (20/10) |
+| 24 | 19/10 | 27 | 6 + 2 extras (23/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
+| 30 | 20/10 | 17 | 6 + 2 extras (23/10) | sim (20/10); extras pendentes | sim (20/10); extras pendentes |
 | 34 | perdido (§7) | — | — | — | — |
 | 36 | perdido (§7) | — | — | — | — |
 
 A amostra de torneios era de 24 (4 blocos × 3 estratos × 2). Pelo cálculo de $n$ ([Metodologia §5.1](Metodologia.md#51-cálculo-do-tamanho-da-amostra)), as 5 posições sorteadas de cada torneio passam a ser todas titulares ($`m_k = 5`$, sem reservas): 120 posições, das quais 6 são "Anônimo" (já marcadas como não resposta).
 
-Em 22/10, depois da primeira rodada de consultas (20 respondentes em 51), três células ficaram com menos de 2 torneios com $`m_k \ge 2`$, e receberam torneios extras da mesma permutação ([ADR-011](../.ai/modelagem.md)): bloco 5 low (4039583266), bloco 5 micro (4039582664) e bloco 8 low (4039582706 e 4039581466). A amostra passa a 28 torneios e 140 posições. O top 10 e os nicknames das posições dos extras ainda não foram anotados.
+Em 22/10, depois da primeira rodada de consultas (20 respondentes em 51), três células ficaram com menos de 2 torneios com $`m_k \ge 2`$, e receberam torneios extras da mesma permutação ([ADR-011](../.ai/modelagem.md)): bloco 5 low (4039583266), bloco 5 micro (4039582664) e bloco 8 low (4039582706 e 4039581466). Em 23/10, com as 120 posições originais consultadas (49 respondentes), mais três células ficaram abaixo do mínimo e receberam extras: bloco 24 micro (4040085450 e 4040093364), bloco 30 low (4040087687) e bloco 30 micro (4040092069, o último torneio da célula; se falhar, a célula é colapsada com o low do bloco 30). A amostra passa a 32 torneios e 160 posições. O top 10 e os nicknames das posições dos 8 extras ainda não foram anotados.
 
-Próximo passo: conferir se a lista de resultados dos torneios extras abre pelo ID no SharkScope (a busca dos blocos 5 e 8 já saiu da janela), anotar os nicknames e consultar as posições ainda em branco de [`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv) (cota de 140 por dia), anotando `roi`, `lucro` e `n_jogos_dia` em todas.
+Próximo passo: conferir se a lista de resultados dos torneios extras abre pelo ID no SharkScope (a busca dos quatro blocos já saiu da janela), anotar os nicknames e consultar as posições ainda em branco de [`coleta_jogadores.csv`](../data/raw/sharkscope/coleta_jogadores.csv) (cota de 140 por dia), anotando `roi`, `lucro` e `n_jogos_dia` em todas.
 
 ## 7. Perda dos blocos 34 e 36
 

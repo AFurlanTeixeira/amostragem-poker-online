@@ -141,7 +141,7 @@ Restrição: cota de 140 consultas por dia no SharkScope.
 | $H$ | 3 | Faixas de buy-in |
 | $`n_{jh}`$ | 2, mais torneios extras se preciso | **Mínimo de 2** com respondentes para estimar a variância entre torneios no estrato (torneios extras: ver abaixo) |
 | $`m_k`$ | 5 | Cálculo de $n$ da §5.1 (eram 2 titulares e 3 reservas) |
-| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições, **140** com os 4 torneios extras | Esperavam-se cerca de 110 respondentes; a resposta observada (≈ 39%) levou aos torneios extras (abaixo) |
+| **Total** | $4 \times 3 \times 2 \times 5 = \mathbf{120}$ posições, **160** com os 8 torneios extras | Esperavam-se cerca de 110 respondentes; a resposta observada (49/120 ≈ 41%) levou aos torneios extras (abaixo) |
 
 > Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de variância correspondente sem suposições extras (como colapsar estratos). Por isso o mínimo é 2 em cada estágio, também depois da não resposta.
 
