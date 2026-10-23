@@ -27,7 +27,7 @@ B <- read.csv(args$blocos)$B[1]
 cat("== Nao resposta (perfis privados e Anonimo) ==\n")
 print(taxa_nao_resposta(coleta), digits = 3)
 
-for (variavel in c("roi", "lucrativo")) {
+for (variavel in c("roi", "lucrativo", "lucrativo_estrito")) {
   res <- estimar_media_tres_estagios(coleta, moldura, B, variavel, unidade = args$unidade)
   epa <- calcular_epa_tres_estagios(res)
   cat(sprintf("\n== %s (por %s; B = %d, b = %d) ==\n", variavel, res$unidade, B, res$b))
