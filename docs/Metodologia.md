@@ -77,7 +77,7 @@ A unidade sorteada é a **inscrição** (o par jogador × torneio), então um me
 |---|---|---|
 | $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope na **janela fixa de 01/10/2025 a 30/09/2026**, considerando só o PokerStars | SharkScope |
 | $`\ell_{ki}`$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
-| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`\ell_{ki} > 0`$; caso contrário, $0$ | Derivada |
+| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`y_{ki} > 0`$; caso contrário, $0$. Versão estrita: $`d_{ki} = 1`$ se $`y_{ki} > 0`$ e $`\ell_{ki} > 0`$ (§7.6) | Derivada |
 | $`M_k`$ | Número de inscritos no torneio $k$, **aproximado pelo total de entradas** mostrado pela fonte (ver nota abaixo) | Listagem do SharkScope (`n_entradas_fonte`) |
 | `n_entradas` | Número de entradas do jogador sorteado no torneio (auxiliar) | Lista de inscritos |
 | $`f_i`$ | Número de torneios do jogador no período, aproximado por `n_jogos_dia` × 76/24 (mínimo 1) | SharkScope (`n_jogos_dia`, média de jogos por dia) |
