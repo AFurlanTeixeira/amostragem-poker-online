@@ -126,3 +126,13 @@ com o estrato vizinho do mesmo bloco (low → micro; micro e mid_high → low),
 com N_jh e n_jh somados (técnica de estratos colapsados: a variância fica
 superestimada; citação a conferir em `docs/referencias.md`). Vale também para os blocos 24 e 30. Não resolve os
 gl = 3 nem o viés de perfis privados.
+
+## ADR-012: IC logit para as proporções
+
+Com P̂ perto de 1 e gl = 3 (t = 3,18), o IC de Wald passa de 1 (lucrativos:
+0,854 ± 0,232 → [0,62; 1,09]). Para `lucrativo` e `lucrativo_estrito`, o IC
+principal é o logit (`ic_logit()`): IC t em logit(P̂), com EP pelo método
+delta, EP/(P̂(1 − P̂)), mesmos gl, e volta à escala de proporção. É
+assimétrico e fica em (0, 1), como `survey::svyciprop(method = "logit")`.
+O Wald é reportado ao lado. Alternativa mais conservadora não adotada:
+Korn–Graubard. O ROI médio continua com o IC de Wald (sem limites).

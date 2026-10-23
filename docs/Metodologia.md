@@ -300,7 +300,11 @@ Por inscrição, $`f_i = 1`$ e $`\hat{N} = \hat{M}_0`$. Implementação: `estima
 
 $$\hat{R} \pm t_{\,gl;\,0{,}975}\,\sqrt{\widehat{\mathrm{Var}}(\hat{R})}$$
 
-Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 3$ ($`t_{3;0{,}975} \approx 3{,}182`$) em vez de $z = 1{,}96$. Com $b/B$ pequeno, a variância é estimada essencialmente a partir dos $b$ totais de bloco, por isso os gl vêm do número de blocos, e não do número de torneios ou de jogadores. Para $\hat{P}$, também é recomendável o intervalo de Wilson ou o logit, adaptados ao tamanho efetivo de amostra $`n_{\text{ef}} = n / \text{EPA}`$.
+Com poucos conglomerados primários, use graus de liberdade $gl = b - 1 = 3$ ($`t_{3;0{,}975} \approx 3{,}182`$) em vez de $z = 1{,}96$. Com $b/B$ pequeno, a variância é estimada essencialmente a partir dos $b$ totais de bloco, por isso os gl vêm do número de blocos, e não do número de torneios ou de jogadores. Para $\hat{P}$, o intervalo acima pode passar de 1 (ou ficar abaixo de 0) quando $\hat{P}$ está perto de um extremo e o gl é pequeno. Por isso, para as proporções o IC principal é o **logit** ([ADR-012](../.ai/modelagem.md), `ic_logit()`): com $`\ell = \log\{\hat P/(1-\hat P)\}`$ e $`\mathrm{EP}_\ell = \mathrm{EP}(\hat P)/\{\hat P(1-\hat P)\}`$ (método delta),
+
+$$\left[\,\mathrm{logit}^{-1}\!\left(\ell - t_{\,gl;\,0{,}975}\,\mathrm{EP}_\ell\right);\ \mathrm{logit}^{-1}\!\left(\ell + t_{\,gl;\,0{,}975}\,\mathrm{EP}_\ell\right)\right],$$
+
+que é assimétrico e fica sempre dentro de $(0, 1)$. O IC de Wald é reportado ao lado, para comparação.
 
 ---
 

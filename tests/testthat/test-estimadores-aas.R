@@ -22,6 +22,19 @@ test_that("AAS aplica a FCPF", {
   expect_equal(estimar_media_aas(y, N = 4)$variancia, 0)
 })
 
+test_that("IC logit fica em (0, 1) e e simetrico na escala logit", {
+  perto_de_1 <- montar_resultado(0.854, 0.0729^2, gl = 3, nivel = 0.95)
+  expect_gt(perto_de_1$ls, 1) # o Wald passa de 1
+  ic <- ic_logit(perto_de_1)
+  expect_true(ic[["li"]] > 0 && ic[["ls"]] < 1)
+  expect_equal(mean(qlogis(ic)), qlogis(0.854))
+  expect_equal(ic[["li"]], 0.476, tolerance = 1e-3) # conta a mao
+  # Com p = 0,5 e EP pequeno, coincide com o Wald (p(1 - p) = 1/4).
+  meio <- montar_resultado(0.5, 1e-6, gl = 30, nivel = 0.95)
+  expect_equal(unname(ic_logit(meio)), c(meio$li, meio$ls), tolerance = 1e-6)
+  expect_true(all(is.na(ic_logit(list(estimativa = 1, erro_padrao = 0, gl = 3)))))
+})
+
 test_that("estratificada a partir dos dados equivale a combinar_estratos", {
   y <- c(1, 3, 5, 10, 12, 14)
   estrato <- rep(c("a", "b"), each = 3)
