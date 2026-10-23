@@ -94,7 +94,8 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 #' precisa manter ao menos 2 torneios.
 #'
 #' @param coleta data.frame (ver `carregar_coleta()`), com `bloco_id` e, se
-#'   `unidade = "jogador"`, `n_jogos_dia` dos respondentes.
+#'   `unidade = "jogador"`, `n_jogos_dia` dos respondentes (ou `f_i`, se a
+#'   frequencia for conhecida; ela tem prioridade).
 #' @param moldura data.frame (ver `montar_moldura()`), torneios dos blocos listados.
 #' @param B numeric, blocos na moldura temporal.
 #' @param variavel character, `"roi"` ou `"lucrativo"`.
@@ -124,7 +125,9 @@ estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
   validar_tamanhos(por_torneio[!duplicated(torneio), ])
 
   N_jh <- table(paste(moldura$bloco_id, moldura$estrato, sep = "|"))
-  f <- if (unidade == "jogador") {
+  f <- if (unidade == "jogador" && "f_i" %in% names(resp)) {
+    resp$f_i # f_i conhecido (populacao sintetica do Kaggle, ADR-013)
+  } else if (unidade == "jogador") {
     if (anyNA(resp$n_jogos_dia)) {
       stop("n_jogos_dia ausente em respondentes; necessario para unidade = 'jogador'.")
     }
