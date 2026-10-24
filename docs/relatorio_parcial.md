@@ -19,7 +19,7 @@ Foram sorteados 6 dos 38 blocos, mas só 4 puderam ser listados. Nesses 4 blocos
 | Proporção de lucrativos (ROI > 0) | 0,854 | 0,073 | [0,476; 0,974] (logit) |
 | Proporção com ROI > 0 e lucro > 0 | 0,723 | 0,181 | [0,128; 0,979] (logit) |
 
-Mais de 80% da variância vem da variação **entre blocos**, e com b = 4 os intervalos têm só 3 graus de liberdade. As estimativas devem ser lidas como as dos **jogadores com perfil público no SharkScope**: a não resposta é de 55% e provavelmente seletiva (§6).
+Mais de 80% da variância vem da variação **entre blocos**, e com b = 4 os intervalos têm só 3 graus de liberdade. As estimativas devem ser lidas como as dos **jogadores com perfil público no SharkScope**: a não resposta é de 55% e provavelmente seletiva (§6). Os intervalos acima devem ser lidos como **otimistas**. Numa simulação do mesmo plano no Kaggle, com b = 4, o erro-padrão estimado captou só de 50% a 80% da variância real, e a cobertura dos IC de "95%" ficou entre 87% e 94,5% (§6, item 3).
 
 ---
 
@@ -296,7 +296,7 @@ Entre os 72 respondentes, o ROI vai de −24,7% a 1064,4%, com mediana de 17,05%
 | Lucrativos (ROI > 0) | 0,854 | 0,073 | [0,622; **1,086**] | [0,476; 0,974] |
 | ROI > 0 e lucro > 0 | 0,723 | 0,181 | [0,145; **1,300**] | [0,128; 0,979] |
 
-Com $`gl = 3`$. Para as proporções, o intervalo principal é o logit.
+Com $`gl = 3`$. Para as proporções, o intervalo principal é o logit. Com tão poucas UPAs, a cobertura real dos intervalos deve ficar abaixo de 95% (§6, item 3).
 
 ### 5.3 Análises de sensibilidade
 
@@ -337,13 +337,29 @@ A variação entre blocos domina. Na escala linearizada do ROI, os totais $`\hat
 
 1. **Viés de não resposta.** 55% das posições ficaram sem dados. A correção por célula pressupõe que a não resposta é aleatória dentro da célula, mas quem mantém perfil público no SharkScope tende a ser o jogador mais regular e mais vencedor. Isso é coerente com a proporção de lucrativos muito alta (≈ 85%) para um jogo em que o rake faz a maioria perder. No Kaggle, com dados sintéticos, $`P = 0{,}19`$ e o ROI médio é −31,9%, mas as populações não são comparáveis diretamente. A ressalva principal é que as estimativas descrevem os **jogadores com perfil público**.
 2. **Poucas UPAs.** Com $`b = 4`$, o IC do ROI usa t com 3 gl (3,18 contra 1,96), e a variância entre blocos domina (§5.4). Os blocos perdidos (34 e 36, terça à tarde e à noite) deixam o horário comercial de dia útil representado só pelo bloco 24.
-3. **Viés de sobrevivência e janela do ROI.** O ROI é o da janela de 12 meses, não o do período de 76 h, e quem perde muito tende a parar de jogar e tem menos chance de estar ativo no período.
-4. **Aproximações nas variáveis do plano.** $`M_k`$ é o total de entradas, com re-entries, e por isso superestima os jogadores distintos em torneios com re-entry. $`f_i`$ vem da média de jogos por dia em 12 meses, não das 76 h. As duas aproximações afetam os pesos.
-5. **Valor extremo.** O ROI de 1064,4% (`MuoMadre`) foi conferido, mas sozinho desloca a média em cerca de 4 p.p. (§5.3).
+3. **Intervalos otimistas (estreitos demais).** Um IC de 95% deveria conter o valor verdadeiro em 95% das amostras. Se o erro-padrão é subestimado, o intervalo encolhe na mesma proporção e acerta com menos frequência. No campo não dá para medir isso, porque o valor verdadeiro é desconhecido. Mas o mesmo plano, com os mesmos sorteios e estimadores, foi aplicado a uma população sintética montada com o Kaggle e com a estrutura do campo, em que o valor verdadeiro é conhecido ([`kaggle_tres_estagios.md`](kaggle_tres_estagios.md), ADR-013). Com 5.000 réplicas e $`b = 4`$, como no campo:
+
+   | Parâmetro (por jogador) | Viés | EP real | EP estimado (média) | $`\widehat{\mathrm{Var}}/\mathrm{Var}`$ | Cobertura Wald | Cobertura logit |
+   |---|---:|---:|---:|---:|---:|---:|
+   | ROI médio (%) | −0,07 | 9,60 | 6,82 | 0,50 | 93,3% | — |
+   | Lucrativos | −0,002 | 0,086 | 0,061 | 0,50 | 89,8% | 94,6% |
+
+   Três conclusões saem daí:
+   - **As estimativas pontuais são confiáveis:** o estimador é praticamente não viesado.
+   - **A incerteza é subestimada.** A causa não está nas fórmulas da §4.5: para o total, a variância estimada bateu com a real (razão de 1,06). Ela está na linearização de Taylor da razão (§4.5), que com poucas UPAs ignora termos de ordem superior (Lohr, 2022, cap. 9). No Kaggle, a subestimação diminui com mais blocos (razão de 0,64 com $`b = 4`$ e 0,89 com $`b = 12`$, por inscrição).
+   - **O logit ajuda nas proporções:** a cobertura sobe de 89,8% para 94,6%.
+
+   O campo tem pesos ainda mais variáveis (de 1,7 a 1.000) do que a simulação, então a subestimação ali pode ser igual ou maior. Como ordem de grandeza, e não como resultado: se a variância do ROI estiver subestimada pela metade, como no Kaggle, o EP real seria cerca de $`5{,}50/\sqrt{0{,}5} \approx 7{,}8`$, e o IC ficaria perto de [−7; 42] em vez de [−0,04; 34,98]. A versão de conglomerado último (§5.3) quase não muda o EP (5,59), então não resolve o problema. **Consequências para as conclusões:**
+   - a proporção de lucrativos é alta mesmo no limite inferior do IC logit (0,48);
+   - já o IC do ROI médio não exclui zero, então os dados não permitem afirmar que o ROI médio dos jogadores com perfil público é positivo.
+4. **Viés de sobrevivência e janela do ROI.** O ROI é o da janela de 12 meses, não o do período de 76 h, e quem perde muito tende a parar de jogar e tem menos chance de estar ativo no período.
+5. **Aproximações nas variáveis do plano.** $`M_k`$ é o total de entradas, com re-entries, e por isso superestima os jogadores distintos em torneios com re-entry. $`f_i`$ vem da média de jogos por dia em 12 meses, não das 76 h. As duas aproximações afetam os pesos.
+6. **Valor extremo.** O ROI de 1064,4% (`MuoMadre`) foi conferido, mas sozinho desloca a média em cerca de 4 p.p. (§5.3).
 
 ## 7. Próximos passos
 
-- Rodar de novo a simulação do Kaggle com n = 120, o tamanho do campo, e montar a comparação AAS × AAS estratificada × plano de campo (pergunta 4).
+- Rodar de novo a simulação de AAS e AAS estratificada do Kaggle com n = 120, o tamanho do campo, e juntá-la à simulação do plano em três estágios ([`kaggle_tres_estagios.md`](kaggle_tres_estagios.md)) numa comparação única (pergunta 4).
+- Avaliar um IC mais conservador para o campo, como um bootstrap de UPAs ou um fator de correção calibrado na simulação do Kaggle, e comparar a cobertura na simulação.
 - Anotar o top 10 dos 8 torneios extras ([`top10_torneios.csv`](../data/raw/sharkscope/top10_torneios.csv)), que fica fora do plano amostral e serve para uma comparação descritiva.
 - Completar a referência da técnica de estratos colapsados (ADR-011), que não chegou a ser usada.
 - Levar estes resultados para o [`relatorio.Rmd`](relatorio.Rmd) final, com gráficos da distribuição do ROI e dos componentes de variância.
