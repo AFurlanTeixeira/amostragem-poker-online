@@ -34,7 +34,8 @@ validar_colunas <- function(df, esperadas, origem) {
 }
 
 COLUNAS_KAGGLE <- c(
-  "player_id", "skill", "avg_buyin", "realized_roi", "went_broke", "profitable"
+  "player_id", "skill", "tournaments_played", "avg_buyin", "realized_roi", "went_broke",
+  "profitable"
 )
 
 # Limites das faixas de buy-in (US$), iguais aos estratos de campo (plano §3.1):
@@ -62,8 +63,8 @@ estratificar_buyin <- function(buy_in) {
 #'   mesmas do campo), `"skill"` (quartis de `skill`, variavel latente que nao
 #'   e observavel em campo -- so para fins didaticos) ou `"nenhum"`.
 #' @return data.frame com `player_id`, `roi` (= `realized_roi`, em %),
-#'   `lucrativo` (= `profitable`, 1 se ROI > 0), `skill`, `avg_buyin`,
-#'   `went_broke` e, se pedido, `estrato`.
+#'   `lucrativo` (= `profitable`, 1 se ROI > 0), `skill`, `n_torneios`
+#'   (= `tournaments_played`), `avg_buyin`, `went_broke` e, se pedido, `estrato`.
 carregar_populacao_kaggle <- function(caminho, estratificar_por = c("buyin", "skill", "nenhum")) {
   estratificar_por <- match.arg(estratificar_por)
   bruto <- read.csv(caminho, stringsAsFactors = FALSE)
@@ -74,6 +75,7 @@ carregar_populacao_kaggle <- function(caminho, estratificar_por = c("buyin", "sk
     roi = as.numeric(bruto$realized_roi),
     lucrativo = as.integer(bruto$profitable),
     skill = as.numeric(bruto$skill),
+    n_torneios = as.integer(bruto$tournaments_played),
     avg_buyin = as.numeric(bruto$avg_buyin),
     went_broke = as.integer(bruto$went_broke),
     stringsAsFactors = FALSE
