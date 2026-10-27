@@ -9,7 +9,8 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 - **Como obter:** baixe pelo Kaggle e coloque os dois CSVs nesta pasta, ou rode `bash scripts/baixar_kaggle.sh` (requer a CLI do Kaggle e o token em `~/.kaggle/kaggle.json`).
 - **Por que fica fora do git:** a licença não aparece na página do dataset. Confirme antes de redistribuir.
 - **Natureza:** dados **sintéticos**. A coluna `skill` é a "vantagem verdadeira de longo prazo", uma variável latente que só existe numa simulação.
-- **Limitação:** não há ID de torneio, então o plano de campo (com conglomerados) não pode ser simulado aqui; só a AAS e a AAS estratificada.
+- **Limitação:** não há ID de torneio, então o plano de campo (com conglomerados) não pode ser simulado diretamente. Ele é simulado numa população sintética com a estrutura do campo, em que blocos e torneios são construídos e preenchidos com jogadores do Kaggle (`scripts/simular_kaggle_tres_estagios.R`, ADR-013).
+- **`tournaments_played`** também é usada: é a chance de um jogador ser colocado em cada torneio da população sintética.
 
 ### Dicionário (colunas usadas pelo projeto em negrito)
 
