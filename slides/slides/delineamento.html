@@ -1,0 +1,49 @@
+<section id="delineamento" data-transition="fade" style="background:#0E2240;color:#F3EEE8;font-family:'Segoe UI', 'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="position:absolute;left:0px;top:0px;width:24px;height:1080px;background:#E9C46A"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:4px;text-transform:uppercase;color:#8D9AB0;font-weight:600">03 · Delineamento amostral</p>
+<h2 style="font-size:64px;font-weight:700;color:#E9C46A;line-height:1.1">Três estágios, estratificação no meio</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:16px;align-items:center">
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#132B4F;padding:28px;border-top:4px solid #E9C46A">
+<p style="font-size:24px;font-weight:700;color:#E9C46A">1º estágio · UPA</p>
+<h3 style="font-size:32px;font-weight:700;color:#F3EEE8">Blocos de 2 h</h3>
+<p style="font-size:26px;line-height:1.4;color:#C3CCDA">AAS sem reposição de b = 6 entre B = 38 (4 efetivos)</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#E9C46A"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#132B4F;padding:28px;border-top:4px solid #E9C46A">
+<p style="font-size:24px;font-weight:700;color:#E9C46A">Estratos · H = 3</p>
+<h3 style="font-size:32px;font-weight:700;color:#F3EEE8">Faixa de buy-in</h3>
+<p style="font-size:26px;line-height:1.4;color:#C3CCDA">Micro US$ 1–4,99 · Low 5–24,99 · Mid/High ≥ 25, dentro do bloco</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#E9C46A"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#132B4F;padding:28px;border-top:4px solid #E9C46A">
+<p style="font-size:24px;font-weight:700;color:#E9C46A">2º estágio · USA</p>
+<h3 style="font-size:32px;font-weight:700;color:#F3EEE8">Torneios</h3>
+<p style="font-size:26px;line-height:1.4;color:#C3CCDA">AAS sem reposição de nⱼₕ = 2 por célula (bloco × estrato)</p>
+</div>
+<x-shape kind="arrow-right" style="width:40px;height:24px;background:#E9C46A"></x-shape>
+<div style="flex:1;align-self:stretch;display:flex;flex-direction:column;gap:12px;background:#132B4F;padding:28px;border-top:4px solid #E9C46A">
+<p style="font-size:24px;font-weight:700;color:#E9C46A">3º estágio · UTA</p>
+<h3 style="font-size:32px;font-weight:700;color:#F3EEE8">Jogadores</h3>
+<p style="font-size:26px;line-height:1.4;color:#C3CCDA">AAS sem reposição de mₖ = 5 posições da lista de resultados</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">Estratificação?</h3>
+<p style="font-size:24px;line-height:1.45;color:#C3CCDA">Sim, por buy-in dentro de cada bloco: garante as três faixas em todo bloco.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">Conglomerados?</h3>
+<p style="font-size:24px;line-height:1.45;color:#C3CCDA">Sim, três estágios: bloco → torneio → jogador. Concentra a coleta.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">Sorteio</h3>
+<p style="font-size:24px;line-height:1.45;color:#C3CCDA">sample.int() do R, semente 164363, sementes derivadas por célula.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8D9AB0">ME430 · Técnicas de Amostragem · Poker Online</p>
+<p style="position:absolute;right:128px;bottom:64px;width:120px;font-size:24px;color:#8D9AB0;text-align:right">06</p>
+<aside>Delineamento (≈ 50 s). Todos os estágios são AAS sem reposição. No 3º estágio sorteamos posições na lista de resultados (1 = campeão), que já tem ordem fixa, sem transcrever a lista inteira. Os n primeiros de uma permutação aleatória formam uma AAS de tamanho n; isso permitiu acrescentar torneios extras sem alterar o que já tinha sido sorteado.</aside>
+</section>

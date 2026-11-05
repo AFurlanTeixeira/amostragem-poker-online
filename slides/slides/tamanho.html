@@ -1,0 +1,28 @@
+<section id="tamanho" data-transition="fade" style="background:#0E2240;color:#F3EEE8;font-family:'Segoe UI', 'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="position:absolute;left:0px;top:0px;width:24px;height:1080px;background:#E9C46A"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:4px;text-transform:uppercase;color:#8D9AB0;font-weight:600">04 · Tamanho da amostra</p>
+<h2 style="font-size:64px;font-weight:700;color:#E9C46A;line-height:1.1">Quantas consultas cabem na cota?</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:64px">
+<div style="flex:1.6;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:34px;color:#F3EEE8;background:#132B4F;padding:24px 32px;border-left:4px solid #E9C46A">n = z² p(1 − p) / e² × [1 + ρ(m − 1)]</p>
+<p style="font-size:26px;line-height:1.45;color:#C3CCDA">Dimensionado pela proporção P (pior caso p = 0,5), com o EPA aproximado por Kish. FCPF desprezível (M̂₀ ≈ 144.000).</p>
+<table style="font-size:26px;color:#C3CCDA">
+<tr style="background:#0A1A33"><th style="width:25%;color:#E9C46A">Margem e</th><th style="width:25%;color:#E9C46A;text-align:right">ρ = 0</th><th style="width:25%;color:#E9C46A;text-align:right">ρ = 0,05; m = 5</th><th style="width:25%;color:#E9C46A;text-align:right">ρ = 0,10; m = 5</th></tr>
+<tr><td>± 0,12</td><td style="text-align:right">67</td><td style="text-align:right">80</td><td style="text-align:right">94</td></tr>
+<tr style="background:#1D3A63"><td style="color:#F3EEE8">± 0,10 (meta)</td><td style="text-align:right;color:#F3EEE8">96</td><td style="text-align:right;color:#F3EEE8">116</td><td style="text-align:right;color:#F3EEE8">135</td></tr>
+<tr><td>± 0,08</td><td style="text-align:right">150</td><td style="text-align:right">180</td><td style="text-align:right">210</td></tr>
+</table>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px;background:#0A1A33;padding:40px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#8D9AB0;font-weight:600">Alocação</p>
+<p style="font-size:120px;font-weight:700;line-height:1.0;color:#E9C46A">120</p>
+<p style="font-size:28px;line-height:1.4;color:#F3EEE8">posições = 4 blocos × 3 estratos × 2 torneios × 5 jogadores</p>
+<p style="font-size:24px;line-height:1.45;color:#C3CCDA">Limite: 140 consultas/dia no SharkScope. Com b = 4, o IC usa t com 3 gl: t₃/z = 1,62, então a margem real pode ser até 60% maior.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8D9AB0">ME430 · Técnicas de Amostragem · Poker Online</p>
+<p style="position:absolute;right:128px;bottom:64px;width:120px;font-size:24px;color:#8D9AB0;text-align:right">07</p>
+<aside>Tamanho (≈ 45 s). Meta de margem ±0,10 para P: de 96 a 116 jogadores. O máximo disponível era 24 torneios × 5 = 120 posições, então mₖ = 5, decidido antes de qualquer consulta de ROI. O mínimo de 2 em cada estágio é para conseguir estimar cada componente de variância. Ressalva: com poucos blocos, mais jogadores não resolvem a margem.</aside>
+</section>

@@ -1,0 +1,18 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-11-05T12:00:00Z"},
+  "lists": "css",
+  "title": "Amostragem Poker Online",
+  "order": ["cover", "sumario", "problema", "populacao", "temporal", "delineamento", "tamanho", "pesos", "execucao", "naoresposta", "estimadores", "resultados", "variancia", "sensibilidade", "kaggle", "conclusoes", "fim"],
+  "sections": {
+    "s1": {"description": "Abertura e roteiro da apresentação", "start": "cover"},
+    "s2": {"description": "Planejamento metodológico: problema, população, delineamento, tamanho e pesos", "start": "problema"},
+    "s3": {"description": "Execução: o que mudou em campo, não resposta e erros não amostrais", "start": "execucao"},
+    "s4": {"description": "Estimadores, estimativas, variância e sensibilidade", "start": "estimadores"},
+    "s5": {"description": "Simulação no Kaggle e conclusões", "start": "kaggle"}
+  },
+  "faces": {
+    "open-sans": {"family": "Open Sans", "href": "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap"}
+  },
+  "designSystems": []
+}
