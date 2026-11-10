@@ -124,6 +124,9 @@ Rscript scripts/sortear_amostra.R top10       # linhas do top 10 dos torneios so
 
 # 4. Estimação a partir da coleta
 Rscript scripts/estimar_campo.R --unidade jogador     # e --unidade inscricao (sensibilidade)
+
+# 5. Análise exploratória dos estratos (tabelas em data/processed, figuras em docs/figuras)
+Rscript scripts/explorar_estratos.R
 ```
 
 ### Relatório
@@ -156,6 +159,8 @@ docs/
   fase1_torneios_sorteados.md     # Torneios sorteados (gerado)
   plano_projeto.md                # Plano inicial v2 (dois estágios)
   referencias.md                  # Mapa fórmula → livro/seção
+  notas/                          # Notas de decisão e análise (estratificação, AED dos estratos)
+  figuras/                        # Figuras da AED dos estratos (geradas, versionadas)
   relatorio.Rmd                   # Relatório executável (esqueleto)
 scripts/
   baixar_kaggle.sh                # Download do dataset
@@ -163,6 +168,7 @@ scripts/
   sortear_amostra.R               # Sorteio dos blocos, torneios e jogadores
   gerar_md_torneios.R             # Tabela dos torneios sorteados em Markdown
   estimar_campo.R                 # Estimação em três estágios, IC, EPA
+  explorar_estratos.R             # Análise exploratória dos estratos de buy-in (campo)
 R/
   dados.R                         # Leitura e validação das fontes
   sorteio.R                       # Sorteio de blocos, torneios por (bloco, estrato) e jogadores
@@ -170,6 +176,7 @@ R/
   estimadores_dois_estagios.R     # Núcleo de dois estágios, razão, EPA (Thompson cap. 13; Bolfarine cap. 8)
   estimadores_tres_estagios.R     # Plano de campo: blocos → torneios → jogadores, por jogador (1/f)
   simulacao_kaggle.R              # Monte Carlo sobre a população do Kaggle
+  exploracao_estratos.R           # AED dos estratos: moldura, não resposta, domínios, decomposição
 tests/
   testthat/                       # Testes unitários (testthat)
 ```
