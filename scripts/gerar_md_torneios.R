@@ -37,7 +37,7 @@ m <- m[order(m$bloco_id, ordem_estrato[m$estrato], m$inicio_brasilia), ]
 
 rotulo <- c(micro = "Micro", low = "Low", mid_high = "Mid/High")
 dia <- c("segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo")
-reais <- function(x) formatC(x, format = "f", digits = 2, decimal.mark = ",")
+fmt_decimal <- function(x) formatC(x, format = "f", digits = 2, decimal.mark = ",")
 data_hora <- function(x) sprintf("%s/%s %s", substr(x, 9, 10), substr(x, 6, 7), substr(x, 12, 16))
 
 linhas <- c(
@@ -87,7 +87,7 @@ for (id in unique(m$bloco_id)) {
     sprintf(
       "| %s | %s | %s | %s | %s | %d | %d | %d | %s | %s |",
       rotulo[d$estrato], d$torneio_id, d$nome, substr(d$inicio_brasilia, 12, 16),
-      reais(d$buy_in), d$n_inscritos, d$N_jh, d$n_jh, sub("^formato: ", "", d$observacao),
+      fmt_decimal(d$buy_in), d$n_inscritos, d$N_jh, d$n_jh, sub("^formato: ", "", d$observacao),
       d$sorteio
     ),
     ""

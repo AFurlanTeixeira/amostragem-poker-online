@@ -145,9 +145,23 @@ if (etapa == "blocos") {
   linhas <- data.frame(
     bloco_id = rep(novos$bloco_id, each = 10), torneio_id = rep(novos$torneio_id, each = 10),
     posicao = rep(1:10, times = nrow(novos)), nickname = rep("", n_linhas),
-    data_anotacao = rep("", n_linhas), stringsAsFactors = FALSE
+    data_anotacao = rep(NA_character_, n_linhas), stringsAsFactors = FALSE
   )
-  write.csv(rbind(existente, linhas), args$top10, row.names = FALSE, na = "")
+  # Colunas da consulta que o arquivo existente ja tiver entram em branco.
+  for (coluna in setdiff(names(existente), names(linhas))) linhas[[coluna]] <- rep(NA, n_linhas)
+  if (!is.null(existente)) linhas <- linhas[, names(existente)]
+  # So acrescenta as linhas novas: regravar o arquivo inteiro mudaria a forma
+  # das linhas ja anotadas (campos vazios, numeros em notacao cientifica).
+  # Conexao binaria: no Windows, o modo texto troca "\n" por "\r\n".
+  if (n_linhas > 0 || is.null(existente)) {
+    saida <- file(args$top10, open = if (is.null(existente)) "wb" else "ab")
+    write.table(
+      linhas, saida,
+      sep = ",", row.names = FALSE, na = "", qmethod = "double", eol = "\n",
+      col.names = is.null(existente)
+    )
+    close(saida)
+  }
   cat(sprintf("%d torneios acrescentados -> %s\n", nrow(novos), args$top10))
 } else {
   stop("Etapa invalida: use 'blocos', 'torneios', 'jogadores', 'torneio-extra' ou 'top10'.")
