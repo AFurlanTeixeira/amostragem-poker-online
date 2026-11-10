@@ -76,6 +76,127 @@ resultados_campo
 
 <!-- Interpretação: componentes entre blocos/entre torneios/dentro, IC 95% (gl = b - 1 = 3), EPA, rho_int, não resposta; sensibilidade por inscrição vs. por jogador. -->
 
+# Análise exploratória dos estratos de buy-in
+
+Verifica no campo a escolha dos 3 estratos feita com o Kaggle. As tabelas sem peso descrevem os respondentes e ignoram o plano. As estimativas por estrato (domínio) usam o estimador de três estágios, com IC de gl = b − 1. A discussão completa está em `docs/notas/aed_estratos.md` (`Rscript scripts/explorar_estratos.R`).
+
+```{r aed-dados, eval = tem_campo}
+caminho_top10 <- "data/raw/sharkscope/top10_torneios.csv"
+top10 <- carregar_top10(caminho_top10)
+comparacao_top10 <- comparar_top10_estratos(coleta, top10, moldura)
+tabela <- function(x, ...) knitr::kable(x, digits = 2, format.args = list(decimal.mark = ","), ...)
+```
+
+## Moldura
+
+```{r aed-moldura, eval = tem_campo, fig.width = 9, fig.height = 4}
+tabela(resumir_moldura_estratos(moldura), caption = "Moldura por estrato")
+grafico_moldura_estratos(moldura)
+```
+
+O Mid/High tem torneios menores (6,8% das inscrições) e buy-in de US\$ 27 a US\$ 530. Só 4 torneios têm buy-in ≥ US\$ 100, em 2 dos 4 blocos, o que inviabiliza um estrato High.
+
+## Não resposta
+
+```{r aed-resposta, eval = tem_campo, fig.width = 6, fig.height = 4}
+tabela(taxa_nao_resposta(coleta), caption = "Não resposta na amostra aleatória")
+tabela(comparacao_top10, caption = "Amostra aleatória x top 10 (24 torneios originais)")
+grafico_resposta_estratos(comparacao_top10)
+```
+
+A resposta cresce com o buy-in, na amostra e no top 10. O Micro tem a maior não resposta e o maior peso no $\hat N$.
+
+## ROI e lucrativos por estrato
+
+```{r aed-roi, eval = tem_campo, fig.width = 6, fig.height = 4}
+tabela(resumir_variavel_estratos(coleta, "roi"), caption = "ROI dos respondentes (sem peso)")
+grafico_roi_estratos(coleta)
+tabela(estimar_dominios_estratos(coleta, moldura, B, "roi"),
+  caption = "ROI médio por estrato (domínio, por jogador)"
+)
+tabela(estimar_dominios_estratos(coleta, moldura, B, "lucrativo"),
+  caption = "Proporção de lucrativos por estrato (IC logit)"
+)
+tabela(estimar_dominios_estratos(coleta, moldura, B, "lucrativo_estrito"),
+  caption = "Proporção de lucrativos estritos (ROI > 0 e lucro > 0) por estrato (IC logit)"
+)
+```
+
+```{r aed-sensibilidade, eval = tem_campo}
+# Sensibilidade: o maior ROI (cauda do Mid/High) tratado como nao resposta.
+maior <- which.max(ifelse(coleta$respondeu %in% TRUE, coleta$roi, -Inf))
+sem_maior <- coleta
+sem_maior$respondeu[maior] <- FALSE
+tabela(estimar_dominios_estratos(sem_maior, moldura, B, "roi"),
+  caption = sprintf(
+    "ROI por estrato sem o maior ROI (%s%%)", format(coleta$roi[maior], decimal.mark = ",")
+  )
+)
+```
+
+## Quanto o estrato explica
+
+```{r aed-decomposicao, eval = tem_campo}
+tabela(decompor_variancia_estratos(coleta, "roi"), caption = "Decomposição da SQ do ROI")
+tabela(decompor_variancia_estratos(sem_maior, "roi"),
+  caption = "Decomposição da SQ do ROI, sem o maior ROI"
+)
+tabela(decompor_variancia_estratos(coleta, "lucrativo"),
+  caption = "Decomposição da SQ de lucrativo"
+)
+tabela(associar_buyin(coleta, moldura, "roi"),
+  caption = "Associação do ROI com o buy-in (descritiva, ignora o plano)"
+)
+```
+
+O estrato explica de 3% a 10% da soma de quadrados (EPA aproximado da estratificação entre 0,90 e 0,97). É pouco, mas ao contrário do Kaggle os estratos diferem: o Micro tem ROI e proporção de lucrativos menores. Sem o maior ROI, o QM entre torneios é igual ao QM dentro, logo $\rho_{int}$ ≈ 0 para o ROI.
+
+# Análise exploratória do top 10
+
+Os 10 primeiros dos 24 torneios originais, consultados de 05/11 a 10/11, ficam fora do plano amostral. São comparados com a amostra aleatória dos mesmos torneios sem as posições 1 a 10, que seriam o mesmo registro. Tudo é sem peso. A discussão completa está em `docs/notas/aed_top10.md` (`Rscript scripts/explorar_top10.R`).
+
+```{r top10-dados, eval = tem_campo}
+top10p <- preparar_top10(top10, moldura)
+grupos_top10 <- montar_grupos_top10(top10p, coleta)
+por_torneio_top10 <- comparar_por_torneio_top10(grupos_top10)
+populacao_ref <- if (tem_kaggle) carregar_populacao_kaggle(caminho_kaggle, "nenhum")
+referencia_top10 <- tabela_referencia_top10(grupos_top10, coleta, moldura, B, populacao_ref)
+```
+
+## O top 10 ao lado dos outros resultados
+
+```{r top10-referencia, eval = tem_campo}
+tabela(referencia_top10, caption = "Kaggle, estimativa do plano, amostra aleatória e top 10")
+```
+
+Top 10 e amostra aleatória têm ROI mediano de 16% a 18% e cerca de 90% de lucrativos. Os dois grupos ficam perto da estimativa do plano e longe do Kaggle. O que separa o campo do Kaggle é o perfil público no SharkScope, e não o resultado no torneio.
+
+## Top 10 x amostra aleatória
+
+```{r top10-grupos, eval = tem_campo, fig.width = 7, fig.height = 4}
+tabela(resumir_grupos_top10(grupos_top10), caption = "Top 10 x amostra (posição > 10)")
+tabela(resumir_grupos_top10(grupos_top10, por_estrato = TRUE), caption = "Por estrato")
+roi_plano <- referencia_top10$roi_media[referencia_top10$tipo == "com peso (1/f_i)"]
+grafico_top10_vs_amostra(grupos_top10, referencia = roi_plano)
+tabela(testar_top10(grupos_top10, por_torneio_top10, top10p),
+  caption = "Testes descritivos (ignoram o plano e a conglomeração)"
+)
+```
+
+Terminar no top 10 não indica ROI de longo prazo maior: a distribuição do ROI e a proporção de lucrativos não diferem, e dentro do top 10 o ROI não depende da posição. A taxa de resposta, sim, é maior no top 10.
+
+## Não resposta por posição e consistência das consultas
+
+```{r top10-posicao, eval = tem_campo, fig.width = 9, fig.height = 4}
+tabela(resumir_resposta_top10(top10p, "posicao"), caption = "Top 10: resposta por posição")
+grafico_top10_posicao(top10p)
+tabela(conferir_reconsultas(top10p, coleta),
+  caption = "Posições 1 a 10 sorteadas na amostra: o mesmo registro consultado duas vezes"
+)
+```
+
+A resposta cai de 61% nas posições 1 a 3 para 42% nas posições 8 a 10 e 38% fora do top 10. A não resposta depende do resultado no torneio, o que contraria a hipótese do ADR-006, mas o ROI dos respondentes não depende. As 19 reconsultas têm o mesmo status de resposta e ROI a menos de 0,5 ponto de distância.
+
 # Comparação e discussão
 
 <!-- Plano §4.5: tabela comparativa e limitações (populações diferentes, cauda pesada do ROI, viés de não resposta). -->

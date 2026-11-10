@@ -29,6 +29,8 @@ Rscript scripts/simular_kaggle.R --help                 # Monte Carlo no Kaggle
 Rscript scripts/simular_kaggle_tres_estagios.R --help   # plano de campo no Kaggle (ADR-013)
 Rscript scripts/sortear_amostra.R torneios --help       # sorteio de campo
 Rscript scripts/estimar_campo.R --help                  # estimação em três estágios
+Rscript scripts/explorar_estratos.R --help              # análise exploratória dos estratos
+Rscript scripts/explorar_top10.R --help                 # AED do top 10 e comparação
 Rscript -e 'rmarkdown::render("docs/relatorio.Rmd")'    # relatório
 ```
 
@@ -42,6 +44,8 @@ R/estimadores_dois_estagios.R núcleo de dois estágios (Thompson §13.1), termo
 R/estimadores_tres_estagios.R plano de campo: razão por jogador (1/f_i), variância por estágio
 R/simulacao_kaggle.R          Monte Carlo de AAS/AAS estratificada na população do Kaggle
 R/simulacao_kaggle_tres_estagios.R  população sintética com a estrutura do campo e Monte Carlo do plano
+R/exploracao_estratos.R       AED dos estratos de campo: moldura, não resposta, domínios, decomposição, gráficos
+R/exploracao_top10.R          AED do top 10 (fora do plano) e comparação com amostra, plano e Kaggle
 ```
 
 Regras que não podem ser quebradas (ver [`.ai/modelagem.md`](.ai/modelagem.md)):

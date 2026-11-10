@@ -18,6 +18,7 @@
 | EPA (DEFF) | `calcular_epa()`, `resumir_simulacao()` | Bolfarine §3.4, §4.3.4 |
 | EPA ≈ 1 + ρ_int(m̄ − 1) | `calcular_epa()` | Bolfarine eq. 8.24–8.26 |
 | Não resposta | `taxa_nao_resposta()` | Thompson §14.5 |
+| Estimação em domínios (estrato como subpopulação, mesmo estimador razão no subconjunto) | `estimar_dominios_estratos()` | Lohr §4.3; Cochran §2.13 |
 
 ## Bibliografia
 
