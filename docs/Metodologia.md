@@ -76,7 +76,7 @@ A unidade sorteada é a **inscrição** (o par jogador × torneio), então um me
 | Variável | Definição | Fonte |
 |---|---|---|
 | $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope na **janela fixa de 01/10/2025 a 30/09/2026**, considerando só o PokerStars | SharkScope |
-| $`\ell_{ki}`$ — Lucro | *Profit* (US\$) no mesmo filtro | SharkScope |
+| $`\ell_{ki}`$ — Lucro | *Profit* (R\$, a moeda em que o SharkScope mostrou os valores) no mesmo filtro | SharkScope |
 | $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`y_{ki} > 0`$; caso contrário, $0$. Versão estrita: $`d_{ki} = 1`$ se $`y_{ki} > 0`$ e $`\ell_{ki} > 0`$ (§7.6) | Derivada |
 | $`M_k`$ | Número de inscritos no torneio $k$, **aproximado pelo total de entradas** mostrado pela fonte (ver nota abaixo) | Listagem do SharkScope (`n_entradas_fonte`) |
 | `n_entradas` | Número de entradas do jogador sorteado no torneio (auxiliar) | Lista de inscritos |
@@ -472,7 +472,7 @@ O formato de cada planilha de campo está em [`data/raw/README.md`](../data/raw/
 | `ordem`, `posicao`, `tipo` | Ordem do sorteio, posição na lista de resultados, `titular` |
 | `nickname` | Nickname na lista de resultados (§14) |
 | `data_consulta`, `respondeu` | Data da consulta; `FALSE` para perfil privado ou "Anônimo" |
-| `roi`, `lucro` | Total ROI (%) e Profit (US\$) no filtro fixo (§2.4) |
+| `roi`, `lucro` | Total ROI (%) e Profit (R\$) no filtro fixo (§2.4) |
 | `n_jogos_dia` | Média de jogos por dia, para $`f_i`$ (§7.5) |
 
 ---

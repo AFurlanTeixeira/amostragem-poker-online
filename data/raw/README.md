@@ -66,7 +66,7 @@ Situação com os 24 torneios originais dos blocos 5, 8, 24 e 30 (os 8 torneios 
 
 Os 8 jogadores que aparecem em dois torneios são: `baradavid` e `comistus` (4039581390 e 4038334524), `CrazySezya` (4039581390 e 4039581475), `judem96` e `JusuBoi` (4040087674 e 4040085499), `liova777` (4038334525 e 4040087659), `Mind_ze` (4040092095 e 4040093464) e `törski` (4040092085 e 4040085499).
 
-Colunas da consulta, com o mesmo significado das de `coleta_jogadores.csv`: `data_consulta`, `respondeu` (`FALSE` para perfil sem dados ou `Anônimo`; em branco se a linha não foi consultada), `roi` (%), `lucro` (US\$) e `n_jogos_dia`. Na fonte, os perfis sem dados vinham como `n/a`; aqui ficam em branco, com `respondeu = FALSE`.
+Colunas da consulta, com o mesmo significado das de `coleta_jogadores.csv`: `data_consulta`, `respondeu` (`FALSE` para perfil sem dados ou `Anônimo`; em branco se a linha não foi consultada), `roi` (%), `lucro` (R\$) e `n_jogos_dia`. Na fonte, os perfis sem dados vinham como `n/a`; aqui ficam em branco, com `respondeu = FALSE`.
 
 Consulta dos 24 torneios originais, de 2026-11-05 a 2026-11-10 (as 80 linhas dos extras seguem em branco):
 
@@ -101,9 +101,9 @@ Colunas de `coleta_jogadores.csv` preenchidas na consulta:
 | `data_consulta` | `AAAA-MM-DD` | Dia da consulta no SharkScope |
 | `respondeu` | `TRUE`/`FALSE` | `FALSE` se o perfil é privado ou `Anônimo`; em branco se a linha não foi consultada |
 | `roi` | real (%) | Total ROI no filtro definido |
-| `lucro` | real (US$) | Profit no filtro definido |
+| `lucro` | real (R$) | Profit no filtro definido, na moeda em que o SharkScope mostra (reais) |
 | `n_jogos_dia` | real | Média de jogos por dia do jogador, como o SharkScope mostra |
-- `roi` vai em %; `lucro`, em US$.
+- `roi` vai em %; `lucro`, em R$. Como o lucro só entra pelo sinal (`lucrativo_estrito`), a moeda não afeta as estimativas.
 
 ### `listagem_torneios.csv` (Fase 1)
 
