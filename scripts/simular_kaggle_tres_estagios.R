@@ -23,6 +23,7 @@ option_list <- list(
   make_option("--B", default = 38L, help = "Blocos na populacao sintetica [%default]"),
   make_option("--b-oficial", default = 6L, help = "Blocos no sorteio oficial [%default]"),
   make_option("--b", default = "4,6,12", help = "Blocos por replica no Monte Carlo [%default]"),
+  make_option("--m-k", default = 5L, help = "Jogadores por torneio no Monte Carlo [%default]"),
   make_option("--n-rep", default = 5000L, help = "Replicas por valor de b [%default]"),
   make_option("--seed", default = 164363L, help = "Semente (a do campo) [%default]")
 )
@@ -88,10 +89,12 @@ write.csv(oficial, saida("sorteio_oficial"), row.names = FALSE)
 # 3. Monte Carlo do plano (sem nao resposta) para cada b.
 valores_b <- as.integer(strsplit(args$b, ",")[[1]])
 sims <- do.call(rbind, lapply(valores_b, function(b) {
-  cat(sprintf("\nMonte Carlo: b = %d, %d replicas...\n", b, args$n_rep))
-  simular_tres_estagios(pop, b, args$n_rep, args$seed)
+  cat(sprintf("\nMonte Carlo: b = %d, m_k = %d, %d replicas...\n", b, args$m_k, args$n_rep))
+  simular_tres_estagios(pop, b, args$n_rep, args$seed, m_k = args$m_k)
 }))
 resumo <- resumir_tres_estagios(sims, verdade)
 cat("\n== Monte Carlo ==\n")
 print(resumo, digits = 4, row.names = FALSE)
-write.csv(resumo, saida("monte_carlo"), row.names = FALSE)
+# m_k = 3 aproxima os 2,79 respondentes por torneio do campo (n efetivo 67).
+nome_mc <- if (args$m_k == 5) "monte_carlo" else sprintf("monte_carlo_mk%d", args$m_k)
+write.csv(resumo, saida(nome_mc), row.names = FALSE)

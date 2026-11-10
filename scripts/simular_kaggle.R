@@ -3,7 +3,7 @@
 # Kaggle (populacao conhecida). Plano §2.1 e §4.5.
 #
 # Exemplo:
-#   Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 60 --n-rep 5000 --seed 42
+#   Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 120 --n-rep 5000 --seed 42
 #
 # Defaults vem de variaveis de ambiente (ver `.env.example`).
 
@@ -51,7 +51,9 @@ for (variavel in c("roi", "lucrativo")) {
   print(resumo, digits = 4)
   write.csv(
     resumo,
-    sprintf("data/processed/simulacao_kaggle_%s_%s.csv", args$estratificar_por, variavel),
+    sprintf(
+      "data/processed/simulacao_kaggle_%s_n%d_%s.csv", args$estratificar_por, args$n, variavel
+    ),
     row.names = FALSE
   )
 }
