@@ -46,7 +46,7 @@ A não resposta cai à medida que o buy-in sobe. O ADR-006 pede a taxa por estra
 ![Taxa de resposta por estrato, amostra aleatória e top 10](../figuras/aed_estratos_resposta.png)
 
 - **O estrato com mais não resposta é o que mais pesa.** O Micro responde por 63% do $\hat N$ de jogadores (seção 3) e tem só 37% de resposta. Se a não resposta depende do resultado, o viés se concentra nele.
-- **A resposta parece ligada ao desempenho no torneio.** Nos 3 estratos, quem terminou no top 10 tem o perfil mais vezes público. Entre os que responderam, porém, o ROI do top 10 é parecido com o da amostra aleatória. Por esse indicador, não há sinal claro de que a resposta dependa do ROI de longo prazo dentro do estrato.
+- **A resposta parece ligada ao desempenho no torneio.** Nos 3 estratos, quem terminou no top 10 tem o perfil mais vezes público. Entre os que responderam, porém, o ROI do top 10 é parecido com o da amostra aleatória. Por esse indicador, não há sinal claro de que a resposta dependa do ROI de longo prazo dentro do estrato. A análise completa do top 10 está em [`aed_top10.md`](aed_top10.md).
 - **Mesmo assim, os respondentes parecem bons demais.** 85% deles têm ROI > 0, contra cerca de 20% de lucrativos no Kaggle, e é de se esperar que, com o rake, a maioria dos jogadores perca. Perfis públicos no SharkScope devem super-representar jogadores regulares e vencedores. A hipótese de não resposta aleatória dentro do torneio (ADR-006) dificilmente vale, e o viés de não resposta deve dominar o erro amostral (Thompson §14.5).
 
 ### 3. ROI e lucrativos por estrato

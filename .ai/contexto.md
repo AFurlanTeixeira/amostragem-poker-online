@@ -33,6 +33,7 @@ SharkScope: sorteio blocos → listagem dos blocos → sorteio torneios (bloco �
 | [docs/plano_projeto.md](../docs/plano_projeto.md) | Plano inicial v2 (dois estágios) e cronograma |
 | [docs/referencias.md](../docs/referencias.md) | Mapa fórmula → livro/seção/equação |
 | [docs/notas/aed_estratos.md](../docs/notas/aed_estratos.md) | Análise exploratória dos estratos de buy-in no campo |
+| [docs/notas/aed_top10.md](../docs/notas/aed_top10.md) | AED do top 10 e comparação com amostra, plano e Kaggle |
 | [.ai/padroes-codigo.md](padroes-codigo.md) | Padrões de R e de testes |
 | [.ai/modelagem.md](modelagem.md) | Decisões estatísticas (ADRs) |
 | [data/raw/README.md](../data/raw/README.md) | Fontes de dados e formato das planilhas |

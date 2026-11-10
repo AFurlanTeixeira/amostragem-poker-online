@@ -127,6 +127,7 @@ Rscript scripts/estimar_campo.R --unidade jogador     # e --unidade inscricao (s
 
 # 5. Análise exploratória dos estratos (tabelas em data/processed, figuras em docs/figuras)
 Rscript scripts/explorar_estratos.R
+Rscript scripts/explorar_top10.R      # top 10 x amostra x plano x Kaggle
 ```
 
 ### Relatório
@@ -160,7 +161,7 @@ docs/
   plano_projeto.md                # Plano inicial v2 (dois estágios)
   referencias.md                  # Mapa fórmula → livro/seção
   notas/                          # Notas de decisão e análise (estratificação, AED dos estratos)
-  figuras/                        # Figuras da AED dos estratos (geradas, versionadas)
+  figuras/                        # Figuras das AEDs (estratos e top 10; geradas, versionadas)
   relatorio.Rmd                   # Relatório executável (esqueleto)
 scripts/
   baixar_kaggle.sh                # Download do dataset
@@ -169,6 +170,7 @@ scripts/
   gerar_md_torneios.R             # Tabela dos torneios sorteados em Markdown
   estimar_campo.R                 # Estimação em três estágios, IC, EPA
   explorar_estratos.R             # Análise exploratória dos estratos de buy-in (campo)
+  explorar_top10.R                # AED do top 10 e comparação com amostra, plano e Kaggle
 R/
   dados.R                         # Leitura e validação das fontes
   sorteio.R                       # Sorteio de blocos, torneios por (bloco, estrato) e jogadores
@@ -177,6 +179,7 @@ R/
   estimadores_tres_estagios.R     # Plano de campo: blocos → torneios → jogadores, por jogador (1/f)
   simulacao_kaggle.R              # Monte Carlo sobre a população do Kaggle
   exploracao_estratos.R           # AED dos estratos: moldura, não resposta, domínios, decomposição
+  exploracao_top10.R              # AED do top 10: resposta por posição, reconsultas, comparação
 tests/
   testthat/                       # Testes unitários (testthat)
 ```
