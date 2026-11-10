@@ -1,0 +1,36 @@
+<section id="kaggle" data-transition="fade" style="background:#132B4F;color:#F3EEE8;font-family:'Segoe UI', 'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
+<div style="position:absolute;left:0px;top:0px;width:24px;height:1080px;background:#E9C46A"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:4px;text-transform:uppercase;color:#8D9AB0;font-weight:600">08 · Kaggle: 45.000 jogadores sintéticos, μ = −31,9%, P = 0,19</p>
+<h2 style="font-size:64px;font-weight:700;color:#E9C46A;line-height:1.1">Simulação com população conhecida</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#0E2240;padding:28px 32px">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">AAS × AAS estratificada</h3>
+<p style="font-size:24px;color:#8D9AB0">n = 60, 5.000 réplicas (Monte Carlo)</p>
+<table style="font-size:24px;color:#C3CCDA">
+<tr style="background:#0A1A33"><th style="width:34%;color:#E9C46A">Estratos</th><th style="width:18%;color:#E9C46A">Par.</th><th style="width:18%;color:#E9C46A;text-align:right">EPA</th><th style="width:30%;color:#E9C46A;text-align:right">Cobertura</th></tr>
+<tr><td>Buy-in</td><td>ROI</td><td style="text-align:right">0,98</td><td style="text-align:right">94,4%</td></tr>
+<tr><td>Buy-in</td><td>P</td><td style="text-align:right">0,99</td><td style="text-align:right">94,0%</td></tr>
+<tr><td>Skill</td><td>ROI</td><td style="text-align:right">0,95</td><td style="text-align:right">95,1%</td></tr>
+<tr><td>Skill</td><td>P</td><td style="text-align:right">0,94</td><td style="text-align:right">94,8%</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.45;color:#F3EEE8">Buy-in quase não ajuda: o ROI não varia entre faixas (correlação 0,0006). Skill ajuda pouco e não é observável.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#0E2240;padding:28px 32px;border-top:4px solid #E9C46A">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">Plano de campo em três estágios</h3>
+<p style="font-size:24px;color:#8D9AB0">b = 4, 5.000 réplicas, por jogador</p>
+<table style="font-size:24px;color:#C3CCDA">
+<tr style="background:#0A1A33"><th style="width:28%;color:#E9C46A">Medida</th><th style="width:36%;color:#E9C46A;text-align:right">ROI (%)</th><th style="width:36%;color:#E9C46A;text-align:right">Lucrativos</th></tr>
+<tr><td>Viés</td><td style="text-align:right">−0,07</td><td style="text-align:right">−0,002</td></tr>
+<tr><td>EP real</td><td style="text-align:right">9,60</td><td style="text-align:right">0,086</td></tr>
+<tr><td>EP estimado</td><td style="text-align:right">6,82</td><td style="text-align:right">0,061</td></tr>
+<tr><td>Cobertura</td><td style="text-align:right">93,3% (Wald)</td><td style="text-align:right">89,8% → 94,6% (logit)</td></tr>
+</table>
+<p style="font-size:24px;line-height:1.45;color:#F3EEE8">Não viesado, mas o EP estimado capta só ≈ 50% da variância real: a linearização falha com poucas UPAs.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1400px;font-size:24px;color:#8D9AB0">ME430 · Populações diferentes: a comparação é metodológica, não das médias</p>
+<p style="position:absolute;right:128px;bottom:64px;width:120px;font-size:24px;color:#8D9AB0;text-align:right">15</p>
+<aside>Kaggle (≈ 60 s). Esquerda: amostragem direta de elementos. Cobertura mostrada é a da estratificada (a da AAS fica entre 94,3% e 95,0%). Direita: o mesmo plano de campo aplicado a uma população sintética com a estrutura do SharkScope (38 blocos, Nⱼₕ e Mₖ reamostrados da listagem real). O estimador é praticamente não viesado, mas o erro-padrão é subestimado; a subestimação diminui com mais blocos. O IC logit recupera a cobertura das proporções.</aside>
+</section>

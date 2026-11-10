@@ -1,0 +1,46 @@
+<section id="variancia" data-transition="fade" style="background:#0E2240;color:#F3EEE8;font-family:'Segoe UI', 'Open Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:36px">
+<div style="position:absolute;left:0px;top:0px;width:24px;height:1080px;background:#E9C46A"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="font-size:24px;letter-spacing:4px;text-transform:uppercase;color:#8D9AB0;font-weight:600">07 · Decomposição da variância</p>
+<h2 style="font-size:64px;font-weight:700;color:#E9C46A;line-height:1.1">O horário domina a incerteza</h2>
+</div>
+<div style="display:flex;flex-direction:row;gap:40px;align-items:center">
+<div style="display:flex;flex-direction:row;gap:12px;align-items:center"><div style="width:28px;height:28px;background:#E9C46A"></div><p style="font-size:24px;color:#F3EEE8">Entre blocos</p></div>
+<div style="display:flex;flex-direction:row;gap:12px;align-items:center"><div style="width:28px;height:28px;background:#4A6FA5"></div><p style="font-size:24px;color:#F3EEE8">Dentro dos blocos (torneios + jogadores)</p></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:row;gap:24px;align-items:center">
+<p style="font-size:28px;font-weight:600;width:340px">ROI médio</p>
+<div style="flex:1;display:flex;flex-direction:row;height:56px"><div style="flex:92.5;background:#E9C46A"></div><div style="flex:7.5;background:#4A6FA5"></div></div>
+<p style="font-size:28px;font-weight:700;color:#E9C46A;width:300px">92,5% entre</p>
+</div>
+<div style="display:flex;flex-direction:row;gap:24px;align-items:center">
+<p style="font-size:28px;font-weight:600;width:340px">Lucrativos</p>
+<div style="flex:1;display:flex;flex-direction:row;height:56px"><div style="flex:81.2;background:#E9C46A"></div><div style="flex:18.8;background:#4A6FA5"></div></div>
+<p style="font-size:28px;font-weight:700;color:#E9C46A;width:300px">81,2% entre</p>
+</div>
+<div style="display:flex;flex-direction:row;gap:24px;align-items:center">
+<p style="font-size:28px;font-weight:600;width:340px">ROI &gt; 0 e lucro &gt; 0</p>
+<div style="flex:1;display:flex;flex-direction:row;height:56px"><div style="flex:94.9;background:#E9C46A"></div><div style="flex:5.1;background:#4A6FA5"></div></div>
+<p style="font-size:28px;font-weight:700;color:#E9C46A;width:300px">94,9% entre</p>
+</div>
+</div>
+<div style="display:flex;flex-direction:row;gap:48px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px">
+<h3 style="font-size:28px;font-weight:700;color:#F3EEE8">Efeito do planejamento (por jogador)</h3>
+<table style="font-size:24px;color:#C3CCDA">
+<tr style="background:#0A1A33"><th style="width:50%;color:#E9C46A">Parâmetro</th><th style="width:25%;color:#E9C46A;text-align:right">EPA</th><th style="width:25%;color:#E9C46A;text-align:right">ρ̂</th></tr>
+<tr><td>ROI médio</td><td style="text-align:right">0,44</td><td style="text-align:right">−0,31</td></tr>
+<tr><td>Lucrativos</td><td style="text-align:right">2,85</td><td style="text-align:right">1,03</td></tr>
+<tr><td>ROI &gt; 0 e lucro &gt; 0</td><td style="text-align:right">10,96</td><td style="text-align:right">5,56</td></tr>
+</table>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#132B4F;padding:28px 32px;border-left:4px solid #E9C46A">
+<p style="font-size:26px;line-height:1.45;color:#F3EEE8">Mais blocos reduziriam a variância muito mais do que mais jogadores por torneio.</p>
+<p style="font-size:24px;line-height:1.45;color:#C3CCDA">ρ̂ fora de [−1/(m̄−1); 1]: a aproximação de Kish não vale aqui (m̄ = 2,79, pesos de 1,7 a 1.000).</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8D9AB0">ME430 · Técnicas de Amostragem · Poker Online</p>
+<p style="position:absolute;right:128px;bottom:64px;width:120px;font-size:24px;color:#8D9AB0;text-align:right">13</p>
+<aside>Variância (≈ 45 s). Mais de 80% da variância vem da diferença entre blocos de horário; os dois blocos de domingo puxam a estimativa em direções opostas. Para as proporções o plano é bem menos eficiente que uma AAS de mesmo n (EPA &gt; 1). Para o ROI, o EPA abaixo de 1 é efeito do valor extremo inflando a variância da AAS. Os valores de ρ̂ mostram que Kish não se aplica, então a leitura é só qualitativa.</aside>
+</section>
