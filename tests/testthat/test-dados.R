@@ -88,6 +88,19 @@ test_that("carregar_top10 tipa as colunas e rejeita posicao invalida", {
   expect_error(carregar_top10(escrever_csv(top10_fabricado(c(1:9, 9)))), "repetida")
 })
 
+test_that("carregar_top10 tipa as colunas da consulta", {
+  bruto <- top10_fabricado()
+  bruto$respondeu <- c(TRUE, FALSE, rep(NA, 8))
+  bruto$roi <- c(12.5, NA, rep(NA, 8))
+  bruto$lucro <- c(-30, NA, rep(NA, 8))
+  bruto$n_jogos_dia <- c(4.2, NA, rep(NA, 8))
+  top10 <- carregar_top10(escrever_csv(bruto))
+  expect_type(top10$respondeu, "logical")
+  expect_equal(top10$roi[1], 12.5)
+  expect_equal(top10$lucro[1], -30)
+  expect_true(is.na(top10$respondeu[3]))
+})
+
 test_that("carregar_coleta cria as variaveis lucrativo e lucrativo_estrito", {
   caminho <- escrever_csv(data.frame(
     estrato = "micro", torneio_id = "1", n_inscritos = 10, nickname = c("a", "b", "c"),

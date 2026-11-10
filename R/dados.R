@@ -142,14 +142,24 @@ montar_moldura <- function(listagem) {
 #'
 #' Os 10 primeiros colocados de cada torneio sorteado, anotados para uma
 #' comparacao futura com a amostra aleatoria. Nao entram nos estimadores.
+#' As colunas da consulta (`data_consulta`, `respondeu`, `roi`, `lucro`,
+#' `n_jogos_dia`) sao opcionais; se existirem, sao tipadas como na coleta.
 #'
 #' @param caminho character, CSV com as colunas de `COLUNAS_TOP10`.
 #' @return data.frame tipado; erro se houver posicao fora de 1 a 10 ou
 #'   repetida no mesmo torneio.
 carregar_top10 <- function(caminho) {
-  top10 <- read.csv(caminho, stringsAsFactors = FALSE, colClasses = c(torneio_id = "character"))
+  top10 <- read.csv(
+    caminho,
+    stringsAsFactors = FALSE, encoding = "UTF-8",
+    colClasses = c(torneio_id = "character")
+  )
   validar_colunas(top10, COLUNAS_TOP10, "top 10 dos torneios")
   top10$posicao <- as.integer(top10$posicao)
+  if ("respondeu" %in% names(top10)) top10$respondeu <- as.logical(top10$respondeu)
+  for (coluna in intersect(c("roi", "lucro", "n_jogos_dia"), names(top10))) {
+    top10[[coluna]] <- as.numeric(top10[[coluna]])
+  }
   if (any(!top10$posicao %in% 1:10)) stop("posicao fora de 1 a 10 no top 10.")
   if (anyDuplicated(top10[, c("torneio_id", "posicao")])) {
     stop("posicao repetida no mesmo torneio no top 10.")

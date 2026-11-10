@@ -44,7 +44,7 @@ Dado bruto não é editado nem transformado aqui: as transformações ficam em `
 | `torneios_sorteados.csv` | Torneios sorteados em cada (bloco, estrato), com `N_jh` e `n_jh`; os extras ([ADR-011](../../.ai/modelagem.md)) vêm depois dos 2 originais | `scripts/sortear_amostra.R torneios` e `torneio-extra` |
 | `jogadores_sorteados.csv` | 3º estágio: posições sorteadas na lista de resultados de cada torneio (5 titulares, em `ordem`; eram 2 titulares + 3 reservas até o cálculo de $n$, [Metodologia §5.1](../../docs/Metodologia.md#51-cálculo-do-tamanho-da-amostra)) | `scripts/sortear_amostra.R jogadores` |
 | `coleta_jogadores.csv` | Resultado de cada consulta ao SharkScope | Preenchido à mão durante a coleta |
-| `top10_torneios.csv` | Os 10 primeiros colocados de cada torneio sorteado, para comparação futura. **Fora do plano amostral**: não entra nos estimadores | Linhas criadas por `scripts/sortear_amostra.R top10`; `nickname` e `data_anotacao` preenchidos à mão |
+| `top10_torneios.csv` | Os 10 primeiros colocados de cada torneio sorteado e o resultado da consulta de cada um, para comparação com a amostra aleatória. **Fora do plano amostral**: não entra nos estimadores | Linhas criadas por `scripts/sortear_amostra.R top10`; `nickname`, `data_anotacao` e as colunas da consulta preenchidos à mão |
 
 Os arquivos `*_modelo.csv` mostram o cabeçalho esperado de cada planilha.
 
@@ -65,6 +65,20 @@ Situação com os 24 torneios originais dos blocos 5, 8, 24 e 30 (os 8 torneios 
 | Jogadores distintos entre os consultáveis | 217 |
 
 Os 8 jogadores que aparecem em dois torneios são: `baradavid` e `comistus` (4039581390 e 4038334524), `CrazySezya` (4039581390 e 4039581475), `judem96` e `JusuBoi` (4040087674 e 4040085499), `liova777` (4038334525 e 4040087659), `Mind_ze` (4040092095 e 4040093464) e `törski` (4040092085 e 4040085499).
+
+Colunas da consulta, com o mesmo significado das de `coleta_jogadores.csv`: `data_consulta`, `respondeu` (`FALSE` para perfil sem dados ou `Anônimo`; em branco se a linha não foi consultada), `roi` (%), `lucro` (US\$) e `n_jogos_dia`. Na fonte, os perfis sem dados vinham como `n/a`; aqui ficam em branco, com `respondeu = FALSE`.
+
+Consulta dos 24 torneios originais, de 2026-11-05 a 2026-11-10 (as 80 linhas dos extras seguem em branco):
+
+| | Linhas |
+|---|---:|
+| Consultadas | 240 |
+| `respondeu = TRUE` | 124 |
+| `respondeu = FALSE` (inclui os 15 `Anônimo`) | 116 |
+| Respondentes distintos | 116 |
+| Respondentes com ROI > 0 | 112 |
+
+Um jogador repetido consultado em dias diferentes pode ter valores diferentes nos dois registros (`CrazySezya`, `liova777`). Dois casos têm valores diferentes no mesmo dia, provavelmente erro de transcrição a conferir no SharkScope: `JusuBoi` (ROI −21,1 e −21,2) e `törski` (`n_jogos_dia` 23 e 12,8). O `lucro` de `Th3BigGrinder` (−65.37) também destoa do formato dos demais.
 
 Na lista de inscritos não se transcreve nada além das posições sorteadas. A posição é a da lista de resultados do torneio no SharkScope (1 = campeão), e vai de 1 a `M_k` (`n_inscritos`). Em cada torneio, siga a `ordem` de `jogadores_sorteados.csv`:
 

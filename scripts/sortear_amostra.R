@@ -147,6 +147,8 @@ if (etapa == "blocos") {
     posicao = rep(1:10, times = nrow(novos)), nickname = rep("", n_linhas),
     data_anotacao = rep("", n_linhas), stringsAsFactors = FALSE
   )
+  # Colunas da consulta que o arquivo existente ja tiver entram em branco.
+  for (coluna in setdiff(names(existente), names(linhas))) linhas[[coluna]] <- NA
   write.csv(rbind(existente, linhas), args$top10, row.names = FALSE, na = "")
   cat(sprintf("%d torneios acrescentados -> %s\n", nrow(novos), args$top10))
 } else {
