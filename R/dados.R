@@ -140,8 +140,9 @@ montar_moldura <- function(listagem) {
 
 #' Le o top 10 dos torneios sorteados (fora do plano amostral).
 #'
-#' Os 10 primeiros colocados de cada torneio sorteado, anotados para uma
-#' comparacao futura com a amostra aleatoria. Nao entram nos estimadores.
+#' Os 10 primeiros colocados de cada torneio sorteado, anotados e consultados
+#' no SharkScope para uma comparacao descritiva com a amostra aleatoria. Nao
+#' entram nos estimadores.
 #' As colunas da consulta (`data_consulta`, `respondeu`, `roi`, `lucro`,
 #' `n_jogos_dia`) sao opcionais; se existirem, sao tipadas como na coleta.
 #'

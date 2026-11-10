@@ -70,15 +70,19 @@ Colunas da consulta, com o mesmo significado das de `coleta_jogadores.csv`: `dat
 
 Consulta dos 24 torneios originais, de 2026-11-05 a 2026-11-10 (as 80 linhas dos extras seguem em branco):
 
-| | Linhas |
+| | Contagem |
 |---|---:|
-| Consultadas | 240 |
-| `respondeu = TRUE` | 124 |
-| `respondeu = FALSE` (inclui os 15 `Anônimo`) | 116 |
-| Respondentes distintos | 116 |
-| Respondentes com ROI > 0 | 112 |
+| Linhas consultadas | 240 |
+| Linhas com `respondeu = TRUE` | 124 |
+| Linhas com `respondeu = FALSE` (inclui os 15 `Anônimo`) | 116 |
+| Linhas com ROI > 0 | 112 |
+| Respondentes distintos (nome sem o sufixo `[n]`) | 116 |
+| Respondentes distintos com ROI > 0 | 105 |
+| Respondentes distintos com ROI > 0 e lucro > 0 | 97 |
 
-Um jogador repetido consultado em dias diferentes pode ter valores diferentes nos dois registros (`CrazySezya`, `liova777`). Três valores transcritos errados na primeira anotação foram corrigidos após nova conferência no SharkScope (ver `log_coleta.csv`): ROI de `JusuBoi` (−21,1 → −21,2), `n_jogos_dia` de `törski` (23 → 12,8) e `lucro` de `Th3BigGrinder` (−65.37 → −492).
+Três valores transcritos errados na primeira anotação foram corrigidos após nova conferência no SharkScope (ver `log_coleta.csv`): ROI de `JusuBoi` (−21,1 → −21,2), `n_jogos_dia` de `törski` (23 → 12,8) e `lucro` de `Th3BigGrinder` (−65,37 → −492).
+
+**Valores dependem da data da consulta.** Mesmo com a janela fixa já encerrada, um jogador consultado em dias diferentes pode ter valores diferentes. Isso aparece dentro do top 10 (`CrazySezya` e `liova777`) e entre a coleta e o top 10 (por exemplo, `JusuBoi`, com ROI −20,7 em 23/10 e −21,2 em 10/11). Cada registro guarda o valor do seu dia (`data_consulta`). Os lucros de dias diferentes não são comparáveis em magnitude, porque o SharkScope provavelmente converte para R\$ pelo câmbio do dia. Ver a limitação em [Metodologia §11](../../docs/Metodologia.md#11-erros-não-amostrais).
 
 Na lista de inscritos não se transcreve nada além das posições sorteadas. A posição é a da lista de resultados do torneio no SharkScope (1 = campeão), e vai de 1 a `M_k` (`n_inscritos`). Em cada torneio, siga a `ordem` de `jogadores_sorteados.csv`:
 
@@ -101,9 +105,9 @@ Colunas de `coleta_jogadores.csv` preenchidas na consulta:
 | `data_consulta` | `AAAA-MM-DD` | Dia da consulta no SharkScope |
 | `respondeu` | `TRUE`/`FALSE` | `FALSE` se o perfil é privado ou `Anônimo`; em branco se a linha não foi consultada |
 | `roi` | real (%) | Total ROI no filtro definido |
-| `lucro` | real (R$) | Profit no filtro definido, na moeda em que o SharkScope mostra (reais) |
+| `lucro` | real (R\$) | Profit no filtro definido, na moeda em que o SharkScope mostra (reais) |
 | `n_jogos_dia` | real | Média de jogos por dia do jogador, como o SharkScope mostra |
-- `roi` vai em %; `lucro`, em R$. Como o lucro só entra pelo sinal (`lucrativo_estrito`), a moeda não afeta as estimativas.
+- `roi` vai em %; `lucro`, em R\$. Como o lucro só entra pelo sinal (`lucrativo_estrito`), a moeda não afeta as estimativas.
 
 ### `listagem_torneios.csv` (Fase 1)
 
