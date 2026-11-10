@@ -360,7 +360,7 @@ A variação entre blocos domina. Na escala linearizada do ROI, os totais $`\hat
 
 - Rodar de novo a simulação de AAS e AAS estratificada do Kaggle com n = 120, o tamanho do campo, e juntá-la à simulação do plano em três estágios ([`kaggle_tres_estagios.md`](kaggle_tres_estagios.md)) numa comparação única (pergunta 4).
 - Avaliar um IC mais conservador para o campo, como um bootstrap de UPAs ou um fator de correção calibrado na simulação do Kaggle, e comparar a cobertura na simulação.
-- Anotar o top 10 dos 8 torneios extras ([`top10_torneios.csv`](../data/raw/sharkscope/top10_torneios.csv)), que fica fora do plano amostral e serve para uma comparação descritiva.
+- Fazer a comparação descritiva entre o top 10 e a amostra aleatória ([`top10_torneios.csv`](../data/raw/sharkscope/top10_torneios.csv), fora do plano amostral). O top 10 dos 24 torneios originais já foi consultado (05/11 a 10/11): 116 jogadores distintos com dados, 105 deles com ROI > 0. Falta anotar e consultar o top 10 dos 8 torneios extras.
 - Completar a referência da técnica de estratos colapsados (ADR-011), que não chegou a ser usada.
 - Levar estes resultados para o [`relatorio.Rmd`](relatorio.Rmd) final, com gráficos da distribuição do ROI e dos componentes de variância.
 

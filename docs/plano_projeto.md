@@ -216,7 +216,7 @@ A correlação intraclasse estimada, $\hat\rho_{int} \approx (\text{EPA} - 1)/(\
 | Período | Etapa | Atividades principais |
 | --- | --- | --- |
 | **Dias 1 a 3** | **Fase 0: Planejamento e sorteio** | • Tratamento do dataset do Kaggle e simulações de Monte Carlo (AAS e AAS estratificada).<br>• Definição da janela de referência, montagem da moldura de torneios por estrato ($N_h$, $M_{hk}$).<br>• Sorteio dos torneios (1º estágio) e das listas de jogadores e de reserva (2º estágio). |
-| **Dias 4 a 13** | **Fase 1: Coleta de campo** | • Consulta diária de 5 a 10 *nicknames* no SharkScope.<br>• Registro de ROI (%), lucro (US\$) e status de resposta (perfil público ou privado). |
+| **Dias 4 a 13** | **Fase 1: Coleta de campo** | • Consulta diária de 5 a 10 *nicknames* no SharkScope.<br>• Registro de ROI (%), lucro (US\$; na coleta, o SharkScope mostrou os valores em R\$, ver Metodologia §2.4) e status de resposta (perfil público ou privado). |
 | **Dias 14 a 16** | **Fase 2: Análise e comparação** | • Cálculo de $\hat\mu$ (ou $\hat\mu_R$), $\hat P$ e suas variâncias, separando os componentes entre torneios e dentro dos torneios.<br>• IC 95%, EPA e $\hat\rho_{int}$.<br>• Comparação com os resultados das simulações no Kaggle. |
 | **Dias 17 e 18** | **Fase 3: Relatório** | • Redação do relatório: amostragem direta de elementos vs. amostragem estratificada em dois estágios, discussão da não resposta e das limitações. |
 | **Dias 19 e 20** | **Fase 4: Slides e revisão** | • Apresentação com tabelas comparativas e gráficos dos componentes de variância.<br>• Revisão final. |
