@@ -78,7 +78,7 @@ Consulta dos 24 torneios originais, de 2026-11-05 a 2026-11-10 (as 80 linhas dos
 | Respondentes distintos | 116 |
 | Respondentes com ROI > 0 | 112 |
 
-Um jogador repetido consultado em dias diferentes pode ter valores diferentes nos dois registros (`CrazySezya`, `liova777`). Dois casos têm valores diferentes no mesmo dia, provavelmente erro de transcrição a conferir no SharkScope: `JusuBoi` (ROI −21,1 e −21,2) e `törski` (`n_jogos_dia` 23 e 12,8). O `lucro` de `Th3BigGrinder` (−65.37) também destoa do formato dos demais.
+Um jogador repetido consultado em dias diferentes pode ter valores diferentes nos dois registros (`CrazySezya`, `liova777`). Três valores transcritos errados na primeira anotação foram corrigidos após nova conferência no SharkScope (ver `log_coleta.csv`): ROI de `JusuBoi` (−21,1 → −21,2), `n_jogos_dia` de `törski` (23 → 12,8) e `lucro` de `Th3BigGrinder` (−65.37 → −492).
 
 Na lista de inscritos não se transcreve nada além das posições sorteadas. A posição é a da lista de resultados do torneio no SharkScope (1 = campeão), e vai de 1 a `M_k` (`n_inscritos`). Em cada torneio, siga a `ordem` de `jogadores_sorteados.csv`:
 
