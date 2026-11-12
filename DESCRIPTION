@@ -3,10 +3,11 @@ Title: Comparacao de Planos Amostrais no Poker Online
 Version: 0.1.0
 Description: Compara amostragem aleatoria simples e estratificada (simuladas
     por Monte Carlo sobre um dataset do Kaggle) com uma amostragem
-    estratificada em dois estagios aplicada em campo no SharkScope
-    (torneios como unidades primarias, jogadores como secundarias). Estima o
-    ROI medio, a proporcao de jogadores lucrativos, a variancia em dois
-    estagios e o efeito do planejamento (EPA/DEFF).
+    estratificada em tres estagios aplicada em campo no SharkScope (blocos de
+    2 h como unidades primarias, torneios estratificados por buy-in como
+    secundarias, jogadores como terciarias). Estima o ROI medio por jogador
+    distinto, a proporcao de jogadores lucrativos, a variancia por estagio e
+    o efeito do planejamento (EPA/DEFF).
 License: MIT
 Encoding: UTF-8
 Imports:

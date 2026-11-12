@@ -44,7 +44,7 @@ Por isso o desenho evita depender de uma lista completa e concentra o esforço d
 
 ### 2.1 População-alvo
 
-> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go e torneios satélite assim como Cash Game) do **PokerStars.com**, com início entre **17/10/2026 20:00** e **21/10/2026 00:00** (76 h, horário de Brasília).
+> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$ 1,00 ou mais** (excluindo freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go, torneios satélite e cash game) do **PokerStars.com**, com início entre **17/10/2026 20:00** e **21/10/2026 00:00** (76 h, horário de Brasília).
 >
 > O período é limitado pela fonte da listagem. O lobby do PokerStars só mostra parte dos torneios já encerrados (em 13/10/2026, apenas 9 no dia inteiro), então não serve como moldura. A busca de torneios do SharkScope mostra todos, mas só a partir de 17/10/2026 18:24. O período começa às 20:00 de 17/10, o primeiro início de bloco de 2 h dentro dessa janela, e termina antes do prazo da análise (23/10). Os períodos anteriores (01/10 a 14/10 e 11/10 a 20/10) foram abandonados antes de qualquer sorteio de torneios (ver [`fase0_sorteio_blocos.md`](fase0_sorteio_blocos.md)).
 >
@@ -157,13 +157,13 @@ $$n = \frac{z^2\,p(1-p)}{e^2}\,\bigl[1 + \rho\,(m-1)\bigr], \qquad \text{com FCP
 
 | Margem $e$ | $\rho = 0$ | $\rho = 0{,}05$, $m = 4$ | $\rho = 0{,}05$, $m = 5$ | $\rho = 0{,}10$, $m = 5$ |
 |---|---:|---:|---:|---:|
-| ±0,12 | 67 | 77 | 80 | 94 |
-| **±0,10** | **96** | **111** | **116** | **135** |
-| ±0,08 | 150 | 173 | 180 | 210 |
+| ±0,12 | 67 | 77 | 81 | 94 |
+| **±0,10** | **97** | **111** | **116** | **135** |
+| ±0,08 | 151 | 173 | 181 | 211 |
 
-Para $e = \pm 0{,}10$, são necessários de 96 a 116 jogadores. O máximo disponível é $24 \times 5 = 120$ (as 5 posições já anotadas em cada torneio). Por isso $`m_k = 5`$, sem reservas: com cerca de 110 respondentes e $\rho = 0{,}05$, a margem fica em ≈ ±0,10. A decisão foi tomada antes de qualquer consulta de ROI. As 5 posições são as 5 primeiras da mesma permutação sorteada, então continuam sendo uma AAS ([log](../data/raw/sharkscope/log_coleta.csv), evento `decisao_m_k`).
+Os valores estão arredondados para cima. Para $e = \pm 0{,}10$, são necessários de 97 a 116 jogadores. O máximo disponível é $24 \times 5 = 120$ (as 5 posições já anotadas em cada torneio). Por isso $`m_k = 5`$, sem reservas: com cerca de 110 respondentes e $\rho = 0{,}05$, a margem fica em ≈ ±0,10. A decisão foi tomada antes de qualquer consulta de ROI. As 5 posições são as 5 primeiras da mesma permutação sorteada, então continuam sendo uma AAS ([log](../data/raw/sharkscope/log_coleta.csv), evento `decisao_m_k`).
 
-> **Limite que o $n$ não resolve:** com $b = 4$ blocos, o IC usa $t$ com $b - 1 = 3$ graus de liberdade (§8.3). Como $t_{3;\,0{,}975}/z_{0{,}975} = 1{,}62$, a margem real pode ficar até 60% maior do que a da tabela, por mais jogadores que sejam consultados.
+> **Limite que o $n$ não resolve:** com $b = 4$ blocos, o IC usa $t$ com $b - 1 = 3$ graus de liberdade (§8.4). Como $t_{3;\,0{,}975}/z_{0{,}975} = 1{,}62$, a margem real pode ficar até 60% maior do que a da tabela, por mais jogadores que sejam consultados.
 
 ---
 
@@ -282,7 +282,7 @@ com
 
 Os fatores $(1 - b/B)$, $`(1 - n_{jh}/N_{jh})`$ e $`(1 - m_k/M_k)`$ são as **correções para população finita** de cada estágio.
 
-> **Aproximação por conglomerado último.** Quando $b/B$ é pequeno, o primeiro termo sozinho, sem o fator $(1 - b/B)$, já captura quase toda a variância e é um estimador ligeiramente conservador. Aqui $b/B = 4/38 \approx 11\%$ (eram $6/38 \approx 16\%$ antes da perda dos blocos 34 e 36), então a diferença entre as duas versões não é desprezível. É o que fazem `survey` (R) e `samplics` (Python) por padrão. Vale reportar as duas versões.
+> **Aproximação por conglomerado último.** Quando $b/B$ é pequeno, o primeiro termo sozinho, sem o fator $(1 - b/B)$, já captura quase toda a variância e é um estimador ligeiramente conservador. Aqui $b/B = 4/38 \approx 11\%$ (eram $6/38 \approx 16\%$ antes da perda dos blocos 34 e 36), então o fator $(1 - b/B) = 0{,}89$ não é desprezível. A aproximação por conglomerado último é o padrão de `survey` (R) e `samplics` (Python). `scripts/estimar_campo.R` reporta as duas versões; no campo, o EP do ROI vai de 5,50 para 5,59.
 
 ### 8.2 Variância da média (linearização de Taylor)
 
@@ -296,7 +296,27 @@ $$\widehat{\mathrm{Var}}(\hat{R}) \approx \frac{\widehat{\mathrm{Var}}(\hat{Z})}
 
 Por inscrição, $`f_i = 1`$ e $`\hat{N} = \hat{M}_0`$. Implementação: `estimar_media_tres_estagios()` em [`R/estimadores_tres_estagios.R`](../R/estimadores_tres_estagios.R).
 
-### 8.3 Intervalos de confiança
+**Jackknife de blocos (JK1), reportado ao lado ([ADR-014](../.ai/modelagem.md)).** A linearização trata $`\hat N`$ como fixo. Com poucos blocos e pesos muito desiguais, $`\hat N`$ varia muito, e o EP linearizado fica otimista: na simulação do Kaggle com $b = 4$, ele captou cerca de metade da variância real ([`kaggle_tres_estagios.md`](kaggle_tres_estagios.md) §3.3). O jackknife recalcula a razão retirando um bloco por vez (Wolter, 2007, cap. 4),
+
+$$\hat v_{JK}(\hat R) = \frac{b-1}{b}\sum_{j=1}^{b}\bigl(\hat R_{(j)} - \hat R\bigr)^2, \qquad \hat R_{(j)} = \frac{\sum_{l \ne j}\hat Y_l}{\sum_{l \ne j}\hat N_l},$$
+
+e ficou perto da variância real na mesma simulação. A variância principal continua sendo a linearizada; o EP JK1 e o IC correspondente são reportados ao lado.
+
+### 8.3 Componentes de variância
+
+As duas parcelas da §8.1 somam a variância, mas **não** medem quanto vem de cada estágio. A primeira usa os totais *estimados* $`\hat Y_j`$, e $`E[s_u^2] = S_u^2 + \bar V`$, em que $`\bar V`$ é a média das variâncias dentro dos blocos (Cochran, 1977, cap. 10–11). Os estimadores não viesados dos componentes descontam, em cada nível, a parte que vem do nível de baixo. Com $`\bar v`$ igual à média dos $`\widehat{\mathrm{Var}}(\hat Y_j)`$ e $`\bar w_{jh}`$ igual à média, na célula, de $`M_k^2(1 - m_k/M_k)s_{2k}^2/m_k`$:
+
+$$
+\underbrace{B^2\left(1-\frac{b}{B}\right)\frac{s_u^2-\bar v}{b}}_{\text{entre blocos}}
++
+\underbrace{\left(\frac{B}{b}\right)^{2}\sum_{j,h} N_{jh}^2\left(1-\frac{n_{jh}}{N_{jh}}\right)\frac{s_{1jh}^2-\bar w_{jh}}{n_{jh}}}_{\text{entre torneios}}
++
+\underbrace{\left(\frac{B}{b}\right)^{2}\sum_{j,h} N_{jh}^2\,\frac{\bar w_{jh}}{n_{jh}}}_{\text{dentro dos torneios}}
+$$
+
+A soma é idêntica à da §8.1. Um componente negativo se lê como zero. Com $b = 4$ e $`n_{jh} = 2`$, cada componente é a diferença de variâncias estimadas com 3 ou 1 grau de liberdade, e por isso é muito instável. Implementação: `componentes` em `total_tres_estagios()`.
+
+### 8.4 Intervalos de confiança
 
 $$\hat{R} \pm t_{\,gl;\,0{,}975}\,\sqrt{\widehat{\mathrm{Var}}(\hat{R})}$$
 
@@ -316,14 +336,20 @@ $$\text{EPA} = \frac{\widehat{\mathrm{Var}}(\hat{R})}{\widehat{\mathrm{Var}}_{\t
 
 com $`s_y^2`$ ponderada pelos pesos finais $`w/f_i`$ e $`\hat{N}`$ da §8.2.
 
-- $\text{EPA} > 1$: o desenho complexo é **menos** eficiente que uma AAS com o mesmo $n$, por efeito dos conglomerados.
-- $\text{EPA} < 1$: a estratificação compensa a perda causada pelos conglomerados.
+- $\text{EPA} > 1$: o desenho complexo é **menos** eficiente que uma AAS com o mesmo $n$, por efeito dos conglomerados e da desigualdade dos pesos.
+- $\text{EPA} < 1$: a estratificação compensa essas perdas.
+
+O EPA é separado em duas partes (Kish, 1992):
+
+$$\text{EPA} = \underbrace{\bigl(1 + \mathrm{CV}^2(w)\bigr)}_{\text{pesos}} \times \text{resto}, \qquad 1 + \mathrm{CV}^2(w) = \frac{n\sum w^2}{\left(\sum w\right)^2},$$
+
+e $`n/(1 + \mathrm{CV}^2(w))`$ é o tamanho efetivo de amostra de Kish. A parte dos pesos supõe pesos não relacionados com $y$; quando isso não vale, o "resto" não tem leitura como efeito de conglomeração ([ADR-005](../.ai/modelagem.md)).
 
 Com $`m_k`$ constante, vale a aproximação de Kish, que relaciona o EPA à correlação intraclasse $\rho$:
 
 $$\text{EPA} \approx 1 + (m - 1)\,\rho \quad\Rightarrow\quad \hat{\rho} \approx \frac{\text{EPA} - 1}{m - 1}$$
 
-Uma hipótese a investigar é se jogadores do mesmo torneio têm desempenho correlacionado ($\rho > 0$), já que o buy-in e o horário selecionam perfis de habilidade parecidos.
+No plano executado, $`\hat\rho`$ **não é interpretável** e fica só como registro: os torneios têm tamanhos e pesos muito diferentes, $`\bar m = 2{,}79`$, e a variância é estimada entre blocos, não entre torneios (ADR-005). A hipótese de que jogadores do mesmo torneio têm desempenho correlacionado fica sem resposta com estes dados.
 
 ---
 
@@ -335,7 +361,7 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 2. Calcular os parâmetros verdadeiros: $`\bar{Y}_{\text{Kaggle}}`$ e $`P_{\text{Kaggle}}`$. A unidade do Kaggle já é o jogador, como no parâmetro de campo.
 3. Rodar $R = 5\,000$ réplicas de:
    - **AASs** de tamanho $n = 120$, o mesmo $n$ do campo (§5);
-   - **Estratificada simples** por faixa de buy-in, com alocação proporcional (e, como variante didática, por quartis de `skill`).
+   - **Estratificada simples** por faixa de buy-in, com alocação proporcional e de Neyman (e, como variante didática, por quartis de `skill`). As duas alocações são arredondadas pelos maiores restos, para somar exatamente $n$.
 4. Comparar, nas simulações, vício, EQM, erro-padrão médio e cobertura empírica do IC de 95%.
 5. O dataset não tem identificador de torneio, então o desenho em conglomerados não pode ser simulado diretamente nele. Para isso, monta-se uma **população sintética com a estrutura do campo** ([ADR-013](../.ai/modelagem.md)): 38 blocos com $`N_{jh}`$ e $`M_k`$ reamostrados da listagem do SharkScope, e torneios preenchidos com jogadores do Kaggle do mesmo estrato, com probabilidade proporcional a `tournaments_played`. Nela, $`f_i`$ e os parâmetros por jogador são conhecidos, e os sorteios e estimadores do campo são aplicados sem mudança, tanto num sorteio oficial (com a não resposta e a regra de torneios extras do campo) quanto em Monte Carlo. Resultados em [`kaggle_tres_estagios.md`](kaggle_tres_estagios.md).
 
@@ -347,10 +373,10 @@ O dataset do Kaggle é tratado como **população finita conhecida**, o que perm
 
 | Problema | Tratamento |
 |---|---|
-| **Perfil privado / opt-out** no SharkScope | Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Célula com menos de 2 torneios com $`m_k \ge 2`$ recebe torneios extras da mesma permutação, ou é colapsada com o estrato vizinho (§5). |
+| **Perfil privado / opt-out** no SharkScope | Sensibilidade em [ADR-015](../.ai/modelagem.md) (limites de pior caso e ajuste por posição no torneio, `R/nao_resposta.R`). Não resposta, sem substituição (com $`m_k = 5`$ não há reservas, §5.1): $`m_k`$ passa a ser o número de respondentes do torneio, sob a hipótese de não resposta aleatória dentro do torneio. Registrar a taxa por estrato. Célula com menos de 2 torneios com $`m_k \ge 2`$ recebe torneios extras da mesma permutação, ou é colapsada com o estrato vizinho (§5). |
 | **Jogador "Anônimo"** na lista de resultados | Não pode ser consultado nem identificado. É tratado como perfil privado (não resposta) e entra na taxa de não resposta. São 6 das 120 posições sorteadas originalmente. |
 | **`n_jogos_dia` ausente** | Sem ele não há peso $`1/f_i`$ (§7.5). Anotar em toda consulta. |
-| **Jogador com poucos torneios** (ROI instável) | Registrar o número de torneios do jogador no período. Fazer análise de sensibilidade excluindo quem tem menos de 30 torneios. |
+| **Jogador com poucos torneios** (ROI instável) | Prevista uma análise de sensibilidade excluindo quem tem menos de 30 torneios. **Não foi feita:** a coleta não registrou o número de torneios do jogador na janela do ROI, só `n_jogos_dia`. |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros (a unidade é a inscrição) e reaproveitar a consulta sem gastar cota. |
 | **Torneio cancelado ou com poucos inscritos** ($`M_k < m_k`$) | Excluir da lista do bloco antes do sorteio e documentar o critério. |
 | **Erro na listagem do bloco** (torneio omitido) | Conferir a listagem do SharkScope com a agenda oficial do PokerStars e reconciliar. |
@@ -453,9 +479,13 @@ def estimar_media(df: pd.DataFrame, col: str, B: int, t: float = 3.182):  # t_{b
 │   ├── sorteio.R                    # blocos, torneios por (bloco, estrato), posições dos jogadores
 │   ├── estimadores_aas.R            # AAS e AAS estratificada (Kaggle)
 │   ├── estimadores_dois_estagios.R  # núcleo de dois estágios (Thompson §13.1) e EPA
-│   ├── estimadores_tres_estagios.R  # plano de campo: blocos → torneios → jogadores
-│   └── simulacao_kaggle.R
-├── scripts/                         # sortear_amostra.R, estimar_campo.R, simular_kaggle.R
+│   ├── estimadores_tres_estagios.R  # plano de campo: razão, variância, componentes, JK1
+│   ├── nao_resposta.R               # sensibilidade à não resposta (pior caso, posição)
+│   ├── simulacao_kaggle.R           # Monte Carlo de AAS e AAS estratificada
+│   ├── simulacao_kaggle_tres_estagios.R  # população sintética e Monte Carlo do plano de campo
+│   ├── exploracao_estratos.R        # AED dos estratos de campo
+│   └── exploracao_top10.R           # AED do top 10 (fora do plano)
+├── scripts/                         # sortear_amostra.R, estimar_campo.R, simular_kaggle*.R, explorar_*.R
 ├── tests/testthat/                  # um teste por módulo; exemplos do Thompson
 ├── data/raw/
 │   ├── kaggle/                      # dataset do Kaggle (fora do Git)
@@ -482,7 +512,8 @@ O formato de cada planilha de campo está em [`data/raw/README.md`](../data/raw/
 - **Unidade de inscrição × jogador.** Jogadores frequentes têm maior probabilidade de inclusão. O ROI *por jogador distinto* corrige isso com o peso $`1/f_i`$ (§7.5), mas $`f_i`$ é aproximado pela média de jogos por dia da janela de 1 ano, e não contado nas 76 h do período. Se a frequência de um jogador nas 76 h for diferente da média dele no ano, o peso fica errado. A comparação com a versão por inscrição mostra quanto o resultado depende desse peso.
 - **$`M_k`$ aproximado pelas entradas.** O tamanho de cada torneio é o total de entradas, com re-entries (§2.4). Em torneios com re-entry, $`M_k`$ fica maior que o número de jogadores distintos, e o peso $`M_k/m_k`$ desses torneios fica inflado. O sorteio dos jogadores continua sendo feito na lista sem repetições.
 - **Poucos conglomerados primários** ($b = 4$ efetivos, de 6 sorteados): os graus de liberdade são baixos e o IC fica largo. Isso é esperado, e discutir esse ponto faz parte da análise. A perda dos blocos 34 e 36 (terça à tarde e à noite) deixa o horário de dia útil depois das 14h representado só pelo bloco 24.
-- **ROI histórico tem alta variância** e cauda pesada. Considere reportar também a mediana e fazer análise de sensibilidade com ROI winsorizado.
+- **ROI histórico tem alta variância** e cauda pesada. A sensibilidade feita foi retirar o valor extremo (`estimar_campo.R --excluir MuoMadre`): o ROI médio cai de 17,5% para 13,3%. Mediana ponderada e ROI winsorizado não foram calculados.
+- **Sementes derivadas com colisão** ([ADR-016](../.ai/modelagem.md)): dois pares de torneios sorteados receberam a mesma semente no 3º estágio, e um deles as mesmas posições. Cada torneio continua sendo uma AAS, mas os sorteios não são todos independentes entre torneios.
 - **Validade externa:** os resultados valem para MTTs do PokerStars.com no período escolhido, e não para o poker online em geral. O período tem só 76 h (sábado à noite, domingo, segunda e terça), limitado pela janela do SharkScope e pelo prazo. Não cobre uma semana inteira nem eventos que acontecem só em outros dias. Os 4 blocos efetivos são domingo 04–06 h e 10–12 h, segunda 18–20 h e terça 06–08 h.
 - **Termos de uso:** toda a coleta no SharkScope é **manual e respeita a cota da conta**. Não se usa scraping automatizado nem do SharkScope nem do PokerStars.
 - **Privacidade:** nicknames são pseudônimos públicos, escolhidos pelo próprio jogador e exibidos abertamente no PokerStars e no SharkScope. Sozinhos, não identificam a pessoa e não são dados pessoais identificáveis (PII). Por isso, ficam no repositório como aparecem na fonte, o que permite conferir a coleta. Nenhum outro dado do jogador, além do que o SharkScope mostra publicamente, é coletado.
@@ -495,5 +526,7 @@ O formato de cada planilha de campo está em [`data/raw/README.md`](../data/raw/
 - COCHRAN, W. G. *Sampling Techniques*. 3. ed. New York: Wiley, 1977.
 - KISH, L. *Survey Sampling*. New York: Wiley, 1965.
 - LOHR, S. L. *Sampling: Design and Analysis*. 3. ed. Boca Raton: CRC Press, 2022.
-- SÄRNDAL, C.-E.; SWENSSON, B.; WRETMAN, J. *Model Assisted Survey Sampling*. New York: Springer, 1992.
+- KISH, L. Weighting for unequal $`P_i`$. *Journal of Official Statistics*, v. 8, n. 2, p. 183–200, 1992.
+- MANSKI, C. F. Anatomy of the selection problem. *Journal of Human Resources*, v. 24, n. 3, p. 343–360, 1989.
+- WOLTER, K. M. *Introduction to Variance Estimation*. 2. ed. New York: Springer, 2007.
 - THOMPSON, S. K. *Sampling*. 3. ed. Hoboken: Wiley, 2012.

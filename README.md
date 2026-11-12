@@ -31,21 +31,21 @@ O arquivo `data/raw/kaggle/poker_tournament_survival.csv`:
 
 - **Tamanho:** 45.000 jogadores × 17 colunas; nenhum valor ausente; `player_id` único.
 - **Natureza:** dados **sintéticos**. O dicionário descreve `skill` como a "vantagem verdadeira de longo prazo", uma variável latente que não é observável em dados reais.
-- **Unidade:** o jogador, com o histórico agregado de 10 a 1.567 torneios (mediana de 111). É análoga a um perfil do SharkScope. **Não há ID de torneio**, então o plano de campo, com conglomerados, não pode ser simulado neste dataset.
+- **Unidade:** o jogador, com o histórico agregado de 10 a 1.567 torneios (mediana de 111). É análoga a um perfil do SharkScope. **Não há ID de torneio**, então o plano de campo, com conglomerados, não pode ser simulado diretamente neste dataset. Ele é simulado numa população sintética com a estrutura do campo ([`docs/kaggle_tres_estagios.md`](docs/kaggle_tres_estagios.md)).
 - **Parâmetros verdadeiros:** ROI médio $\mu = -31{,}88\%$ (mediana de −34%, DP de 45,96 p.p.); proporção de lucrativos $P = 0{,}1939$; 50,0% quebraram a banca (`went_broke`).
-- **Distribuição do ROI:** limitada entre −100% e +400%, com cauda direita longa (P99 ≈ 109%). O IC normal funciona bem com n = 60 (cobertura de 94% a 95% nas simulações).
+- **Distribuição do ROI:** limitada entre −100% e +400%, com cauda direita longa (P99 ≈ 109%). O IC normal funciona bem com n = 120 (cobertura de 94% a 96% nas simulações).
 - **Estratos por buy-in** (`avg_buyin`, mesmas faixas do campo): micro 1.060 (2,4%), low 14.652 (32,6%), mid_high 29.288 (65,1%). O ROI médio é praticamente igual nas três faixas (−31,9%, −32,4% e −31,6%). A correlação entre ROI e buy-in é de 0,0006.
 
-### Resultados preliminares (n = 60, 5.000 réplicas, seed = 42; a rodar de novo com n = 120, o n do campo)
+### Resultados (n = 120, o n planejado do campo; 5.000 réplicas, seed = 42)
 
-| Estratificação | Parâmetro | EPA empírico (estratificada / AAS) | Cobertura do IC 95% (AAS / estratificada) |
+| Estratificação | Parâmetro | EPA empírico, alocação proporcional | EPA empírico, alocação de Neyman |
 |---|---|---|---|
-| Buy-in (igual ao campo) | ROI | 0,98 | 94,4% / 94,4% |
-| Buy-in (igual ao campo) | P | 0,99 | 94,3% / 94,0% |
-| Quartis de `skill` (didático) | ROI | 0,95 | 95,0% / 95,1% |
-| Quartis de `skill` (didático) | P | 0,94 | 94,6% / 94,8% |
+| Buy-in (igual ao campo) | ROI | 1,00 | 0,98 |
+| Buy-in (igual ao campo) | P | 1,00 | 1,01 |
+| Quartis de `skill` (didático) | ROI | 0,96 | 0,96 |
+| Quartis de `skill` (didático) | P | 0,96 | 0,92 |
 
-Neste dataset, estratificar por buy-in praticamente não reduz a variância, porque o ROI não varia entre as faixas. Estratificar por `skill` ganha um pouco (correlação ROI–skill de 0,23, ou seja, EPA ≈ 1 − R² ≈ 0,95). Mas `skill` não é observável em campo.
+Estratificar por buy-in praticamente não reduz a variância, porque o ROI não varia entre as faixas. Por `skill`, o ganho é pequeno, e `skill` não é observável em campo. A alocação de Neyman usa os DPs verdadeiros dos estratos, que são parecidos (de 43 a 46 p.p. por buy-in): por buy-in ela coincide com a proporcional (39/3/78), e por `skill` desloca poucos jogadores. O EP do EPA com 5.000 réplicas é de cerca de 0,03. A comparação completa, com n = 67 e com o plano em três estágios, está em [`docs/comparacao_planos.md`](docs/comparacao_planos.md).
 
 ---
 
@@ -53,8 +53,8 @@ Neste dataset, estratificar por buy-in praticamente não reduz a variância, por
 
 1. Qual o ROI médio por jogador distinto ($\mu$) e a proporção de jogadores lucrativos ($P$), com IC de 95%?
 2. Quanto da variância vem da variação **entre blocos**, **entre torneios** e **dentro dos torneios**?
-3. Qual o **Efeito do Planejamento (EPA/DEFF)** do plano em três estágios e a correlação intraclasse $\rho_{int}$ implícita?
-4. No Kaggle, quanto a estratificação ganha em relação à AAS (viés, EQM, cobertura do IC)?
+3. Qual o **Efeito do Planejamento (EPA/DEFF)** do plano em três estágios, e quanto dele vem da variação dos pesos e quanto dos conglomerados?
+4. No Kaggle, quanto a estratificação (alocação proporcional e de Neyman) ganha em relação à AAS (viés, EQM, cobertura do IC)?
 5. Qual a taxa de não resposta (perfis privados) e qual o seu possível impacto?
 
 ---
@@ -122,8 +122,12 @@ Rscript scripts/sortear_amostra.R jogadores --m-por-torneio 5 --n-reserva 0 --se
 Rscript scripts/sortear_amostra.R torneio-extra --bloco 5 --estrato low --seed 164363  # ADR-011
 Rscript scripts/sortear_amostra.R top10       # linhas do top 10 dos torneios sorteados
 
-# 4. Estimação a partir da coleta
+# 4. Estimação a partir da coleta (inclui EP por JK1, componentes de variância, EPA decomposto
+#    e sensibilidade à não resposta)
 Rscript scripts/estimar_campo.R --unidade jogador     # e --unidade inscricao (sensibilidade)
+Rscript scripts/estimar_campo.R --excluir MuoMadre     # sensibilidade ao maior ROI
+Rscript scripts/simular_kaggle_tres_estagios.R --b 4,6,12 --n-rep 5000   # plano de campo no Kaggle (ADR-013)
+Rscript scripts/checar_variancia_kaggle.R --b 4 --n-rep 2000             # totais e componentes de variância (ADR-014)
 
 # 5. Análise exploratória dos estratos (tabelas em data/processed, figuras em docs/figuras)
 Rscript scripts/explorar_estratos.R
@@ -171,13 +175,16 @@ scripts/
   estimar_campo.R                 # Estimação em três estágios, IC, EPA
   explorar_estratos.R             # Análise exploratória dos estratos de buy-in (campo)
   explorar_top10.R                # AED do top 10 e comparação com amostra, plano e Kaggle
+  checar_variancia_kaggle.R       # Variância dos totais e componentes verdadeiros x estimados (ADR-014)
 R/
   dados.R                         # Leitura e validação das fontes
   sorteio.R                       # Sorteio de blocos, torneios por (bloco, estrato) e jogadores
   estimadores_aas.R               # AAS e AAS estratificada (Thompson cap. 11)
   estimadores_dois_estagios.R     # Núcleo de dois estágios, razão, EPA (Thompson cap. 13; Bolfarine cap. 8)
   estimadores_tres_estagios.R     # Plano de campo: blocos → torneios → jogadores, por jogador (1/f)
-  simulacao_kaggle.R              # Monte Carlo sobre a população do Kaggle
+  nao_resposta.R                  # Sensibilidade à não resposta: limites de pior caso, ajuste por posição
+  simulacao_kaggle.R              # Monte Carlo sobre a população do Kaggle (proporcional e Neyman)
+  simulacao_kaggle_tres_estagios.R # Plano de campo numa população sintética (ADR-013)
   exploracao_estratos.R           # AED dos estratos: moldura, não resposta, domínios, decomposição
   exploracao_top10.R              # AED do top 10: resposta por posição, reconsultas, comparação
 tests/
@@ -203,7 +210,7 @@ tests/
 
 [x] Dataset do Kaggle carregado e perfilado (colunas e natureza sintética confirmadas; licença pendente)
 
-[x] Simulações de Monte Carlo no Kaggle (AAS vs. AAS estratificada por buy-in e por skill)
+[x] Simulações de Monte Carlo no Kaggle (AAS vs. AAS estratificada por buy-in e por skill, alocação proporcional e de Neyman)
 
 [x] Sorteio dos blocos de tempo (Fase 0)
 
@@ -211,11 +218,17 @@ tests/
 
 [x] Sorteio dos jogadores (3º estágio): m_k = 5 por torneio, 120 posições
 
-[ ] Coleta no SharkScope
+[x] Coleta no SharkScope (160 posições em 32 torneios, 72 respondentes; top 10 dos 24 torneios originais)
+
+[ ] Top 10 dos 8 torneios extras
 
 [x] Estimadores do plano em três estágios (por jogador e por inscrição)
 
-[ ] Estimação de campo, IC 95%, EPA e $\rho_{int}$
+[x] Estimação de campo, IC 95% e EPA (separado em efeito dos pesos e dos conglomerados)
+
+[x] Plano em três estágios simulado no Kaggle (ADR-013), com diagnóstico da variância (N verdadeiro e JK1)
+
+[x] Sensibilidade à não resposta (limites de pior caso e ajuste por posição)
 
 [ ] Relatório técnico
 
