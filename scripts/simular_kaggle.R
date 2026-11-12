@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # Simulacao de Monte Carlo de AAS e AAS estratificada sobre o dataset do
-# Kaggle (populacao conhecida). Plano §2.1 e §4.5.
+# Kaggle (populacao conhecida). Metodologia §10.
 #
 # Exemplo:
 #   Rscript scripts/simular_kaggle.R --estratificar-por buyin --n 120 --n-rep 5000 --seed 42
