@@ -197,6 +197,13 @@ sortear_jogadores <- function(torneios, m_por_torneio, n_reserva, seed) {
 #' posicao, modulo o maior inteiro do R. E deterministica e so depende da
 #' propria unidade.
 #'
+#' LIMITACAO (ADR-016): a soma tem poucos valores possiveis para chaves
+#' numericas de mesmo comprimento, entao chaves diferentes colidem (os 83
+#' torneios da moldura de campo geram 66 sementes). Unidades com a mesma
+#' semente nao sao sorteadas de forma independente. Nao alterar: o sorteio de
+#' campo ja foi executado e precisa continuar reprodutivel. Em um novo
+#' levantamento, trocar por um hash de verdade.
+#'
 #' @param seed integer, semente principal.
 #' @param chave character(1), identificador da unidade.
 #' @return integer.
@@ -227,6 +234,11 @@ expandir_por_estrato <- function(valor, estratos) {
 #' @param codigo expressao a avaliar.
 #' @return o valor de `codigo`.
 withr_seed <- function(seed, codigo) {
+  # set.seed(NULL) sortearia uma semente nova em silencio; NA para com um erro
+  # pouco claro. Os dois casos vem de --seed ou RANDOM_SEED mal informados.
+  if (length(seed) != 1 || is.na(seed)) {
+    stop("Semente invalida: informe um inteiro em --seed (ou RANDOM_SEED).", call. = FALSE)
+  }
   tinha_seed <- exists(".Random.seed", envir = globalenv())
   if (tinha_seed) antigo <- get(".Random.seed", envir = globalenv())
   on.exit({
