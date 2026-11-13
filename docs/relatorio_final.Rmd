@@ -1,7 +1,11 @@
 ---
 title: "Comparação de Planos Amostrais no Poker Online"
 subtitle: "AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três estágios (SharkScope)"
-author: "Arthur Agostinho Furlan Teixeira (RA 164363)"
+author:
+  - "Arthur Agostinho Furlan Teixeira (RA 164363)"
+  - "Felipe Basilio da Silva (RA 238550)"
+  - "Luiz Eduardo Costa Martins Rodrigues (RA 284715)"
+  - "Marcel Hideki Sousa Adati (RA 242910)"
 date: "ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestre de 2026"
 output:
   html_document:
@@ -136,8 +140,11 @@ if (knitr::pandoc_to("gfm")) {
     "# Comparação de Planos Amostrais no Poker Online\n\n",
     "**AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três estágios ",
     "(SharkScope)**\n\n",
-    "Arthur Agostinho Furlan Teixeira (RA 164363) · ME430 — Técnicas de Amostragem · ",
-    "Estatística, Unicamp · 2º semestre de 2026\n\n",
+    "Arthur Agostinho Furlan Teixeira (RA 164363)  \n",
+    "Felipe Basilio da Silva (RA 238550)  \n",
+    "Luiz Eduardo Costa Martins Rodrigues (RA 284715)  \n",
+    "Marcel Hideki Sousa Adati (RA 242910)\n\n",
+    "ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestre de 2026\n\n",
     "> Versão em Markdown gerada a partir de `docs/relatorio_final.Rmd`. Para atualizar: ",
     "`Rscript -e 'rmarkdown::render(\"docs/relatorio_final.Rmd\", output_format = \"all\")'`.\n\n",
     sep = ""
