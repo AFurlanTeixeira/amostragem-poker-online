@@ -84,6 +84,8 @@ Três valores transcritos errados na primeira anotação foram corrigidos após 
 
 **Valores dependem da data da consulta.** Mesmo com a janela fixa já encerrada, um jogador consultado em dias diferentes pode ter valores diferentes. Isso aparece dentro do top 10 (`CrazySezya` e `liova777`) e entre a coleta e o top 10 (por exemplo, `JusuBoi`, com ROI −20,7 em 23/10 e −21,2 em 10/11). Cada registro guarda o valor do seu dia (`data_consulta`). Os lucros de dias diferentes não são comparáveis em magnitude, porque o SharkScope provavelmente converte para R\$ pelo câmbio do dia. Ver a limitação em [Metodologia §11](../../docs/Metodologia.md#11-erros-não-amostrais).
 
+### `coleta_jogadores.csv`
+
 Na lista de inscritos não se transcreve nada além das posições sorteadas. A posição é a da lista de resultados do torneio no SharkScope (1 = campeão), e vai de 1 a `M_k` (`n_inscritos`). Em cada torneio, siga a `ordem` de `jogadores_sorteados.csv`:
 
 - Anote o `nickname` da posição em `coleta_jogadores.csv`, com a `ordem` e a `posicao`.

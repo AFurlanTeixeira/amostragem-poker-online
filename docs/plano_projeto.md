@@ -51,7 +51,7 @@ O projeto usa **duas fontes de dados com papéis metodológicos distintos**:
   * O dataset não tem identificador de torneio. Por isso o plano em dois estágios não pode ser simulado nele e só é aplicado no campo.
   * `avg_buyin` é uma média por jogador, enquanto no campo o estrato é o buy-in do torneio.
   * A licença não aparece na página do Kaggle.
-* **Resultado preliminar** (n = 60, 5.000 réplicas): o EPA da estratificação por buy-in foi de cerca de 0,98, sem ganho, porque o ROI médio é praticamente o mesmo nas três faixas. Por quartis de `skill`, o EPA foi de cerca de 0,95. A cobertura do IC de 95% ficou entre 94% e 95% em todos os casos.
+* **Resultado preliminar** (n = 60, 5.000 réplicas): o EPA da estratificação por buy-in foi de cerca de 1,02, sem ganho, porque o ROI médio é praticamente o mesmo nas três faixas. Por quartis de `skill`, o EPA foi de cerca de 0,95. A cobertura do IC de 95% ficou entre 94% e 95% em todos os casos.
 
 ### 2.2 Fonte 2: coleta de campo (SharkScope)
 

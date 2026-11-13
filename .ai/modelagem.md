@@ -41,15 +41,33 @@ dividida por M̂0² (linearização; Bolfarine Prop. 8.1).
 IC t com gl = b − 1 = 3 no campo: com b/B pequeno, a variância é estimada
 essencialmente a partir dos b totais de bloco. Isso é conservador, e o relatório
 deve discutir que o IC é largo por causa do número de blocos, não do número de
-jogadores. Satterthwaite na AAS estratificada (Thompson eq. 11.4).
+jogadores. Satterthwaite na AAS estratificada (Thompson eq. 11.4). O EP
+linearizado é otimista com poucos blocos; o EP por jackknife é reportado ao
+lado (ADR-014).
 
 ## ADR-005: EPA
 
 EPA = Var(plano) / Var_AAS, com Var_AAS = (1 − n/N̂) s_y²/n e s_y² estimada
 na amostra de campo com os pesos finais (ADR-002, incluindo 1/f_i do ADR-009)
-(Bolfarine §3.4). rho_int = (EPA − 1)/(m̄ − 1) (Bolfarine eq. 8.26). O Kaggle
-**não** entra no EPA de campo: são populações diferentes. No Kaggle, o EPA
-empírico compara a AAS estratificada com a AAS na mesma população.
+(Bolfarine §3.4). O Kaggle **não** entra no EPA de campo: são populações
+diferentes. No Kaggle, o EPA empírico compara a AAS estratificada com a AAS
+na mesma população.
+
+O EPA é separado em duas partes (Kish, 1992; `epa_ponderado()`):
+`epa_pesos` = 1 + CV²(w) = n Σw²/(Σw)², a perda só pela variação dos pesos, e
+`epa_conglomerado` = EPA / `epa_pesos`, o que sobra. No campo (por jogador),
+`epa_pesos` = 4,67: o n efetivo de Kish é 67/4,67 ≈ 14, e os 5 maiores pesos
+somam cerca de metade de Σw. A fórmula de Kish supõe pesos não relacionados
+com y, o que não vale aqui (peso 1/f_i e ROI andam juntos), então
+`epa_conglomerado` (0,10 no ROI, 2,35 no lucrativo estrito) é só um resíduo
+aritmético, sem leitura como efeito de conglomeração.
+
+rho_int = (EPA − 1)/(m̄ − 1) (Bolfarine eq. 8.26) **não é interpretável** neste
+plano e fica só como registro: a aproximação supõe conglomerados de mesmo
+tamanho e pesos iguais, usa m̄ por torneio (2,79) enquanto a variância é
+estimada entre blocos, e dá valores fora de [−1/(m̄ − 1), 1] no campo. O EPA
+estimado numa única amostra também subestima o real (em média, cerca de
+metade dele na simulação do ADR-013), então a leitura é qualitativa.
 
 ## ADR-006: Não resposta (perfis privados e "Anônimo")
 
@@ -57,7 +75,7 @@ Sem reservas desde o ADR-010: o jogador que não responde sai, e m_k passa a
 ser o número de respondentes do torneio (mínimo 2). Hipótese: não resposta
 aleatória dentro do torneio. Células abaixo do mínimo recebem torneios
 extras (ADR-011). Reportar a taxa por estrato e discutir o viés
-residual (Thompson §14.5).
+residual (Thompson §14.5). A sensibilidade a essa hipótese está no ADR-015.
 
 ## ADR-007: Dataset do Kaggle
 
@@ -67,9 +85,14 @@ residual (Thompson §14.5).
   diretamente, só é possível simular AAS e AAS estratificada. O plano em
   estágios é simulado numa população sintética com a estrutura do campo (ADR-013).
 - Estratificação principal: faixas de `avg_buyin` iguais às do campo, para manter
-  a comparabilidade. Resultado: EPA ≈ 0,98, porque o ROI não varia entre as faixas.
-- Estratificação alternativa (didática): quartis de `skill`, EPA ≈ 0,95. Ela não
+  a comparabilidade. Resultado: EPA ≈ 1,00 (n = 120), porque o ROI não varia
+  entre as faixas.
+- Estratificação alternativa (didática): quartis de `skill`, EPA ≈ 0,96. Ela não
   é reproduzível em campo, onde `skill` não é observável.
+- Alocações proporcional e de Neyman, as duas arredondadas pelos maiores
+  restos (`arredondar_alocacao()`), para que Σ n_h = n e o EPA compare planos
+  de mesmo tamanho. O `round()` com mínimo de 2 por estrato dava n = 68 para
+  n = 67 e inflava o ganho da estratificação em cerca de 1,5%.
 - Ressalva: `avg_buyin` é a média do jogador ao longo de vários torneios; no campo,
   o estrato é o buy-in do torneio. As duas classificações não são idênticas.
 - Tamanho da amostra simulada: n = 120, o mesmo do campo (ADR-010).
@@ -124,8 +147,8 @@ os torneios com respondentes. Hipótese: não resposta aleatória dentro da
 célula. Se a célula esgotar os N_jh torneios sem chegar ao mínimo, colapsa-se
 com o estrato vizinho do mesmo bloco (low → micro; micro e mid_high → low),
 com N_jh e n_jh somados (técnica de estratos colapsados: a variância fica
-superestimada; citação a conferir em `docs/referencias.md`). Vale também para os blocos 24 e 30. Não resolve os
-gl = 3 nem o viés de perfis privados.
+superestimada; Cochran, 1977, §5A.12). Vale também para os blocos 24 e 30.
+Não resolve os gl = 3 nem o viés de perfis privados.
 
 ## ADR-012: IC logit para as proporções
 
@@ -143,9 +166,9 @@ O Kaggle não tem horário nem ID de torneio (ADR-007), então a estrutura do
 campo é construída (`montar_populacao_blocos()`, seed 164363): B = 38 blocos;
 em cada bloco e estrato, N_jh sorteado entre os N_jh observados nos 4 blocos
 listados do SharkScope e M_k reamostrado dos M_k observados no estrato. Cada
-torneio é preenchido por AAS sem reposição, com probabilidade proporcional a
-`tournaments_played`, entre os jogadores do Kaggle do mesmo estrato de
-`avg_buyin`. Um jogador pode estar em vários torneios, e f_i é a contagem
+torneio é preenchido por sorteio sem reposição, com probabilidades desiguais
+(proporcionais a `tournaments_played`), entre os jogadores do Kaggle do mesmo
+estrato de `avg_buyin`. Um jogador pode estar em vários torneios, e f_i é a contagem
 exata, então o parâmetro por jogador distinto é conhecido. Sorteios e
 estimadores são os do campo. O sorteio oficial (b = 6, n_jh = 2, m_k = 5)
 simula a não resposta com as taxas observadas por estrato, como Bernoulli
@@ -156,3 +179,89 @@ real (ρ ≈ 0 por construção), e as diferenças entre blocos vêm só de N_jh
 M_k. O EPA medido reflete a variação dos pesos e o número de UPAs, não um
 efeito de horário. A população fica só com os jogadores sorteados para algum
 torneio (21.793 dos 45.000).
+
+## ADR-014: EP por jackknife ao lado do linearizado; componentes de variância
+
+**Jackknife.** Na simulação do ADR-013, a variância linearizada de R̂ capta só
+de 50% a 64% da variância real por jogador (63% a 80% por inscrição). As
+fórmulas por estágio estão certas (a variância dos totais é bem estimada:
+razão de 0,97 a 1,05 em `scripts/checar_variancia_kaggle.R`); o
+déficit está na razão. Com o N verdadeiro no denominador, a razão sobe para
+0,79–0,92: mais da metade do déficit vem de dividir por N̂², e N̂ tem CV de
+cerca de 50% com b = 4. O jackknife de blocos JK1, v = ((b − 1)/b) Σ_j
+(R̂_(j) − R̂)² (Wolter, 2007, cap. 4), fica entre 0,94 e 1,04 da variância
+real. Decisão: `variancia` continua sendo a linearizada (ADR-003), que é a
+fórmula do curso e a validada contra o Thompson, e o EP JK1
+(`variancia_jk1`) é reportado ao lado, com o IC correspondente (t no ROI,
+logit nas proporções, gl = b − 1). Nas proporções, a leitura prudente é a do
+JK1. Ressalva: nem o JK1 leva a cobertura a 95% com 4 blocos (cerca de 94% no
+ROI e 91% nos lucrativos), porque a variância estimada tem 3 gl e R̂ é
+assimétrico. Alternativa não adotada: trocar a variância principal pelo JK1,
+o que mudaria todos os resultados já reportados sem resolver a cobertura.
+
+**Componentes.** As duas parcelas da fórmula do ADR-003 não são componentes de
+variância: E[s_u²] = S_u² + V̄ (Cochran, 1977, cap. 10–11), então o 1º termo
+já carrega a variação de dentro dos blocos. A pergunta "quanto da variância
+vem de cada estágio" é respondida pelos estimadores não viesados dos
+componentes (`componentes` em `total_tres_estagios()`): entre blocos com
+(s_u² − v̄), entre torneios com (s_1² − w̄), dentro dos torneios com w̄,
+que somam a mesma variância. Negativo lê-se como zero. Com b = 4 e
+n_jh = 2 são muito instáveis: servem para dizer que o componente entre
+blocos não é distinguível de zero, não para ordenar os estágios. Os `termos`
+continuam disponíveis, rotulados como parcelas da fórmula. Verificação
+(`scripts/checar_variancia_kaggle.R`): na população sintética, sem efeito de
+horário, o componente verdadeiro entre blocos é 0,1% a 0,2% da variância e o
+de dentro dos torneios, 99%; os estimadores recuperam isso, enquanto o 1º
+termo da fórmula fica em 90% da variância estimada. Ressalva: isso vale
+para o total com R verdadeiro. Na razão (linearizada em torno de R̂ e
+dividida por N̂²), os componentes "entre" ficam negativos em média na
+simulação (−9% a −13% entre blocos, −37% a −42% entre torneios, com b = 4):
+a subestimação da variância linearizada recai sobre eles. No campo, eles
+tendem a subestimar o que vem dos blocos e dos torneios.
+
+## ADR-015: Sensibilidade à não resposta
+
+A correção do plano (m_k = respondentes, ADR-006) supõe não resposta aleatória
+dentro do torneio, e a taxa é de 55%. Duas análises descritivas, sem variância
+própria (`R/nao_resposta.R`), medem quanto a hipótese pesa:
+
+- **Limites de pior caso** (Manski, 1989), para as proporções: os não
+  respondentes recebem 0 e depois 1. Por inscrição (f_i = 1), porque
+  `n_jogos_dia` de quem não respondeu é desconhecido. Os torneios com 0 ou 1
+  respondente voltam a entrar, então os limites não usam o mesmo conjunto de
+  torneios da estimativa observada, e ela pode, em tese, cair fora deles.
+  Campo: lucrativos em [0,41; 0,95] (observada 0,87); estrito em
+  [0,38; 0,91] (observada 0,80).
+- **Ajuste por posição no torneio**: duas classes (metade de cima e de baixo
+  da lista de resultados) dentro da célula, com fator r_célula / r_classe
+  sobre o peso final. É uma heurística inspirada nas classes de ajuste de
+  peso (Lohr, 2022, cap. 8), não o ajuste canônico, que substituiria o fator
+  M_k/m_k em vez de multiplicá-lo. A posição é a única covariável conhecida
+  para quem não respondeu. Campo (por jogador): ROI de 17,5 para 15,1;
+  lucrativos de 0,854 para 0,849.
+
+Leitura: a não resposta ligada à posição no torneio explica pouco (cerca de
+2 p.p. no ROI). O risco maior é o que nenhuma covariável observada capta
+(perfil público associado a ser vencedor), e para ele só os limites de pior
+caso valem: sem hipótese, a proporção de lucrativos está entre 0,41 e 0,95.
+
+## ADR-016: Sementes derivadas com colisão (limitação registrada)
+
+`semente_derivada()` soma os códigos dos caracteres da chave ponderados pela
+posição. Para IDs de torneio numéricos de 10 dígitos, essa soma assume poucas
+centenas de valores: os 83 torneios da moldura geram 66 sementes distintas, e
+entre os 32 sorteados há 2 pares com a mesma semente. Torneios com a mesma
+semente partem do mesmo fluxo aleatório e, com M_k parecidos, recebem as
+mesmas posições: 4039583402 (M = 114) e 4039583321 (M = 112) receberam
+exatamente 71, 19, 95, 42 e 103.
+Consequência: cada torneio continua sendo uma AAS de posições, então pesos e
+estimativa pontual não mudam, mas os sorteios do 3º estágio **não são todos
+independentes entre torneios**, como a fórmula de variância supõe. O efeito
+numérico no campo é pequeno (4039583402 ficou fora da estimação, com 1
+respondente). Decisão: a função **não** é alterada, porque o sorteio de campo
+já foi executado e precisa continuar reproduzível com a semente 164363; a
+limitação é declarada no relatório. A simulação do ADR-013 usa as mesmas
+funções e herda a colisão (800 torneios, 319 sementes); como ali os jogadores
+são alocados ao acaso às posições, posições iguais em torneios diferentes não
+criam dependência nos valores. Em um novo levantamento, usar um hash de
+verdade (por exemplo, `digest::digest2int()`).

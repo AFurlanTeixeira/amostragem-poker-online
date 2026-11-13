@@ -96,6 +96,18 @@ test_that("estratos se somam e EPA e coerente com rho_int", {
   expect_equal(epa$rho_int, (epa$epa - 1) / (epa$m_medio - 1))
 })
 
+test_that("EPA se decompoe em efeito dos pesos (Kish) e efeito do plano", {
+  # w = (1, 1, 1, 3): 1 + CV^2(w) = n sum(w^2) / (sum w)^2 = 4 * 12 / 36.
+  y <- c(1, 2, 3, 4)
+  w <- c(1, 1, 1, 3)
+  epa <- epa_ponderado(variancia = 2, y, w, conglomerado = c("a", "a", "b", "b"), N = 1000)
+  expect_equal(epa$epa_pesos, 4 / 3)
+  expect_equal(epa$epa_conglomerado, epa$epa / epa$epa_pesos)
+
+  sem_variacao <- epa_ponderado(2, y, rep(5, 4), c("a", "a", "b", "b"), N = 1000)
+  expect_equal(sem_variacao$epa_pesos, 1)
+})
+
 test_that("proporcao de lucrativos usa as mesmas formulas", {
   coleta <- coleta_thompson()
   coleta$lucrativo <- as.integer(coleta$roi > 0)

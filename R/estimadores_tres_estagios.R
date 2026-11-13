@@ -34,13 +34,26 @@ frequencia_no_periodo <- function(n_jogos_dia) {
 #' celula, os termos entre e dentro dos torneios de Thompson eq. 13.6
 #' (`variancia_entre()`, `variancia_dentro()`). Com b = B o 1º termo some.
 #'
+#' Os dois termos da formula (`termos`) NAO sao componentes de variancia: o 1º
+#' usa os totais estimados Ŷ_j, e E[s_u^2] = S_u^2 + media das variancias
+#' dentro dos blocos, entao ele ja carrega quase toda a variacao de dentro
+#' (Cochran, 1977, cap. 10-11). Os estimadores nao viesados de cada
+#' componente (`componentes`, que tambem somam a variancia) sao
+#'   entre blocos:       B^2 (1 - b/B) (s_u^2 - vbar) / b, vbar = media dos v_j;
+#'   entre torneios:     (B/b)^2 sum_celulas N^2 (1 - n/N) (s_1^2 - wbar) / n;
+#'   dentro dos torneios: (B/b)^2 sum_celulas N^2 wbar / n,
+#' com wbar = media de M_k^2 (1 - m_k/M_k) s_k^2 / m_k na celula. Com poucos
+#' blocos sao instaveis e podem sair negativos (leia-se zero).
+#'
 #' @param resp data.frame dos respondentes, com `bloco_id`, `estrato`,
 #'   `torneio_id` e `n_inscritos`.
 #' @param a numeric, variavel por respondente (mesma ordem de `resp`).
 #' @param N_jh numeric nomeado por celula (`"bloco|estrato"`).
 #' @param B numeric, blocos na moldura.
-#' @return lista com `total`, `variancia`, `b` e `blocos` (data.frame com
-#'   `bloco_id`, `Y_j` e `v_j`).
+#' @return lista com `total`, `variancia`, `b`, `blocos` (data.frame com
+#'   `bloco_id`, `Y_j` e `v_j`), `termos` (`entre_blocos`, `dentro_blocos`:
+#'   as duas parcelas da formula) e `componentes` (`entre_blocos`,
+#'   `entre_torneios`, `dentro_torneios`: estimativas nao viesadas).
 total_tres_estagios <- function(resp, a, N_jh, B) {
   celula <- paste(resp$bloco_id, resp$estrato, sep = "|")
   torneio <- paste(celula, resp$torneio_id, sep = "|")
@@ -58,10 +71,15 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 
   cel <- lapply(split(tor, tor$celula), function(d) {
     N <- N_jh[[d$celula[1]]]
+    n <- nrow(d)
+    v_entre <- variancia_entre(N, d$T)
+    v_dentro <- variancia_dentro(N, d$M, d$m, d$s2) # = N wbar
     data.frame(
       bloco_id = d$bloco_id[1],
-      Y = (N / nrow(d)) * sum(d$T),
-      v = variancia_entre(N, d$T) + variancia_dentro(N, d$M, d$m, d$s2)
+      Y = (N / n) * sum(d$T),
+      v = v_entre + v_dentro,
+      c_entre_tor = v_entre - (1 - n / N) * (N / n) * v_dentro,
+      c_dentro_tor = (N / n) * v_dentro
     )
   })
   cel <- do.call(rbind, cel)
@@ -72,12 +90,25 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
   )
 
   b <- nrow(blocos)
-  entre_blocos <- if (b == B) 0 else B^2 * (1 - b / B) * stats::var(blocos$Y_j) / b
+  censo <- b == B
+  entre_blocos <- if (censo) 0 else B^2 * (1 - b / B) * stats::var(blocos$Y_j) / b
+  dentro_blocos <- (B / b) * sum(blocos$v_j)
+  c_entre_blocos <- if (censo) {
+    0
+  } else {
+    B^2 * (1 - b / B) * (stats::var(blocos$Y_j) - mean(blocos$v_j)) / b
+  }
   list(
     total = (B / b) * sum(blocos$Y_j),
-    variancia = entre_blocos + (B / b) * sum(blocos$v_j),
+    variancia = entre_blocos + dentro_blocos,
     b = b,
-    blocos = blocos
+    blocos = blocos,
+    termos = c(entre_blocos = entre_blocos, dentro_blocos = dentro_blocos),
+    componentes = c(
+      entre_blocos = c_entre_blocos,
+      entre_torneios = (B / b)^2 * sum(cel$c_entre_tor),
+      dentro_torneios = (B / b)^2 * sum(cel$c_dentro_tor)
+    )
   )
 }
 
@@ -104,12 +135,22 @@ total_tres_estagios <- function(resp, a, N_jh, B) {
 #' @param nivel numeric, nivel de confianca do IC.
 #' @return lista com `estimativa`, `variancia`, `erro_padrao`, `gl`, `li`,
 #'   `ls`, `unidade`, `N_hat` (inscricoes ou jogadores estimados), `b`,
-#'   `blocos`, `torneios_excluidos` (com 1 respondente) e `amostra` (`y`,
+#'   `blocos` (totais do numerador), `blocos_z` (totais da variavel
+#'   linearizada, os que entram na variancia), `termos` e `componentes` da
+#'   variancia na escala de R (ver `total_tres_estagios()`), `variancia_z`
+#'   (Var(Ẑ), para trocar o denominador N̂^2), `variancia_jk1` (jackknife de
+#'   blocos; na simulacao do Kaggle fica perto da variancia real, enquanto a
+#'   linearizada capta cerca de metade, ADR-014),
+#'   `torneios_excluidos` (com 1 respondente) e `amostra` (`y`,
 #'   peso final `w` e `torneio`, para o EPA).
 estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
                                         unidade = c("jogador", "inscricao"),
                                         nivel = 0.95) {
   unidade <- match.arg(unidade)
+  validar_colunas(
+    coleta, c("bloco_id", "estrato", "torneio_id", "n_inscritos", "respondeu", variavel),
+    "coleta (tres estagios)"
+  )
   resp <- coleta[coleta$respondeu %in% TRUE, , drop = FALSE]
   # Torneio com menos de 2 respondentes e nao resposta de USA e sai da
   # estimacao; n_jh passa a contar so os torneios que ficam (ADR-011).
@@ -144,6 +185,12 @@ estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
   lin <- total_tres_estagios(resp, (y - estimativa) / f, N_jh, B)
   variancia <- lin$variancia / den$total^2
 
+  # Jackknife JK1 (reportado ao lado da linearizada, ADR-014): R_(j) sem o
+  # bloco j, v = (b-1)/b sum (R_(j) - R)^2 (Wolter, 2007, cap. 4). O fator
+  # B/b se cancela na razao.
+  R_sem <- (sum(num$blocos$Y_j) - num$blocos$Y_j) / (sum(den$blocos$Y_j) - den$blocos$Y_j)
+  variancia_jk1 <- (num$b - 1) / num$b * sum((R_sem - estimativa)^2)
+
   # Peso final w = (B/b)(N_jh/n_jh)(M_k/m_k)/f (Metodologia §7.4).
   n_cel <- tapply(resp$torneio_id, celula, function(x) length(unique(x)))
   w <- (B / num$b) * as.numeric(N_jh[celula] / n_cel[celula]) * resp$n_inscritos / m_k / f
@@ -152,10 +199,21 @@ estimar_media_tres_estagios <- function(coleta, moldura, B, variavel = "roi",
   # gl = sum(n_jh) - numero de celulas, como no plano em dois estagios.
   gl <- if (num$b < B) num$b - 1 else sum(n_cel) - length(n_cel)
   resultado <- montar_resultado(estimativa, variancia, gl = gl, nivel = nivel)
+  posicao_relativa <- if ("posicao" %in% names(resp)) {
+    resp$posicao / resp$n_inscritos
+  } else {
+    NA_real_
+  }
   c(resultado, list(
     unidade = unidade, N_hat = den$total, b = num$b, blocos = num$blocos,
+    blocos_z = lin$blocos,
+    termos = lin$termos / den$total^2, componentes = lin$componentes / den$total^2,
+    variancia_z = lin$variancia, variancia_jk1 = variancia_jk1,
     torneios_excluidos = excluidos,
-    amostra = data.frame(y = y, w = w, torneio = torneio)
+    amostra = data.frame(
+      y = y, w = w, torneio = torneio, celula = celula,
+      posicao_relativa = posicao_relativa
+    )
   ))
 }
 

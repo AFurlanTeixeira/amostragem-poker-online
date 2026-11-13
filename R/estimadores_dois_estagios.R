@@ -69,8 +69,8 @@ variancia_entre <- function(N_h, z) {
 
 #' Estima a media por jogador sob amostragem estratificada em dois estagios.
 #'
-#' - `"nao_viesado"`: mu = sum(tau_h) / M0, exige M0 conhecido (plano §4.2a).
-#' - `"razao"`: mu_R = sum(tau_h) / sum(Mhat_h) (plano §4.2b).
+#' - `"nao_viesado"`: mu = sum(tau_h) / M0, exige M0 conhecido (plano_projeto.md §4.2a).
+#' - `"razao"`: mu_R = sum(tau_h) / sum(Mhat_h) (plano_projeto.md §4.2b).
 #' - `"auto"`: usa `"nao_viesado"` se a moldura tiver `n_inscritos` de todos
 #'   os torneios; senao, `"razao"`.
 #'
@@ -166,11 +166,19 @@ calcular_epa <- function(resultado, coleta, moldura, variavel = "roi") {
 #' Var_AAS = (1 - n/N) s_y^2 / n, com s_y^2 ponderada pelos pesos `w`
 #' (Bolfarine & Bussab §3.4); rho_int = (EPA - 1)/(mbar - 1) (eq. 8.26).
 #'
+#' O EPA e separado em duas partes (Kish, 1992):
+#' `epa_pesos` = 1 + CV^2(w) = n sum(w^2) / (sum w)^2, a perda so pela
+#' variacao dos pesos, e `epa_conglomerado` = EPA / `epa_pesos`, o que sobra
+#' (conglomeracao em blocos e torneios). No plano de tres estagios, rho_int
+#' usa mbar por torneio, mas a variancia vem quase toda dos blocos, entao
+#' rho_int nao e interpretavel ali e fica so como registro (ADR-005).
+#'
 #' @param variancia numeric, variancia do estimador sob o plano.
 #' @param y,w numeric, valor e peso amostral de cada respondente.
 #' @param conglomerado character, torneio de cada respondente.
 #' @param N numeric, tamanho da populacao de elementos.
-#' @return lista com `epa`, `var_aas`, `s2_y`, `n`, `m_medio`, `rho_int`.
+#' @return lista com `epa`, `epa_pesos`, `epa_conglomerado`, `var_aas`,
+#'   `s2_y`, `n`, `m_medio`, `rho_int`.
 epa_ponderado <- function(variancia, y, w, conglomerado, N) {
   n <- length(y)
   media_w <- sum(w * y) / sum(w)
@@ -178,9 +186,12 @@ epa_ponderado <- function(variancia, y, w, conglomerado, N) {
 
   var_aas <- (1 - n / N) * s2_y / n
   epa <- variancia / var_aas
+  epa_pesos <- n * sum(w^2) / sum(w)^2
   m_medio <- n / length(unique(conglomerado))
   list(
     epa = epa,
+    epa_pesos = epa_pesos,
+    epa_conglomerado = epa / epa_pesos,
     var_aas = var_aas,
     s2_y = s2_y,
     n = n,

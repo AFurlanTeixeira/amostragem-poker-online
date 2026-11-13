@@ -38,7 +38,7 @@ COLUNAS_KAGGLE <- c(
   "profitable"
 )
 
-# Limites das faixas de buy-in (US$), iguais aos estratos de campo (plano §3.1):
+# Limites das faixas de buy-in (US$), iguais aos estratos de campo (Metodologia §2.3):
 # [0, 5) micro, [5, 25) low, [25, Inf) mid_high.
 LIMITES_BUYIN <- c(0, 5, 25, Inf)
 ROTULOS_BUYIN <- c("micro", "low", "mid_high")
@@ -201,7 +201,7 @@ registrar_log_coleta <- function(caminho, fase, evento, detalhe, seed = NA_integ
 #' Le a planilha de coleta de campo no SharkScope.
 #'
 #' Cada linha e um jogador consultado (titular ou reserva). `respondeu` e
-#' `FALSE` quando o perfil e privado (nao resposta, ver plano §5.1).
+#' `FALSE` quando o perfil e privado (nao resposta, ver Metodologia §11).
 #'
 #' @param caminho character, CSV com as colunas de `COLUNAS_COLETA`.
 #' @return data.frame tipado, com as colunas derivadas `lucrativo` (ROI > 0,

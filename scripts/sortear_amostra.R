@@ -43,7 +43,12 @@ option_list <- list(
   make_option("--n-por-estrato", default = as.integer(Sys.getenv("N_POR_ESTRATO", 2))),
   make_option("--m-por-torneio", default = as.integer(Sys.getenv("M_POR_TORNEIO", 5))),
   make_option("--n-reserva", default = as.integer(Sys.getenv("N_RESERVA", 0))),
-  make_option("--seed", default = as.integer(Sys.getenv("RANDOM_SEED", 42)))
+  # Sem padrao de proposito: um sorteio de campo com a semente errada
+  # sobrescreveria os CSV de data/raw/sharkscope com outra amostra.
+  make_option(
+    "--seed",
+    default = NA_integer_, help = "Semente do sorteio, obrigatoria (a do campo e 164363)"
+  )
 )
 parser <- OptionParser(
   usage = "%prog [blocos|torneios|jogadores|torneio-extra|top10] [opcoes]",
@@ -55,6 +60,9 @@ entrada <- parse_args(
 )
 etapa <- entrada$args
 args <- entrada$options
+if (etapa != "top10" && is.na(args$seed)) {
+  stop("Informe --seed (a do campo e 164363).", call. = FALSE)
+}
 
 if (etapa == "blocos") {
   blocos <- gerar_blocos(args$inicio, args$fim, args$horas_bloco, args$fuso)

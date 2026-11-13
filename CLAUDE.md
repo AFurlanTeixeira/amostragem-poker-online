@@ -27,6 +27,7 @@ Docs mais profundos:
 Rscript -e 'testthat::test_dir("tests/testthat")'       # testes unitários
 Rscript scripts/simular_kaggle.R --help                 # Monte Carlo no Kaggle
 Rscript scripts/simular_kaggle_tres_estagios.R --help   # plano de campo no Kaggle (ADR-013)
+Rscript scripts/checar_variancia_kaggle.R --help        # totais e componentes de variância (ADR-014)
 Rscript scripts/sortear_amostra.R torneios --help       # sorteio de campo
 Rscript scripts/estimar_campo.R --help                  # estimação em três estágios
 Rscript scripts/explorar_estratos.R --help              # análise exploratória dos estratos
@@ -41,8 +42,9 @@ R/dados.R                     leitura/validação (Kaggle, listagem → moldura,
 R/sorteio.R                   blocos, torneios por (bloco, estrato), posições dos jogadores
 R/estimadores_aas.R           AAS, AAS estratificada, gl de Satterthwaite
 R/estimadores_dois_estagios.R núcleo de dois estágios (Thompson §13.1), termos de variância, EPA
-R/estimadores_tres_estagios.R plano de campo: razão por jogador (1/f_i), variância por estágio
-R/simulacao_kaggle.R          Monte Carlo de AAS/AAS estratificada na população do Kaggle
+R/estimadores_tres_estagios.R plano de campo: razão por jogador (1/f_i), variância por estágio, componentes, JK1
+R/nao_resposta.R              sensibilidade à não resposta: limites de pior caso, ajuste por posição
+R/simulacao_kaggle.R          Monte Carlo de AAS/AAS estratificada (proporcional e Neyman) no Kaggle
 R/simulacao_kaggle_tres_estagios.R  população sintética com a estrutura do campo e Monte Carlo do plano
 R/exploracao_estratos.R       AED dos estratos de campo: moldura, não resposta, domínios, decomposição, gráficos
 R/exploracao_top10.R          AED do top 10 (fora do plano) e comparação com amostra, plano e Kaggle
@@ -54,4 +56,7 @@ Regras que não podem ser quebradas (ver [`.ai/modelagem.md`](.ai/modelagem.md))
 - Os pesos são por célula (bloco × estrato): w = (B/b)(N_jh/n_jh)(M_k/m_k), nunca um N_h/n_h único somando blocos.
 - A variância inclui o termo entre blocos e o fator M_k² no termo dentro dos torneios (torneios de tamanhos diferentes). IC com gl = b − 1.
 - O EPA é calculado na amostra do SharkScope, nunca contra a variância do Kaggle.
+- Os dois termos da fórmula de variância não são componentes: "quanto vem de cada estágio" se responde com `componentes` (s_u² − v̄), nunca com a fração do 1º termo (ADR-014).
+- O EP linearizado é otimista com poucos blocos: reportar sempre o EP JK1 ao lado (ADR-014).
+- `semente_derivada()` tem colisões, mas não pode ser alterada: o sorteio de campo precisa continuar reproduzível (ADR-016).
 - Os testes em `tests/testthat/test-estimadores-*.R` reproduzem os exemplos do Thompson. Se um deles quebrar, a fórmula está errada.

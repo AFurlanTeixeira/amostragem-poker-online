@@ -117,3 +117,31 @@ test_that("Monte Carlo: plano em tres estagios aproximadamente nao viesado", {
   expect_true(all(resumo$cobertura_wald[resumo$plano == "AAS"] > 0.88))
   expect_equal(resumo$epa_empirico[resumo$plano == "AAS"], rep(1, 4))
 })
+
+test_that("Monte Carlo registra os diagnosticos da variancia", {
+  pop <- pop_fabricada()
+  sims <- simular_tres_estagios(pop, b = 4, n_rep = 20, seed = 5)
+  tres <- sims[sims$plano == "tres_estagios", ]
+  expect_true(all(tres$epa_pesos >= 1))
+  # Var(Z) / N^2 com o N verdadeiro: jogadores ou inscricoes da populacao.
+  insc <- tres[tres$unidade == "inscricao", ]
+  expect_true(all(insc$var_n_verdadeiro > 0) && all(insc$var_jk1 > 0))
+  aas <- sims[sims$plano == "AAS", ]
+  expect_true(all(is.na(aas$var_jk1)))
+
+  resumo <- resumir_tres_estagios(sims, parametros_verdadeiros(pop))
+  r3 <- resumo[resumo$plano == "tres_estagios", ]
+  expect_equal(r3$razao_var_taylor, r3$media_var_estimada / r3$variancia_mc)
+  expect_equal(r3$razao_var_n_verdadeiro, r3$media_var_n_verdadeiro / r3$variancia_mc)
+  expect_equal(r3$razao_var_jk1, r3$media_var_jk1 / r3$variancia_mc)
+  expect_true(all(r3$epa_pesos_medio >= 1))
+
+  # IC t com a variancia JK1 e gl = b - 1.
+  s <- tres[tres$unidade == "inscricao" & tres$variavel == "roi", ]
+  theta <- parametros_verdadeiros(pop)
+  theta <- theta$valor[theta$unidade == "inscricao" & theta$variavel == "roi"]
+  meia <- stats::qt(0.975, 3) * sqrt(s$var_jk1)
+  esperado <- mean(s$estimativa - meia <= theta & theta <= s$estimativa + meia)
+  linha <- r3$unidade == "inscricao" & r3$variavel == "roi"
+  expect_equal(r3$cobertura_jk1[linha], esperado)
+})

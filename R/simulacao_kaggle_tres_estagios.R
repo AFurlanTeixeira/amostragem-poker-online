@@ -191,6 +191,11 @@ celulas_abaixo_do_minimo <- function(amostra) {
 #' resposta simulada. Celula que esgota os N_jh torneios e colapsada com o
 #' estrato vizinho do mesmo bloco (`VIZINHO_COLAPSO`).
 #'
+#' LIMITACAO: so trata um colapso por bloco. Se a celula colapsada continuar
+#' abaixo do minimo, ou se um segundo estrato do mesmo bloco precisar de
+#' colapso, a funcao para com erro (com nao resposta alta, isso acontece em
+#' parte das sementes). Basta para o sorteio oficial com a semente do campo.
+#'
 #' @param pop lista de `montar_populacao_blocos()`.
 #' @param amostra lista de `sortear_amostra_kaggle()`.
 #' @param m_k integer, posicoes por torneio.
@@ -216,7 +221,12 @@ aplicar_torneios_extras <- function(pop, amostra, m_k, seed, taxas) {
           bloco_id = j, estrato = h, evento = "torneio_extra", torneio_id = novos$torneio_id
         )))
       } else {
-        if (grepl("+", h, fixed = TRUE)) stop("Celula colapsada continua abaixo do minimo.")
+        if (grepl("+", h, fixed = TRUE)) {
+          stop(sprintf(
+            "Celula colapsada continua abaixo do minimo (bloco %s, %s); %s",
+            j, h, "colapso em dois niveis nao e tratado."
+          ), call. = FALSE)
+        }
         amostra <- colapsar_celula(amostra, j, h)
         eventos <- c(eventos, list(data.frame(
           bloco_id = j, estrato = h, evento = "colapso", torneio_id = NA_character_
@@ -263,7 +273,9 @@ colapsar_celula <- function(amostra, bloco_id, estrato) {
 #' @param n_jh,m_k integer, tamanhos do 2o e do 3o estagio.
 #' @param nivel numeric, nivel de confianca.
 #' @return data.frame com uma linha por replica, plano, unidade e variavel:
-#'   `estimativa`, `variancia`, `li`, `ls`, `li_logit`, `ls_logit`, `epa_estimado`.
+#'   `estimativa`, `variancia`, `li`, `ls`, `li_logit`, `ls_logit`,
+#'   `epa_estimado`, `epa_pesos` (1 + CV^2 dos pesos), `var_n_verdadeiro`
+#'   (Var(Ẑ) dividida pelo N verdadeiro ao quadrado) e `var_jk1`.
 simular_tres_estagios <- function(pop, b, n_rep, seed, n_jh = 2, m_k = 5, nivel = 0.95) {
   B <- length(unique(pop$torneios$bloco_id))
   linhas <- lapply(seq_len(n_rep), function(r) {
@@ -278,10 +290,18 @@ simular_tres_estagios <- function(pop, b, n_rep, seed, n_jh = 2, m_k = 5, nivel 
           amostra$coleta, amostra$moldura, B, v, unidade = u, nivel = nivel
         )
         aas <- estimar_media_aas(base[[v]][aas_idx], nrow(base), nivel = nivel)
-        epa <- calcular_epa_tres_estagios(res)$epa
+        epa <- calcular_epa_tres_estagios(res)
+        diag <- c(
+          epa = epa$epa, epa_pesos = epa$epa_pesos,
+          var_n_verdadeiro = res$variancia_z / nrow(base)^2, var_jk1 = res$variancia_jk1,
+          termo_entre_blocos = res$termos[["entre_blocos"]],
+          comp_entre_blocos = res$componentes[["entre_blocos"]],
+          comp_entre_torneios = res$componentes[["entre_torneios"]],
+          comp_dentro_torneios = res$componentes[["dentro_torneios"]]
+        )
         rbind(
-          linha_tres_estagios(r, b, "tres_estagios", u, v, res, epa),
-          linha_tres_estagios(r, b, "AAS", u, v, aas, NA_real_)
+          linha_tres_estagios(r, b, "tres_estagios", u, v, res, diag),
+          linha_tres_estagios(r, b, "AAS", u, v, aas)
         )
       }))
     }))
@@ -294,17 +314,31 @@ simular_tres_estagios <- function(pop, b, n_rep, seed, n_jh = 2, m_k = 5, nivel 
 #' @param r,b integer, replica e blocos.
 #' @param plano,unidade,variavel character.
 #' @param res lista de `montar_resultado()`.
-#' @param epa numeric, EPA estimado na replica (ou `NA`).
+#' @param diag numeric nomeado com os diagnosticos da replica (`DIAG_VAZIO`
+#'   lista os nomes; padrao `NA`, para a AAS).
 #' @return data.frame de uma linha.
-linha_tres_estagios <- function(r, b, plano, unidade, variavel, res, epa) {
+linha_tres_estagios <- function(r, b, plano, unidade, variavel, res, diag = DIAG_VAZIO) {
   logit <- if (variavel == "roi") c(li = NA_real_, ls = NA_real_) else ic_logit(res)
   data.frame(
     replica = r, b = b, plano = plano, unidade = unidade, variavel = variavel,
     estimativa = res$estimativa, variancia = res$variancia, li = res$li, ls = res$ls,
-    li_logit = logit[["li"]], ls_logit = logit[["ls"]], epa_estimado = epa,
+    li_logit = logit[["li"]], ls_logit = logit[["ls"]], epa_estimado = diag[["epa"]],
+    epa_pesos = diag[["epa_pesos"]], var_n_verdadeiro = diag[["var_n_verdadeiro"]],
+    var_jk1 = diag[["var_jk1"]],
+    termo_entre_blocos = diag[["termo_entre_blocos"]],
+    comp_entre_blocos = diag[["comp_entre_blocos"]],
+    comp_entre_torneios = diag[["comp_entre_torneios"]],
+    comp_dentro_torneios = diag[["comp_dentro_torneios"]],
     stringsAsFactors = FALSE
   )
 }
+
+# Diagnosticos por replica do plano em tres estagios (NA na AAS).
+DIAG_VAZIO <- c(
+  epa = NA_real_, epa_pesos = NA_real_, var_n_verdadeiro = NA_real_, var_jk1 = NA_real_,
+  termo_entre_blocos = NA_real_, comp_entre_blocos = NA_real_,
+  comp_entre_torneios = NA_real_, comp_dentro_torneios = NA_real_
+)
 
 #' Resume o Monte Carlo contra os parametros verdadeiros.
 #'
@@ -324,6 +358,9 @@ resumir_tres_estagios <- function(sims, verdade) {
     theta <- verdade$valor[verdade$unidade == g$unidade & verdade$variavel == g$variavel]
     # IC logit indefinido (estimativa 0 ou 1) conta como nao cobrir.
     cobre_logit <- !is.na(s$li_logit) & s$li_logit <= theta & theta <= s$ls_logit
+    # IC t com a variancia JK1, mesmos gl = b - 1 (ADR-004).
+    meia_jk1 <- stats::qt(0.975, g$b - 1) * sqrt(s$var_jk1)
+    cobre_jk1 <- s$estimativa - meia_jk1 <= theta & theta <= s$estimativa + meia_jk1
     data.frame(
       g,
       parametro = theta,
@@ -336,9 +373,24 @@ resumir_tres_estagios <- function(sims, verdade) {
       cobertura_logit = if (g$variavel == "roi") NA_real_ else mean(cobre_logit),
       ls_acima_de_1 = if (g$variavel == "roi") NA_real_ else mean(s$ls > 1),
       epa_estimado_medio = mean(s$epa_estimado),
+      epa_pesos_medio = mean(s$epa_pesos),
+      media_var_n_verdadeiro = mean(s$var_n_verdadeiro),
+      media_var_jk1 = mean(s$var_jk1),
+      cobertura_jk1 = mean(cobre_jk1),
+      # Parcela do 1º termo da formula e dos componentes nao viesados na
+      # variancia estimada (medias das replicas; ver `total_tres_estagios()`).
+      fracao_termo_entre_blocos = mean(s$termo_entre_blocos) / mean(s$variancia),
+      fracao_comp_entre_blocos = mean(s$comp_entre_blocos) / mean(s$variancia),
+      fracao_comp_entre_torneios = mean(s$comp_entre_torneios) / mean(s$variancia),
+      fracao_comp_dentro_torneios = mean(s$comp_dentro_torneios) / mean(s$variancia),
       stringsAsFactors = FALSE
     )
   }))
+  # Diagnostico da subestimacao (ADR-014): Var estimada / Var_MC com o
+  # denominador N̂^2 (Taylor, o usado), com o N verdadeiro e pelo JK1.
+  resumo$razao_var_taylor <- resumo$media_var_estimada / resumo$variancia_mc
+  resumo$razao_var_n_verdadeiro <- resumo$media_var_n_verdadeiro / resumo$variancia_mc
+  resumo$razao_var_jk1 <- resumo$media_var_jk1 / resumo$variancia_mc
   chave <- paste(resumo$b, resumo$unidade, resumo$variavel)
   ref <- resumo$variancia_mc[resumo$plano == "AAS"]
   names(ref) <- chave[resumo$plano == "AAS"]

@@ -40,13 +40,13 @@ Simulação de Monte Carlo com AAS e AAS estratificada (alocação proporcional)
 
 | Estratificação | EPA no ROI | EPA em P | Cobertura do IC 95% (estratificada) |
 |---|---|---|---|
-| 3 estratos de buy-in | 0,98 | 0,99 | 94,4% / 94,0% |
-| 5 estratos de buy-in | 1,00 | 1,02 | 94,4% / 94,3% |
+| 3 estratos de buy-in | 1,02 | 1,03 | 94,8% / 94,5% |
+| 5 estratos de buy-in | 1,00 | 1,01 | 94,4% / 94,3% |
 | Quartis de `skill` (referência didática) | 0,95 | 0,94 | 95,1% / 94,8% |
 
-Com 5 estratos, o EPA chega a ficar ligeiramente acima de 1: o mínimo de 2 unidades no estrato Micro e o arredondamento da alocação desviam a amostra da proporcionalidade, sem nenhum ganho em troca. Para comparar, estratificar por uma variável de fato associada ao ROI (`skill`, correlação de 0,23) dá EPA ≈ 0,95, próximo de $1 - R^2 \approx 1 - 0{,}23^2$. Isso mostra que o problema não está no método, mas na falta de associação entre buy-in e ROI.
+A alocação soma exatamente n = 60 (arredondamento pelos maiores restos). Por buy-in, o EPA fica em torno de 1 nas duas divisões, dentro do ruído de Monte Carlo (EP de cerca de 0,03): não há ganho. O mínimo de 2 unidades no estrato Micro desvia um pouco a amostra da proporcionalidade, sem nada em troca. Para comparar, estratificar por uma variável de fato associada ao ROI (`skill`, correlação de 0,23) dá EPA ≈ 0,95, próximo de $1 - R^2 \approx 1 - 0{,}23^2$. Isso mostra que o problema não está no método, mas na falta de associação entre buy-in e ROI.
 
-### 3. Custo amostral no plano em dois estágios
+### 3. Custo amostral (argumento feito para o plano inicial, em dois estágios)
 
 Na coleta de campo, cada estrato precisa de pelo menos $n_h = 2$ torneios para estimar a variância entre torneios (§3.2 do plano). Com o orçamento de cerca de 60 consultas ao SharkScope:
 
