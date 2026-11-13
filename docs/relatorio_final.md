@@ -3,8 +3,13 @@
 **AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três
 estágios (SharkScope)**
 
-Arthur Agostinho Furlan Teixeira (RA 164363) · ME430 — Técnicas de
-Amostragem · Estatística, Unicamp · 2º semestre de 2026
+Arthur Agostinho Furlan Teixeira (RA 164363)  
+Felipe Basilio da Silva (RA 238550)  
+Luiz Eduardo Costa Martins Rodrigues (RA 284715)  
+Marcel Hideki Sousa Adati (RA 242910)
+
+ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestre de
+2026
 
 > Versão em Markdown gerada a partir de `docs/relatorio_final.Rmd`. Para
 > atualizar:
