@@ -10,8 +10,26 @@ date: "ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestr
 output:
   html_document:
     toc: true
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
   md_document:
     variant: gfm
+lang: pt-BR
+geometry: margin=2.5cm
+fontsize: 11pt
+colorlinks: true
+# Só no PDF: Consolas (Windows) tem os caracteres de caixa do diagrama da
+# seção 3.2, e o Latin Modern não tem ≈, ≥ e ρ.
+monofont: Consolas
+monofontoptions: "Scale=0.85"
+header-includes:
+  - \usepackage{float}
+  - \usepackage{newunicodechar}
+  - \newunicodechar{≈}{\ensuremath{\approx}}
+  - \newunicodechar{≥}{\ensuremath{\geq}}
+  - \newunicodechar{ρ}{\ensuremath{\rho}}
 ---
 
 ```{r setup, include = FALSE}
@@ -19,7 +37,13 @@ knitr::opts_knit$set(root.dir = "..")
 knitr::opts_chunk$set(
   echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", dpi = 110,
   # Versionada no git, para as figuras aparecerem no relatorio_final.md no GitHub.
-  fig.path = "figuras/relatorio-"
+  fig.path = "figuras/relatorio-",
+  # PNG também no PDF, para as três saídas usarem as mesmas figuras versionadas.
+  dev = "png",
+  # No PDF a figura ocupa a largura do texto, em vez do tamanho em polegadas.
+  out.width = if (knitr::is_latex_output()) "90%" else NULL,
+  # Figura no ponto do texto, sem flutuar para uma página sozinha.
+  fig.pos = "H"
 )
 ```
 

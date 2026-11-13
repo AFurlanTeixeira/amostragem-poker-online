@@ -137,8 +137,10 @@ Rscript scripts/explorar_top10.R      # top 10 x amostra x plano x Kaggle
 ### Relatório
 
 ```r
-rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")   # gera docs/relatorio_final.html e docs/relatorio_final.md
+rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")   # gera docs/relatorio_final.pdf, .html e .md
 ```
+
+O PDF (versão de entrega) usa XeLaTeX (TinyTeX) e a fonte Consolas, do Windows, no diagrama da §3.2.
 
 ### Testes
 
@@ -166,7 +168,8 @@ docs/
   referencias.md                  # Mapa fórmula → livro/seção
   notas/                          # Notas de decisão e análise (estratificação, AED dos estratos)
   figuras/                        # Figuras das AEDs (estratos e top 10; geradas, versionadas)
-  relatorio_final.Rmd             # Relatório final (gera relatorio_final.md e .html)
+  relatorio_final.Rmd             # Relatório final (gera relatorio_final.pdf, .md e .html)
+  relatorio_final.pdf             # Relatório final, versão de entrega (gerado, versionado)
 scripts/
   baixar_kaggle.sh                # Download do dataset
   simular_kaggle.R                # Monte Carlo de AAS / AAS estratificada
