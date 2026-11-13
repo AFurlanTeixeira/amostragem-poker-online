@@ -6,9 +6,9 @@ estágios (SharkScope)**
 Arthur Agostinho Furlan Teixeira (RA 164363) · ME430 — Técnicas de
 Amostragem · Estatística, Unicamp · 2º semestre de 2026
 
-> Versão em Markdown gerada a partir de `docs/relatorio.Rmd`. Para
+> Versão em Markdown gerada a partir de `docs/relatorio_final.Rmd`. Para
 > atualizar:
-> `Rscript -e 'rmarkdown::render("docs/relatorio.Rmd", output_format = "all")'`.
+> `Rscript -e 'rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")'`.
 
 # Resumo
 
@@ -1320,7 +1320,7 @@ done; done
 Rscript scripts/simular_kaggle_tres_estagios.R --b 4,6,12 --n-rep 5000 --seed 164363
 Rscript scripts/checar_variancia_kaggle.R --b 4 --n-rep 2000
 Rscript scripts/estimar_campo.R --unidade jogador
-Rscript -e 'rmarkdown::render("docs/relatorio.Rmd", output_format = "all")'
+Rscript -e 'rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")'
 ```
 
 | Arquivo | Conteúdo |

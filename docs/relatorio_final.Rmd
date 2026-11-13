@@ -14,7 +14,7 @@ output:
 knitr::opts_knit$set(root.dir = "..")
 knitr::opts_chunk$set(
   echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", dpi = 110,
-  # Versionada no git, para as figuras aparecerem no relatorio.md no GitHub.
+  # Versionada no git, para as figuras aparecerem no relatorio_final.md no GitHub.
   fig.path = "figuras/relatorio-"
 )
 ```
@@ -138,8 +138,8 @@ if (knitr::pandoc_to("gfm")) {
     "(SharkScope)**\n\n",
     "Arthur Agostinho Furlan Teixeira (RA 164363) · ME430 — Técnicas de Amostragem · ",
     "Estatística, Unicamp · 2º semestre de 2026\n\n",
-    "> Versão em Markdown gerada a partir de `docs/relatorio.Rmd`. Para atualizar: ",
-    "`Rscript -e 'rmarkdown::render(\"docs/relatorio.Rmd\", output_format = \"all\")'`.\n\n",
+    "> Versão em Markdown gerada a partir de `docs/relatorio_final.Rmd`. Para atualizar: ",
+    "`Rscript -e 'rmarkdown::render(\"docs/relatorio_final.Rmd\", output_format = \"all\")'`.\n\n",
     sep = ""
   )
 }
@@ -992,7 +992,7 @@ done; done
 Rscript scripts/simular_kaggle_tres_estagios.R --b 4,6,12 --n-rep 5000 --seed 164363
 Rscript scripts/checar_variancia_kaggle.R --b 4 --n-rep 2000
 Rscript scripts/estimar_campo.R --unidade jogador
-Rscript -e 'rmarkdown::render("docs/relatorio.Rmd", output_format = "all")'
+Rscript -e 'rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")'
 ```
 
 | Arquivo | Conteúdo |

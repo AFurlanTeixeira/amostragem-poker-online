@@ -412,7 +412,7 @@ Feito desde a primeira versão deste relatório:
 Falta:
 
 - anotar e consultar o top 10 dos 8 torneios extras;
-- fechar o [`relatorio.Rmd`](relatorio.Rmd) final e os slides.
+- fechar o [`relatorio_final.Rmd`](relatorio_final.Rmd) e os slides.
 
 ## 8. Reprodutibilidade
 
