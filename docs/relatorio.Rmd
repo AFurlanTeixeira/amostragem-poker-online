@@ -1,44 +1,161 @@
 ---
 title: "Comparação de Planos Amostrais no Poker Online"
 subtitle: "AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três estágios (SharkScope)"
-author: "Arthur Agostinho Furlan Teixeira"
-date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+author: "Arthur Agostinho Furlan Teixeira (RA 164363)"
+date: "ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestre de 2026"
 output:
   html_document:
     toc: true
-    number_sections: true
+  md_document:
+    variant: gfm
 ---
 
 ```{r setup, include = FALSE}
 knitr::opts_knit$set(root.dir = "..")
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", dpi = 110,
+  # Versionada no git, para as figuras aparecerem no relatorio.md no GitHub.
+  fig.path = "figuras/relatorio-"
+)
 ```
 
-```{r carregar-funcoes}
+```{r funcoes}
 for (arquivo in list.files("R", pattern = "\\.R$", full.names = TRUE)) source(arquivo)
-SEED <- as.integer(Sys.getenv("RANDOM_SEED", 42))
 
 caminho_kaggle <- Sys.getenv("KAGGLE_PATH", "data/raw/kaggle/poker_tournament_survival.csv")
 caminho_listagem <- "data/raw/sharkscope/listagem_torneios.csv"
 caminho_coleta <- "data/raw/sharkscope/coleta_jogadores.csv"
 caminho_blocos <- "data/raw/sharkscope/blocos_sorteados.csv"
+caminho_top10 <- "data/raw/sharkscope/top10_torneios.csv"
 caminho_mc <- "data/processed/kaggle_tres_estagios_monte_carlo.csv"
+caminho_sim <- function(estrato, n, v) {
+  sprintf("data/processed/simulacao_kaggle_%s_n%d_%s.csv", estrato, n, v)
+}
 tem_kaggle <- file.exists(caminho_kaggle)
-tem_campo <- file.exists(caminho_listagem) && file.exists(caminho_coleta)
+tem_sim <- all(file.exists(c(
+  caminho_sim("buyin", 120, "roi"), caminho_sim("skill", 67, "lucrativo")
+)))
 tem_mc <- file.exists(caminho_mc)
-tabela <- function(x, digits = 2, ...) {
-  knitr::kable(x, digits = digits, format.args = list(decimal.mark = ","), ...)
+
+# Numero com virgula decimal e d casas.
+num <- function(x, d = 2) {
+  formatC(x, format = "f", digits = d, decimal.mark = ",", big.mark = ".")
+}
+pct <- function(x, d = 1) paste0(num(100 * x, d), "%")
+ic_txt <- function(li, ls, d = 2) sprintf("[%s; %s]", num(li, d), num(ls, d))
+tabela <- function(x, ...) {
+  knitr::kable(x, align = c("l", rep("r", ncol(x) - 1)), row.names = FALSE, ...)
+}
+ROTULO <- c(
+  roi = "ROI médio (%)", lucrativo = "Lucrativos (ROI > 0)",
+  lucrativo_estrito = "ROI > 0 e lucro > 0"
+)
+ROTULO_ESTRATO <- c(
+  micro = "Micro", low = "Low", mid_high = "Mid/High", total = "Total"
+)
+casas <- function(v) if (v == "roi") 2 else 3
+```
+
+```{r campo}
+moldura <- montar_moldura(carregar_listagem(caminho_listagem))
+coleta <- carregar_coleta(caminho_coleta)
+B <- read.csv(caminho_blocos)$B[1]
+variaveis_campo <- c("roi", "lucrativo", "lucrativo_estrito")
+
+estimar_campo <- function(dados, unidade, variaveis = variaveis_campo) {
+  lapply(stats::setNames(variaveis, variaveis), function(v) {
+    estimar_media_tres_estagios(dados, moldura, B, v, unidade = unidade)
+  })
+}
+# Estimativa, EP linearizado e EP JK1, cada um com o seu IC (t no ROI,
+# logit nas proporcoes; gl = b - 1).
+resumir_campo <- function(res, v) {
+  jk1 <- montar_resultado(res$estimativa, res$variancia_jk1, gl = res$gl, nivel = 0.95)
+  ic <- if (v == "roi") c(li = res$li, ls = res$ls) else ic_logit(res)
+  ic_jk1 <- if (v == "roi") c(li = jk1$li, ls = jk1$ls) else ic_logit(jk1)
+  list(
+    estimativa = res$estimativa, ep = res$erro_padrao, li = ic[["li"]], ls = ic[["ls"]],
+    ep_jk1 = jk1$erro_padrao, li_jk1 = ic_jk1[["li"]], ls_jk1 = ic_jk1[["ls"]]
+  )
+}
+por_jogador <- estimar_campo(coleta, "jogador")
+por_inscricao <- estimar_campo(coleta, "inscricao")
+r_jog <- Map(resumir_campo, por_jogador, names(por_jogador))
+r_ins <- Map(resumir_campo, por_inscricao, names(por_inscricao))
+
+maior <- which.max(ifelse(coleta$respondeu %in% TRUE, coleta$roi, -Inf))
+sem_extremo <- coleta[-maior, , drop = FALSE]
+r_sem <- resumir_campo(estimar_campo(sem_extremo, "jogador", "roi")$roi, "roi")
+nick_maior <- coleta$nickname[maior]
+roi_maior <- coleta$roi[maior]
+
+resp <- coleta[coleta$respondeu %in% TRUE, , drop = FALSE]
+excluidos <- por_jogador$roi$torneios_excluidos
+na_estimacao <- resp[!resp$torneio_id %in% excluidos, , drop = FALSE]
+n_estimacao <- nrow(na_estimacao)
+taxa_nr <- 1 - nrow(resp) / sum(!is.na(coleta$respondeu))
+epa_campo <- lapply(por_jogador, calcular_epa_tres_estagios)
+pesos <- por_jogador$roi$amostra$w
+concentracao <- sum(sort(pesos, decreasing = TRUE)[1:5]) / sum(pesos)
+n_kish <- epa_campo$roi$n / epa_campo$roi$epa_pesos
+lim <- lapply(c(lucrativo = "lucrativo", lucrativo_estrito = "lucrativo_estrito"), function(v) {
+  limites_pior_caso(coleta, moldura, B, v)
+})
+ajuste <- lapply(stats::setNames(variaveis_campo, variaveis_campo), function(v) {
+  ajustar_por_posicao(coleta, moldura, B, v, unidade = "jogador")
+})
+```
+
+```{r titulo-md, results = "asis"}
+# O md_document descarta o titulo do YAML; no Markdown ele entra no corpo.
+if (knitr::pandoc_to("gfm")) {
+  cat(
+    "# Comparação de Planos Amostrais no Poker Online
+
+",
+    "**AAS e AAS estratificada (Kaggle) vs. amostragem estratificada em três estágios (SharkScope)**
+
+",
+    "Arthur Agostinho Furlan Teixeira (RA 164363) · ME430 — Técnicas de Amostragem · ",
+    "Estatística, Unicamp · 2º semestre de 2026
+
+",
+    "> Versão em Markdown gerada a partir de `docs/relatorio.Rmd`. Para atualizar: ",
+    "`Rscript -e 'rmarkdown::render(\"docs/relatorio.Rmd\", output_format = \"all\")'`.
+
+",
+    sep = ""
+  )
 }
 ```
 
-# Introdução
+# Resumo
 
-Quanto ganha, em média, quem joga torneios de poker online, e que fração dos jogadores é lucrativa? Responder exige uma amostra de jogadores, mas não existe uma lista deles. Este trabalho usa essa dificuldade para comparar dois tipos de plano amostral:
+Não existe uma lista dos jogadores de poker online, e por isso não é possível sortear jogadores diretamente. Este trabalho compara duas formas de contornar a falta de moldura. A primeira é a amostragem direta de elementos (AAS e AAS estratificada), possível só quando há uma lista: ela foi simulada por Monte Carlo num dataset do Kaggle, tratado como população conhecida. A segunda é uma **amostragem estratificada em três estágios** aplicada em campo no SharkScope, em que a única moldura é o tempo: sorteiam-se blocos de 2 h, depois torneios dentro dos blocos (estratificados por buy-in) e, por fim, jogadores dentro dos torneios.
 
-- **amostragem direta de elementos** (AAS e AAS estratificada), que só é possível quando há uma moldura de jogadores. Ela é simulada por Monte Carlo num dataset do Kaggle, tratado como população conhecida;
-- **amostragem estratificada em três estágios**, aplicada em campo no SharkScope, onde a única moldura disponível é o tempo: sorteiam-se blocos de 2 h, depois torneios dentro dos blocos e, por fim, jogadores dentro dos torneios.
+Entre os jogadores com perfil público no SharkScope que jogaram MTTs do PokerStars de 17/10/2026 20:00 a 21/10/2026 00:00:
 
-Os parâmetros são o **ROI médio por jogador distinto** e a **proporção de jogadores lucrativos** (ROI > 0; e, só no campo, ROI > 0 com lucro > 0). As perguntas do projeto são:
+| Parâmetro (por jogador distinto) | Estimativa | EP linearizado | IC 95% | EP jackknife | IC 95% (jackknife) |
+|---|---:|---:|---|---:|---|
+| `r ROTULO[["roi"]]` | `r num(r_jog$roi$estimativa)` | `r num(r_jog$roi$ep)` | `r ic_txt(r_jog$roi$li, r_jog$roi$ls)` | `r num(r_jog$roi$ep_jk1)` | `r ic_txt(r_jog$roi$li_jk1, r_jog$roi$ls_jk1)` |
+| `r ROTULO[["lucrativo"]]` | `r num(r_jog$lucrativo$estimativa, 3)` | `r num(r_jog$lucrativo$ep, 3)` | `r ic_txt(r_jog$lucrativo$li, r_jog$lucrativo$ls, 3)` | `r num(r_jog$lucrativo$ep_jk1, 3)` | `r ic_txt(r_jog$lucrativo$li_jk1, r_jog$lucrativo$ls_jk1, 3)` |
+| `r ROTULO[["lucrativo_estrito"]]` | `r num(r_jog$lucrativo_estrito$estimativa, 3)` | `r num(r_jog$lucrativo_estrito$ep, 3)` | `r ic_txt(r_jog$lucrativo_estrito$li, r_jog$lucrativo_estrito$ls, 3)` | `r num(r_jog$lucrativo_estrito$ep_jk1, 3)` | `r ic_txt(r_jog$lucrativo_estrito$li_jk1, r_jog$lucrativo_estrito$ls_jk1, 3)` |
+
+IC t com 3 graus de liberdade para o ROI e IC logit para as proporções.
+
+- **As estimativas valem para perfis públicos.** A não resposta foi de `r pct(taxa_nr, 0)`, e quem mantém o perfil aberto tende a ser mais regular e mais vencedor. No Kaggle, só 19% dos jogadores são lucrativos.
+- **Os intervalos são largos e ainda otimistas.** Só 4 blocos puderam ser usados, e numa simulação do mesmo plano o erro-padrão linearizado captou cerca de metade da variância real. O jackknife de blocos acerta a variância em média, mas nenhum dos dois leva a cobertura a 95%. O IC do ROI médio encosta em zero.
+- **O plano em três estágios é de 6 a 12 vezes menos eficiente que uma AAS de mesmo tamanho**, sobretudo pela desigualdade dos pesos. É o preço de não ter moldura de jogadores.
+- **Estratificar por buy-in não ajudou no Kaggle** (efeito do planejamento ≈ 1), porque o ROI médio é o mesmo nas três faixas.
+
+# 1. Introdução
+
+O ROI (*return on investment*) de um jogador de torneios é o lucro líquido dividido pelo total pago em inscrições, em %. Este trabalho estima dois parâmetros da população de jogadores de MTTs (torneios multimesa) do PokerStars:
+
+- $\bar Y$, o **ROI médio por jogador distinto**;
+- $P$, a **proporção de jogadores lucrativos**, em duas versões: ROI > 0 (a mesma definição do Kaggle) e ROI > 0 com lucro > 0.
+
+O desafio é amostral, não computacional: não há lista de jogadores para sortear. As perguntas do projeto são:
 
 1. Qual o ROI médio por jogador e a proporção de lucrativos, com IC de 95%?
 2. Quanto da variância vem da variação entre blocos, entre torneios e dentro dos torneios?
@@ -46,379 +163,540 @@ Os parâmetros são o **ROI médio por jogador distinto** e a **proporção de j
 4. No Kaggle, quanto a estratificação ganha em relação à AAS?
 5. Qual a taxa de não resposta e qual o seu possível impacto?
 
-As fórmulas e o protocolo de campo estão em `docs/Metodologia.md`, e as decisões estatísticas, em `.ai/modelagem.md` (ADRs).
+# 2. Populações e planos amostrais
 
-# Delineamentos amostrais
+## 2.1 População conhecida: o dataset do Kaggle
 
-## População conhecida: Kaggle
+O dataset *Poker Tournament Survival* (Nefedov, Kaggle) tem 45.000 jogadores **sintéticos**, um por linha, com o histórico agregado de 10 a 1.567 torneios. As variáveis usadas são o ROI realizado, o indicador de lucrativo e o buy-in médio. Não há torneio nem horário. Como a população inteira é conhecida (ROI médio de −31,88% e 19,39% de lucrativos), cada plano pode ser sorteado milhares de vezes e avaliado contra o valor verdadeiro.
 
-O dataset tem 45.000 jogadores sintéticos, um por linha, com ROI realizado, indicador de lucrativo e buy-in médio. Não tem torneio nem horário. Como a população inteira é conhecida (ROI médio de −31,88%, 19,4% de lucrativos), cada plano pode ser sorteado milhares de vezes e avaliado contra o valor verdadeiro: viés, variância, cobertura do IC e EPA empírico, $\mathrm{Var}_{MC}(\text{plano})/\mathrm{Var}_{MC}(\text{AAS de mesmo } n)$.
+Planos simulados, com 5.000 réplicas cada:
 
-Planos simulados: AAS sem reposição e AAS estratificada por faixa de buy-in (as mesmas três faixas do campo), com alocação proporcional e de Neyman. Como referência didática, estratifica-se também por quartis de `skill`, uma variável latente que não existe em dados reais. As duas alocações são arredondadas pelos maiores restos, de modo que $\sum n_h = n$ e a comparação com a AAS é de mesmo tamanho.
+- **AAS** sem reposição;
+- **AAS estratificada** pelas mesmas três faixas de buy-in do campo, com alocação proporcional ($n_h \propto N_h$) e de Neyman ($n_h \propto N_h S_h$, com os $S_h$ verdadeiros);
+- como referência didática, AAS estratificada por quartis de `skill`, uma variável latente que não existe em dados reais.
 
-## Campo: três estágios no SharkScope
+As duas alocações são arredondadas pelos maiores restos, com mínimo de 2 por estrato, de modo que $\sum n_h = n$ e a comparação com a AAS é de mesmo tamanho. Os tamanhos são $n = 120$ (o planejado no campo) e $n = 67$ (o que de fato entrou na estimação de campo).
 
-A população é a das inscrições (jogador × torneio) em MTTs regulares do PokerStars com buy-in de US\$ 1,00 ou mais, com início entre 17/10/2026 20:00 e 21/10/2026 00:00 (76 h).
+## 2.2 Campo: amostragem estratificada em três estágios
 
-| Estágio | Unidade | População | Amostra |
+A população de campo é a das **inscrições** (pares jogador × torneio) em MTTs regulares do PokerStars com buy-in de US\$ 1,00 ou mais e início entre 17/10/2026 20:00 e 21/10/2026 00:00 (horário de Brasília, 76 h). Ficam de fora freerolls, Spin & Go, Sit & Go, satélites e cash game. ROI e lucro de cada jogador são os do SharkScope no PokerStars, na janela fixa de 01/10/2025 a 30/09/2026.
+
+| Estágio | Unidade | População | Amostra planejada |
 |---|---|---|---|
-| 1º (UPA) | Bloco de 2 h | $B = 38$ | $b = 6$ sorteados, 4 efetivos |
-| Estratificação, dentro do bloco | Faixa de buy-in: micro (1–4,99), low (5–24,99), mid/high (≥ 25) | $H = 3$ | — |
+| 1º (UPA) | Bloco de 2 h | $B = 38$ | $b = 6$ |
+| Estratificação, dentro do bloco | Faixa de buy-in: Micro (US\$ 1–4,99), Low (5–24,99), Mid/High (≥ 25) | $H = 3$ | — |
 | 2º (USA) | Torneio | $N_{jh}$ por célula (bloco × estrato) | $n_{jh} = 2$ |
-| 3º (UTA) | Jogador (posição na lista de resultados) | $M_k$ | $m_k = 5$ |
+| 3º (UTA) | Jogador (posição na lista de resultados) | $M_k$ (total de entradas) | $m_k = 5$ |
 
-Cada estágio é uma AAS sem reposição, então o peso de uma inscrição é $w = (B/b)(N_{jh}/n_{jh})(M_k/m_k)$, calculado por célula. Como o plano sorteia inscrições, quem joga mais tem mais chance de entrar; para estimar a média **por jogador**, o peso é dividido pela frequência $f_i$ do jogador no período (aproximada por `n_jogos_dia` × 76/24). O total de jogadores é desconhecido, e a média é o estimador razão $\hat R = \sum w\,y_i/f_i \,\big/ \sum w/f_i$.
+O estágio temporal resolve o problema de moldura: não há lista de todos os torneios do período, mas a lista dos 38 blocos é trivial, e só os torneios dos blocos sorteados precisam ser listados, como na amostragem por áreas (Cochran, 1977, cap. 10–11). A estratificação por buy-in é feita dentro de cada bloco e não é um estágio. O 3º estágio sorteia **posições** na lista de resultados do torneio (1 = campeão), que tem ordem fixa, em vez de transcrever a lista de inscritos.
 
-A variância soma um termo por estágio, com correção de população finita em cada um e o fator $M_k^2$ no termo de dentro dos torneios, e é aplicada à variável linearizada $z_i = (y_i - \hat R)/f_i$. O IC usa a t com $b - 1$ graus de liberdade; para as proporções, o intervalo principal é o logit.
+Todos os sorteios são AAS sem reposição com a semente 164363. Os torneios dos 4 blocos efetivos formam a moldura do 2º estágio:
 
-**O que aconteceu na execução:**
-
-- **Dois blocos perdidos.** Os blocos 34 e 36 saíram do alcance da busca do SharkScope antes de serem listados. Foram tratados como não resposta de UPA, sem substituição: $b = 4$ e $B/b = 9{,}5$.
-- **Não resposta de 55%.** Perfis privados e jogadores "Anônimo" não podem ser consultados. Em cada torneio, $m_k$ passa a ser o número de respondentes, e células com menos de 2 torneios com 2 respondentes receberam torneios extras da mesma permutação (8 extras). A amostra final tem 32 torneios, 160 posições, 72 respondentes e 67 inscrições em 24 torneios na estimação.
-- **Sementes derivadas com colisão.** A função que deriva a semente de cada torneio gera valores repetidos: 2 pares dos 32 torneios sorteados receberam a mesma semente, e um par recebeu as mesmas 5 posições. Cada torneio continua sendo uma AAS de posições, mas os sorteios do 3º estágio não são todos independentes entre torneios (ADR-016).
-
-## Por que três estratos de buy-in
-
-```{r estratificacao, child = "docs/notas/estratificacao_buyin.md"}
+```{r moldura-blocos}
+tab <- table(moldura$bloco_id, moldura$estrato)[, c("micro", "low", "mid_high")]
+tabela(
+  data.frame(
+    Bloco = rownames(tab),
+    Micro = as.integer(tab[, "micro"]), Low = as.integer(tab[, "low"]),
+    `Mid/High` = as.integer(tab[, "mid_high"]), Total = as.integer(rowSums(tab)),
+    check.names = FALSE
+  ),
+  caption = "Torneios elegíveis por bloco e estrato (N_jh)"
+)
 ```
 
-# Simulação no dataset do Kaggle
+Os blocos efetivos são domingo 04–06 h (bloco 5) e 10–12 h (bloco 8), segunda 18–20 h (bloco 24) e terça 06–08 h (bloco 30).
 
-## AAS e AAS estratificada
+## 2.3 O que aconteceu na execução
 
-```{r kaggle, eval = tem_kaggle}
-n_rep <- as.integer(Sys.getenv("N_REPLICAS", 5000))
-# n = 120 e o tamanho planejado do campo; n = 67, o que entrou na estimacao.
-tamanhos <- c(as.integer(Sys.getenv("TAMANHO_AMOSTRA", 120)), 67L)
+- **Dois blocos perdidos.** Os blocos 34 e 36 (terça, 14–16 h e 18–20 h) saíram do alcance da busca do SharkScope antes de serem listados. Foram tratados como não resposta de UPA, sem substituição, porque trocar UPAs por escolha tira a base probabilística do 1º estágio: $b = 4$ e peso $B/b = 9{,}5$. A hipótese é que a perda não tem relação com o ROI, já que veio do acesso à fonte.
+- **Não resposta de `r pct(taxa_nr, 0)`.** Perfis privados e jogadores "Anônimo" não podem ser consultados. Em cada torneio, $m_k$ passa a ser o número de respondentes, sob a hipótese de não resposta aleatória dentro do torneio. Para manter ao menos 2 torneios com 2 respondentes por célula, mínimo necessário para estimar a variância, células abaixo do mínimo receberam o próximo torneio da mesma permutação (8 torneios extras). Os $n$ primeiros elementos de uma permutação aleatória são uma AAS de tamanho $n$, então os extras não alteram o caráter aleatório do sorteio. Torneios com 0 ou 1 respondente ficaram fora da estimação.
+- **Colisão nas sementes derivadas.** Cada torneio recebeu uma semente derivada da principal, mas a função usada gera valores repetidos para identificadores numéricos: 2 pares dos 32 torneios sorteados tiveram a mesma semente, e um par recebeu as mesmas 5 posições. Cada torneio continua sendo uma AAS de posições, mas os sorteios do 3º estágio não são todos independentes entre torneios, como a fórmula de variância supõe. O efeito numérico é pequeno (um dos dois torneios ficou fora da estimação), e o sorteio não pode ser refeito depois da coleta.
 
-# Estratificacao por buy-in (a mesma do campo) e por quartis de skill (didatico).
-resumo_kaggle <- do.call(rbind, lapply(c("buyin", "skill"), function(criterio) {
-  populacao <- carregar_populacao_kaggle(caminho_kaggle, estratificar_por = criterio)
-  do.call(rbind, lapply(tamanhos, function(n) {
-    do.call(rbind, lapply(c("roi", "lucrativo"), function(v) {
-      sims <- simular_planos(populacao, v, n, n_rep, SEED)
-      r <- resumir_simulacao(sims, mean(populacao[[v]]))
-      data.frame(
-        estrato = criterio, n = n, variavel = v, plano = r$plano, vies = r$vies,
-        ep_mc = sqrt(r$variancia_mc), ep_estimado = sqrt(r$media_var_estimada),
-        cobertura = r$cobertura, epa = r$epa_empirico
-      )
-    }))
+```{r amostra-efetiva}
+n_tor_sorteados <- length(unique(coleta$torneio_id))
+n_tor_estimacao <- length(unique(na_estimacao$torneio_id))
+tabela(
+  data.frame(
+    ` ` = c("Blocos", "Torneios", "Posições consultadas", "Respondentes", "Respondentes por torneio"),
+    Sorteado = c("6", n_tor_sorteados, sum(!is.na(coleta$respondeu)), "—", "5"),
+    `Usado na estimação` = c(
+      "4", sprintf("%d (2 por célula)", n_tor_estimacao), "—",
+      sprintf("%d inscrições (%d jogadores distintos)", n_estimacao,
+              length(unique(na_estimacao$nickname))),
+      num(epa_campo$roi$m_medio)
+    ),
+    check.names = FALSE
+  ),
+  caption = "Amostra efetiva"
+)
+```
+
+# 3. Estimadores
+
+## 3.1 Pesos e média por jogador distinto
+
+Como cada estágio é uma AAS sem reposição, a probabilidade de inclusão de uma inscrição é o produto das probabilidades de cada estágio, e o peso é o inverso:
+
+$$w = \frac{B}{b}\cdot\frac{N_{jh}}{n_{jh}}\cdot\frac{M_k}{m_k},$$
+
+calculado por célula (bloco × estrato), e não com um único $N_h/n_h$ por estrato somando blocos diferentes.
+
+O plano sorteia inscrições, então quem joga mais torneios tem mais chance de entrar. Um jogador com $f_i$ inscrições no período aparece $f_i$ vezes na população; atribuindo $y_i/f_i$ a cada uma delas, a soma sobre as inscrições é a soma sobre os jogadores. O total de jogadores também é desconhecido, e a média é o **estimador razão** (Thompson, 2012, p. 175):
+
+$$\hat{\bar Y} = \hat R = \frac{\sum w\,y_i/f_i}{\sum w/f_i} = \frac{\hat Y}{\hat N}.$$
+
+$f_i$ é aproximado por `n_jogos_dia` × 76/24, com mínimo 1, em que `n_jogos_dia` é a média de jogos por dia que o SharkScope mostra para a janela de 12 meses. A versão **por inscrição** usa $f_i = 1$ e serve de sensibilidade. As proporções usam o mesmo estimador, com $y_i$ igual a uma indicadora.
+
+## 3.2 Variância
+
+A variância do total soma um termo por estágio, cada um com sua correção para população finita (Cochran, 1977, cap. 11; Thompson, 2012, eq. 13.6–13.8):
+
+$$\widehat{\mathrm{Var}}(\hat Y) = B^2\Bigl(1-\tfrac{b}{B}\Bigr)\frac{s_u^2}{b} + \frac{B}{b}\sum_{j=1}^{b}\sum_{h}\Biggl[N_{jh}^2\Bigl(1-\tfrac{n_{jh}}{N_{jh}}\Bigr)\frac{s_{1jh}^2}{n_{jh}} + \frac{N_{jh}}{n_{jh}}\sum_{k} M_k^2\Bigl(1-\tfrac{m_k}{M_k}\Bigr)\frac{s_{2k}^2}{m_k}\Biggr],$$
+
+em que $s_u^2$ é a variância amostral dos totais estimados $\hat Y_j$ dos blocos, $s_{1jh}^2$ a dos totais estimados $\hat T_k = M_k \bar y_k$ dos torneios da célula, e $s_{2k}^2$ a de $y$ entre os respondentes do torneio. O fator $M_k^2$ é necessário porque os torneios têm tamanhos diferentes. A implementação reproduz os Exemplos 1 e 2 de Thompson (2012, §13.1).
+
+Para a razão, a variância é aproximada por **linearização de Taylor**: aplica-se a fórmula acima à variável $z_i = (y_i - \hat R)/f_i$ e divide-se por $\hat N^2$ (Lohr, 2022, cap. 9). Como alternativa que não depende da linearização, reporta-se ao lado o **jackknife de blocos** (JK1), que recalcula a razão retirando um bloco por vez (Wolter, 2007, cap. 4):
+
+$$\hat v_{JK} = \frac{b-1}{b}\sum_{j=1}^{b}\bigl(\hat R_{(j)} - \hat R\bigr)^2.$$
+
+## 3.3 Intervalos de confiança
+
+Com $b/B$ pequeno, a variância é estimada essencialmente a partir dos $b$ totais de bloco, então os graus de liberdade vêm do número de UPAs: $\hat R \pm t_{b-1;\,0{,}975}\,\mathrm{EP}$, com $t_{3;\,0{,}975} = 3{,}18$. Com $\hat P$ perto de 1 e 3 graus de liberdade, o intervalo de Wald passa de 1 (para os lucrativos, `r ic_txt(por_jogador$lucrativo$li, por_jogador$lucrativo$ls, 3)`). Por isso, para as proporções, o intervalo principal é o **logit**: o IC t é calculado em $\ell = \log\{\hat P/(1-\hat P)\}$, com $\mathrm{EP}_\ell = \mathrm{EP}/\{\hat P(1-\hat P)\}$ pelo método delta, e volta para a escala de proporção. Ele é assimétrico e fica sempre em (0, 1), como `svyciprop(method = "logit")` do pacote `survey` (Lumley, 2010).
+
+## 3.4 Componentes de variância
+
+A pergunta 2 pede quanto da variância vem de cada estágio. As duas parcelas da fórmula da §3.2 **não** respondem a isso: a primeira usa os totais *estimados* $\hat Y_j$, e $E[s_u^2] = S_u^2 + \bar V$, em que $S_u^2$ é a variância dos totais verdadeiros e $\bar V$ é a média das variâncias dentro dos blocos. O primeiro termo já carrega, portanto, a variação de dentro. Os estimadores não viesados dos componentes descontam, em cada nível, a parte que vem do nível de baixo. Com $\bar v$ igual à média dos $\widehat{\mathrm{Var}}(\hat Y_j)$ e $\bar w_{jh}$ igual à média, na célula, de $M_k^2(1-m_k/M_k)s_{2k}^2/m_k$:
+
+$$\underbrace{B^2\Bigl(1-\tfrac{b}{B}\Bigr)\frac{s_u^2-\bar v}{b}}_{\text{entre blocos}} + \underbrace{\Bigl(\tfrac{B}{b}\Bigr)^{2}\sum_{j,h} N_{jh}^2\Bigl(1-\tfrac{n_{jh}}{N_{jh}}\Bigr)\frac{s_{1jh}^2-\bar w_{jh}}{n_{jh}}}_{\text{entre torneios}} + \underbrace{\Bigl(\tfrac{B}{b}\Bigr)^{2}\sum_{j,h} N_{jh}^2\,\frac{\bar w_{jh}}{n_{jh}}}_{\text{dentro dos torneios}}.$$
+
+As três parcelas somam exatamente a variância da §3.2. Um componente estimado negativo se lê como zero.
+
+## 3.5 Efeito do planejamento
+
+$$\text{EPA} = \frac{\widehat{\mathrm{Var}}(\hat R)}{\bigl(1 - n/\hat N\bigr)\, s_y^2/n},$$
+
+com $s_y^2$ ponderada pelos pesos finais e estimada **na própria amostra de campo**, nunca com a variância do Kaggle, que é outra população (Bolfarine e Bussab, 2005, §3.4). O EPA é separado na parte que vem só da desigualdade dos pesos, $1 + \mathrm{CV}^2(w) = n\sum w^2/(\sum w)^2$, e no resto (Kish, 1992); $n/(1 + \mathrm{CV}^2(w))$ é o tamanho efetivo de amostra de Kish. Nas simulações, o EPA empírico é $\mathrm{Var}_{MC}(\text{plano})/\mathrm{Var}_{MC}(\text{AAS de mesmo } n)$.
+
+# 4. Simulações no Kaggle
+
+## 4.1 Os estratos de buy-in na população
+
+```{r kaggle-estratos, eval = tem_kaggle}
+kb <- carregar_populacao_kaggle(caminho_kaggle, "buyin")
+ordem <- c("micro", "low", "mid_high")
+N_h <- table(kb$estrato)[ordem]
+tabela(
+  data.frame(
+    Estrato = ROTULO_ESTRATO[ordem],
+    Jogadores = num(as.numeric(N_h), 0),
+    `% dos jogadores` = pct(as.numeric(N_h) / nrow(kb)),
+    `ROI médio (%)` = num(tapply(kb$roi, kb$estrato, mean)[ordem], 1),
+    `DP do ROI` = num(tapply(kb$roi, kb$estrato, stats::sd)[ordem], 1),
+    `Lucrativos` = num(tapply(kb$lucrativo, kb$estrato, mean)[ordem], 3),
+    check.names = FALSE
+  ),
+  caption = "Estratos de buy-in no Kaggle (buy-in médio do jogador)"
+)
+```
+
+O ROI médio e a proporção de lucrativos são praticamente iguais nas três faixas, e a correlação entre ROI e buy-in médio é de 0,0006. A estratificação só reduz a variância quando as médias dos estratos diferem, então não se espera ganho. Mesmo assim, o campo usa 3 estratos, e não 5, por três razões: com 5 estratos o efeito do planejamento também fica em torno de 1 (1,00 no ROI e 1,01 na proporção, com $n = 60$); mais estratos dividem o mesmo orçamento em células menores e deixam a variância de cada uma com menos graus de liberdade; e torneios com buy-in ≥ US\$ 100 são raros demais para formar um estrato (só 4 na moldura de campo, em 2 dos 4 blocos).
+
+Ressalva: no Kaggle, o estrato é definido pelo buy-in *médio* do jogador; no campo, pelo buy-in do *torneio*.
+
+## 4.2 AAS e AAS estratificada
+
+```{r kaggle-sim, eval = tem_sim}
+NOME_PLANO <- c(
+  "AAS" = "AAS",
+  "AAS estratificada (proporcional)" = "Estratificada, proporcional",
+  "AAS estratificada (Neyman)" = "Estratificada, Neyman"
+)
+linhas_sim <- do.call(rbind, lapply(c(120L, 67L), function(n) {
+  do.call(rbind, lapply(c("roi", "lucrativo"), function(v) {
+    b <- read.csv(caminho_sim("buyin", n, v))
+    s <- read.csv(caminho_sim("skill", n, v))
+    s <- s[s$plano != "AAS", ]
+    s$plano <- paste(NOME_PLANO[s$plano], "(skill)")
+    b$plano <- ifelse(b$plano == "AAS", "AAS", paste(NOME_PLANO[b$plano], "(buy-in)"))
+    d <- rbind(b, s)
+    d$n <- n
+    d$variavel <- v
+    d
   }))
 }))
-tabela(resumo_kaggle, digits = 3, caption = "Monte Carlo no Kaggle: AAS e AAS estratificada")
+tabela_sim <- function(v) {
+  d <- linhas_sim[linhas_sim$variavel == v, ]
+  dd <- casas(v) + 1
+  tabela(
+    data.frame(
+      Plano = d$plano, n = d$n, `Viés` = num(d$vies, dd),
+      `EP real` = num(sqrt(d$variancia_mc), dd),
+      `EP estimado` = num(sqrt(d$media_var_estimada), dd),
+      Cobertura = pct(d$cobertura), EPA = num(d$epa_empirico),
+      check.names = FALSE
+    ),
+    caption = sprintf("Monte Carlo no Kaggle (5.000 réplicas): %s", ROTULO[[v]])
+  )
+}
+tabela_sim("roi")
+tabela_sim("lucrativo")
 ```
 
-Os três planos são praticamente não viesados, o EP estimado acompanha o EP real e a cobertura do IC fica perto de 95%. A estratificação por buy-in **não traz ganho**: o EPA fica em torno de 1, dentro do ruído de Monte Carlo (com 5.000 réplicas, o EP de uma razão de variâncias é de cerca de 0,03). O motivo é que o ROI médio é o mesmo nas três faixas. A alocação de Neyman também não ajuda, porque os desvios-padrão dos estratos são parecidos (de 43 a 46 p.p.). Por `skill`, que de fato se associa ao ROI, o ganho é pequeno (EPA de 0,92 a 0,98).
+"EP real" é o desvio-padrão das 5.000 estimativas; "EP estimado" é a raiz da média das variâncias estimadas; "EPA" é a variância de Monte Carlo do plano dividida pela da AAS de mesmo $n$.
 
-## O plano de campo numa população sintética
+- **Os três planos são confiáveis.** O viés é desprezível, o EP estimado acompanha o EP real e a cobertura fica entre 94% e 96%.
+- **Estratificar por buy-in não traz ganho.** O EPA fica entre 0,98 e 1,02, dentro do ruído de Monte Carlo (com 5.000 réplicas, a razão de duas variâncias tem EP de cerca de 0,03). A alocação de Neyman também não ajuda, porque os desvios-padrão dos estratos são parecidos.
+- **Por `skill`, que se associa ao ROI (correlação de 0,23), o ganho é pequeno:** EPA de 0,92 a 0,98, próximo de $1 - 0{,}23^2$. O problema não está no método, mas na falta de associação entre buy-in e ROI.
+- **A não resposta custou cerca de 34% de EP.** Passar de $n = 120$ para $n = 67$ multiplica o EP da AAS por $\sqrt{120/67} = 1{,}34$. Esse é só o custo em variância; o viés de não resposta não aparece na simulação.
 
-O plano em três estágios não pode ser sorteado diretamente no Kaggle, que não tem torneios. Para avaliá-lo, montou-se uma população sintética com a estrutura do campo (ADR-013): 38 blocos, com $N_{jh}$ e $M_k$ reamostrados da listagem do SharkScope, e torneios preenchidos com jogadores do Kaggle do mesmo estrato. Nela, $f_i$ e os parâmetros por jogador são conhecidos. Os sorteios e os estimadores são os do campo (`Rscript scripts/simular_kaggle_tres_estagios.R`; detalhes em `docs/kaggle_tres_estagios.md`).
+## 4.3 O plano de campo numa população sintética
+
+O plano em três estágios não pode ser sorteado diretamente no Kaggle, que não tem torneios. Para avaliá-lo, montou-se uma população sintética com a estrutura do campo:
+
+- 38 blocos; em cada bloco e estrato, $N_{jh}$ é sorteado entre os valores observados nos 4 blocos do SharkScope, e o $M_k$ de cada torneio, entre os $M_k$ observados no estrato;
+- os lugares de cada torneio são preenchidos por sorteio sem reposição entre os jogadores do Kaggle do mesmo estrato, com probabilidade proporcional ao número de torneios jogados. Um jogador pode estar em vários torneios, e $f_i$ é a contagem exata;
+- a população resultante tem 800 torneios, 151.948 inscrições e 21.793 jogadores distintos, com ROI médio por jogador de −33,96% e 16,9% de lucrativos.
+
+Os sorteios e os estimadores são exatamente os do campo. Limitação: os torneios são preenchidos ao acaso dentro do estrato, então não há correlação intraclasse nem efeito de horário; as diferenças entre blocos vêm só de $N_{jh}$ e $M_k$.
 
 ```{r tres-estagios-mc, eval = tem_mc}
 mc <- read.csv(caminho_mc)
 mc3 <- mc[mc$plano == "tres_estagios" & mc$unidade == "jogador", ]
+mc3 <- mc3[order(match(mc3$variavel, c("roi", "lucrativo")), mc3$b), ]
+dd <- ifelse(mc3$variavel == "roi", 2, 3)
 tabela(
   data.frame(
-    variavel = mc3$variavel, b = mc3$b, vies = mc3$vies,
-    ep_real = sqrt(mc3$variancia_mc), ep_linearizado = sqrt(mc3$media_var_estimada),
-    razao_linearizada = mc3$razao_var_taylor, razao_n_verdadeiro = mc3$razao_var_n_verdadeiro,
-    razao_jk1 = mc3$razao_var_jk1, cobertura_wald = mc3$cobertura_wald,
-    cobertura_logit = mc3$cobertura_logit, cobertura_jk1 = mc3$cobertura_jk1,
-    epa_empirico = mc3$epa_empirico
+    Parâmetro = ROTULO[mc3$variavel], b = mc3$b,
+    `Viés` = mapply(num, mc3$vies, dd + 1),
+    `EP real` = mapply(num, sqrt(mc3$variancia_mc), dd),
+    `EP linearizado` = mapply(num, sqrt(mc3$media_var_estimada), dd),
+    `Var. lin. / real` = num(mc3$razao_var_taylor),
+    `Com N verdadeiro` = num(mc3$razao_var_n_verdadeiro),
+    `JK1 / real` = num(mc3$razao_var_jk1),
+    check.names = FALSE
   ),
-  digits = 3, caption = "Plano em três estágios na população sintética, por jogador (5.000 réplicas)"
+  caption = "Plano em três estágios na população sintética, por jogador (5.000 réplicas): precisão"
+)
+tabela(
+  data.frame(
+    Parâmetro = ROTULO[mc3$variavel], b = mc3$b,
+    `Cobertura Wald` = pct(mc3$cobertura_wald),
+    `Cobertura logit` = ifelse(is.na(mc3$cobertura_logit), "—", pct(mc3$cobertura_logit)),
+    `Cobertura JK1` = pct(mc3$cobertura_jk1),
+    `EPA empírico` = num(mc3$epa_empirico, 1),
+    check.names = FALSE
+  ),
+  caption = "Plano em três estágios na população sintética, por jogador: cobertura do IC de 95% e EPA"
 )
 ```
-
-Quatro resultados importam para a leitura do campo:
 
 1. **O estimador pontual é praticamente não viesado**, incluindo o peso de multiplicidade $1/f_i$.
-2. **O EP linearizado é otimista.** As colunas `razao_*` dividem a média da variância estimada pela variância real. A linearizada capta cerca de metade com $b = 4$. Trocando $\hat N$ pelo $N$ verdadeiro no denominador, a razão sobe para cerca de 0,8: a maior parte do déficit vem de dividir por $\hat N^2$, que é muito variável neste plano. O jackknife de blocos (JK1) fica perto de 1.
-3. **Nem o JK1 leva a cobertura a 95%** com poucos blocos: a variância estimada tem $b - 1$ graus de liberdade e $\hat R$ é assimétrico. Nas proporções, o IC logit recupera boa parte da cobertura.
-4. **O plano é várias vezes menos eficiente que uma AAS de mesmo $n$** (EPA empírico de 6 a 12 por jogador), mesmo sem correlação intraclasse: os torneios foram preenchidos ao acaso, então a perda vem da desigualdade dos pesos e do número pequeno de UPAs. É o preço de não ter moldura de jogadores.
+2. **O EP linearizado é otimista: capta cerca de metade da variância com $b = 4$.** As fórmulas por estágio estão certas: para os totais, que não dependem de linearização, a variância estimada bate com a real (razão entre 0,97 e 1,05). O déficit está na razão. Dividindo pelo $N$ verdadeiro em vez de $\hat N$, a razão sobe para cerca de 0,8: a maior parte do problema vem de dividir por $\hat N^2$, que tem coeficiente de variação de cerca de 50% com 4 blocos. O jackknife de blocos fica perto de 1.
+3. **Nem o jackknife leva a cobertura a 95%** com poucos blocos: a variância estimada tem $b - 1$ graus de liberdade e $\hat R$ é assimétrico. Nas proporções, o IC logit recupera boa parte da cobertura.
+4. **O plano é de 6 a 12 vezes menos eficiente que uma AAS de mesmo $n$,** mesmo sem correlação intraclasse. A perda vem da desigualdade dos pesos: o plano sorteia 2 torneios por estrato e 5 jogadores por torneio independentemente do tamanho, os torneios Micro são grandes e têm jogadores de $f_i$ alto, e o peso $1/f_i$ vai de 1/178 a 1. O EPA cresce com $b$ porque a variância do plano cai mais devagar que $1/b$.
+5. **Os termos da fórmula não medem o efeito de horário.** Nesta população, o componente verdadeiro entre blocos é de 0,1% a 0,2% da variância, e mesmo assim o 1º termo da fórmula concentra 90% da variância estimada com $b = 4$. Os estimadores dos componentes da §3.4 recuperam a decomposição verdadeira para um total; na razão, os componentes "entre" ficam negativos em média, porque a subestimação da variância linearizada recai sobre eles.
 
-# Coleta de campo no SharkScope
+# 5. Resultados de campo
 
-```{r campo, eval = tem_campo}
-moldura <- montar_moldura(carregar_listagem(caminho_listagem))
-coleta <- carregar_coleta(caminho_coleta)
-B <- read.csv(caminho_blocos)$B[1]
-variaveis_campo <- c("roi", "lucrativo", "lucrativo_estrito")
+## 5.1 Estimativas
 
-estimar_campo <- function(dados, unidade) {
-  lapply(stats::setNames(variaveis_campo, variaveis_campo), function(v) {
-    estimar_media_tres_estagios(dados, moldura, B, v, unidade = unidade)
-  })
+```{r campo-estimativas}
+linha_tab <- function(r, v) {
+  d <- casas(v)
+  data.frame(
+    Parâmetro = ROTULO[[v]], Estimativa = num(r$estimativa, d),
+    `EP linearizado` = num(r$ep, d), `IC 95%` = ic_txt(r$li, r$ls, d),
+    `EP JK1` = num(r$ep_jk1, d), `IC 95% (JK1)` = ic_txt(r$li_jk1, r$ls_jk1, d),
+    check.names = FALSE
+  )
 }
-# Uma linha por variavel: EP linearizado e EP JK1, cada um com o seu IC
-# (t no ROI, logit nas proporcoes; gl = b - 1).
-linhas_campo <- function(resultados, cenario) {
-  do.call(rbind, lapply(names(resultados), function(v) {
-    res <- resultados[[v]]
-    jk1 <- montar_resultado(res$estimativa, res$variancia_jk1, gl = res$gl, nivel = 0.95)
-    ic <- if (v == "roi") c(li = res$li, ls = res$ls) else ic_logit(res)
-    ic_jk1 <- if (v == "roi") c(li = jk1$li, ls = jk1$ls) else ic_logit(jk1)
+tabela(
+  do.call(rbind, Map(linha_tab, r_jog, names(r_jog))),
+  caption = "Estimativas por jogador distinto (IC t no ROI e logit nas proporções; 3 gl)"
+)
+```
+
+O ROI médio estimado dos jogadores com perfil público é de `r num(r_jog$roi$estimativa, 1)`%, e a proporção de lucrativos, de `r num(r_jog$lucrativo$estimativa, 2)`. Os intervalos são largos porque a variância é estimada com 4 blocos.
+
+- **ROI.** Os dois EP são próximos, e o intervalo encosta em zero nas duas versões. Os dados não permitem afirmar que o ROI médio é positivo.
+- **Proporções.** O EP JK1 é cerca de 60% maior que o linearizado, e o limite inferior da proporção de lucrativos cai de `r num(r_jog$lucrativo$li)` para `r num(r_jog$lucrativo$li_jk1)`. Como a simulação mostra que o EP linearizado é otimista, a leitura prudente é a do JK1: a proporção entre os perfis públicos é bem maior que os 0,19 do Kaggle, mas os dados não sustentam que a maioria dos jogadores é lucrativa.
+
+## 5.2 Sensibilidade
+
+```{r campo-sensibilidade}
+sens <- function(r, cenario) {
+  data.frame(
+    Cenário = cenario, `ROI médio (%)` = num(r$estimativa), EP = num(r$ep),
+    `IC 95%` = ic_txt(r$li, r$ls), `EP JK1` = num(r$ep_jk1),
+    `IC 95% (JK1)` = ic_txt(r$li_jk1, r$ls_jk1), check.names = FALSE
+  )
+}
+tabela(
+  rbind(
+    sens(r_jog$roi, "Por jogador (principal)"),
+    sens(r_ins$roi, "Por inscrição (f_i = 1)"),
+    sens(r_sem, sprintf("Por jogador, sem %s", nick_maior))
+  ),
+  caption = "Sensibilidade do ROI médio"
+)
+```
+
+- **Por inscrição**, quem joga mais pesa mais, e a estimativa sobe um pouco (lucrativos: `r num(r_ins$lucrativo$estimativa, 3)` contra `r num(r_jog$lucrativo$estimativa, 3)`). É o efeito que o peso $1/f_i$ corrige: jogadores frequentes tendem a ser mais lucrativos.
+- **O maior ROI da amostra** (`r nick_maior`, `r num(roi_maior, 1)`%) foi conferido no SharkScope e mantido. Sozinho, ele desloca a média em cerca de `r num(r_jog$roi$estimativa - r_sem$estimativa, 0)` p.p., e sem ele o IC inclui zero com folga. Nesse cenário, o EP JK1 sobe para `r num(r_sem$ep_jk1)`, mais um sinal de que a variância é mal determinada com 4 blocos.
+- **Conglomerado último.** Usar só o termo entre blocos sem a correção $(1 - b/B)$, como fazem por padrão os pacotes `survey` e `samplics`, leva o EP do ROI de 5,50 para 5,59: não resolve o problema da linearização.
+
+## 5.3 De onde vem a variância
+
+```{r campo-componentes}
+tabela(
+  do.call(rbind, lapply(variaveis_campo, function(v) {
+    res <- por_jogador[[v]]
+    f <- function(x) pct(x / res$variancia, 0)
     data.frame(
-      cenario = cenario, variavel = v, estimativa = res$estimativa,
-      ep = res$erro_padrao, li = ic[["li"]], ls = ic[["ls"]],
-      ep_jk1 = jk1$erro_padrao, li_jk1 = ic_jk1[["li"]], ls_jk1 = ic_jk1[["ls"]]
+      Parâmetro = ROTULO[[v]],
+      `1º termo` = f(res$termos[["entre_blocos"]]),
+      `2º termo` = f(res$termos[["dentro_blocos"]]),
+      `Entre blocos` = f(res$componentes[["entre_blocos"]]),
+      `Entre torneios` = f(res$componentes[["entre_torneios"]]),
+      `Dentro dos torneios` = f(res$componentes[["dentro_torneios"]]),
+      check.names = FALSE
     )
-  }))
-}
-por_jogador <- estimar_campo(coleta, "jogador")
-por_inscricao <- estimar_campo(coleta, "inscricao")
-```
-
-## Estimativas
-
-```{r campo-estimativas, eval = tem_campo}
-tabela(linhas_campo(por_jogador, "por jogador"),
-  digits = 3,
-  caption = "Estimativas por jogador distinto, com EP linearizado e EP JK1 (IC 95%, 3 gl)"
+  })),
+  caption = "Frações da variância estimada: termos da fórmula (§3.2) e componentes não viesados (§3.4)"
 )
 ```
 
-O ROI médio estimado dos jogadores com perfil público é de cerca de 17%, e a proporção de lucrativos, de 0,85. Os intervalos são largos, porque a variância é estimada com 4 blocos (t com 3 gl = 3,18). No ROI, os dois EP são próximos e o intervalo encosta em zero. Nas proporções, o EP JK1 é cerca de 60% maior que o linearizado, e o limite inferior da proporção de lucrativos cai de 0,48 para 0,23. Como a simulação mostra que o EP linearizado é otimista, a leitura prudente das proporções é a do JK1: os dados sustentam que a proporção é bem maior que os 0,19 do Kaggle, mas não que a maioria dos jogadores é lucrativa.
+O 1º termo da fórmula concentra de 81% a 95% da variância, mas isso **não** quer dizer que a diferença entre blocos domina: a simulação mostra que ele concentra 90% mesmo numa população sem efeito de horário (§4.3, item 5). Descontando a parte que vem de dentro dos blocos, a variação **dentro dos blocos** (entre torneios e entre jogadores) responde por cerca de metade da variância ou mais nas três variáveis, e o componente entre blocos vai de zero a metade conforme a variável. No ROI sem `r nick_maior`, ele passa de 29% para 50%.
 
-```{r campo-sensibilidade, eval = tem_campo}
-# Sensibilidade: por inscricao (f_i = 1) e sem o maior ROI.
-maior <- which.max(ifelse(coleta$respondeu %in% TRUE, coleta$roi, -Inf))
-sem_extremo <- coleta[-maior, , drop = FALSE]
-sensibilidade <- rbind(
-  linhas_campo(por_jogador, "por jogador"),
-  linhas_campo(por_inscricao, "por inscricao"),
-  linhas_campo(estimar_campo(sem_extremo, "jogador")["roi"], "por jogador, sem o maior ROI")
-)
-tabela(sensibilidade[sensibilidade$variavel == "roi", ], digits = 2, caption = "Sensibilidade do ROI médio")
-```
+Esses componentes são diferenças de variâncias estimadas com 3 graus de liberdade (4 blocos) ou 1 (2 torneios por célula), e por isso são muito instáveis. Além disso, na razão, os componentes "entre" tendem a ser subestimados (§4.3). A resposta à pergunta 2 é, portanto, que os dados **não permitem** apontar o horário como principal fonte de incerteza, nem descartá-lo. A recomendação prática continua sendo sortear mais blocos: toda a variância cai com $1/b$, e só mais blocos aumentam os graus de liberdade.
 
-Por inscrição, quem joga mais pesa mais, e a estimativa sobe um pouco: é o efeito que o peso $1/f_i$ corrige. O maior ROI da amostra (`r coleta$nickname[maior]`, `r format(coleta$roi[maior], decimal.mark = ",")`%) foi conferido e mantido, mas sozinho desloca a média em cerca de 4 p.p., e sem ele o intervalo inclui zero.
+## 5.4 Efeito do planejamento
 
-## De onde vem a variância
-
-```{r campo-componentes, eval = tem_campo}
-componentes_campo <- do.call(rbind, lapply(variaveis_campo, function(v) {
-  res <- por_jogador[[v]]
-  data.frame(
-    variavel = v,
-    termo_1 = res$termos[["entre_blocos"]] / res$variancia,
-    termo_2 = res$termos[["dentro_blocos"]] / res$variancia,
-    entre_blocos = res$componentes[["entre_blocos"]] / res$variancia,
-    entre_torneios = res$componentes[["entre_torneios"]] / res$variancia,
-    dentro_torneios = res$componentes[["dentro_torneios"]] / res$variancia
-  )
-}))
-tabela(componentes_campo,
-  caption = "Frações da variância estimada: termos da fórmula e componentes não viesados"
+```{r campo-epa}
+tabela(
+  do.call(rbind, lapply(variaveis_campo, function(v) {
+    e <- epa_campo[[v]]
+    data.frame(
+      Parâmetro = ROTULO[[v]], EPA = num(e$epa), `Parte dos pesos (1 + CV²)` = num(e$epa_pesos),
+      Resto = num(e$epa_conglomerado), `n efetivo de Kish` = num(e$n / e$epa_pesos, 1),
+      check.names = FALSE
+    )
+  })),
+  caption = sprintf("EPA estimado na amostra de campo, por jogador (n = %d)", epa_campo$roi$n)
 )
 ```
 
-A fórmula da variância tem duas parcelas, e a primeira ($B^2(1-b/B)s_u^2/b$) concentra de 80% a 95% do total. Isso **não** quer dizer que a diferença entre blocos domina: $s_u^2$ é calculada com totais estimados de bloco, que já carregam o erro de amostrar torneios e jogadores, $E[s_u^2] = S_u^2 + \bar V$. Descontando essa parte (colunas `entre_blocos`, `entre_torneios` e `dentro_torneios`, que somam 1; negativo se lê como zero), a variação **dentro dos blocos** responde por cerca de metade da variância ou mais nas três variáveis, e o componente entre blocos vai de zero a metade conforme a variável. Com 4 blocos e 2 torneios por célula, esses componentes são diferenças de variâncias com 3 ou 1 grau de liberdade e são muito instáveis. A simulação confirma a leitura: na população sintética, sem efeito de horário, o componente verdadeiro entre blocos é de 0,1% a 0,2% da variância, e mesmo assim o 1º termo da fórmula concentra 90% da variância estimada (`Rscript scripts/checar_variancia_kaggle.R`).
+Os pesos são muito desiguais: os 5 maiores somam `r pct(concentracao, 0)` da soma dos pesos, e o tamanho efetivo de amostra de Kish é de `r num(n_kish, 1)` em `r epa_campo$roi$n`. Só a desigualdade dos pesos já levaria a um EPA perto de `r num(epa_campo$roi$epa_pesos, 1)`.
 
-Há uma ressalva na direção contrária: na simulação, os componentes "entre" calculados na razão ficam negativos em média, porque a subestimação da variância linearizada recai sobre eles. A tabela tende, então, a subestimar o que vem dos blocos e dos torneios.
+O EPA estimado vai de `r num(epa_campo$roi$epa, 1)` (ROI) a `r num(epa_campo$lucrativo_estrito$epa, 0)` (lucrativo estrito) e só pode ser lido qualitativamente:
 
-A resposta à pergunta 2 é, portanto, que os dados **não permitem** apontar o horário como principal fonte de incerteza, nem descartá-lo. A recomendação prática continua sendo sortear mais blocos, porque toda a variância cai com $1/b$ e só mais blocos aumentam os graus de liberdade.
+- no ROI, o valor extremo infla $s_y^2$ e derruba o EPA;
+- a separação de Kish supõe pesos não relacionados com $y$, o que não vale aqui (o peso $1/f_i$ e o ROI andam juntos), então o "resto" não mede conglomeração;
+- na simulação, o EPA estimado numa amostra fica em média na metade do EPA real;
+- a correlação intraclasse derivada de $\text{EPA} \approx 1 + (\bar m - 1)\rho$ dá valores fora de $[-1/(\bar m - 1), 1]$ e não é interpretável: os torneios têm tamanhos e pesos muito diferentes, e a variância é estimada entre blocos.
 
-## Efeito do planejamento
+A conclusão sustentada pelos dados e pela simulação é que o plano de campo é bem menos eficiente que uma AAS de mesmo tamanho.
 
-```{r campo-epa, eval = tem_campo}
-epa_campo <- do.call(rbind, lapply(variaveis_campo, function(v) {
-  e <- calcular_epa_tres_estagios(por_jogador[[v]])
+## 5.5 Não resposta
+
+```{r campo-nao-resposta}
+nr <- taxa_nao_resposta(coleta)
+nr <- nr[match(c("micro", "low", "mid_high"), nr$estrato), ]
+tabela(
   data.frame(
-    variavel = v, epa = e$epa, epa_pesos = e$epa_pesos, n = e$n,
-    n_efetivo_kish = e$n / e$epa_pesos, m_medio = e$m_medio
-  )
-}))
-tabela(epa_campo, caption = "EPA estimado na amostra de campo (por jogador)")
-pesos <- por_jogador$roi$amostra$w
-concentracao <- sum(sort(pesos, decreasing = TRUE)[1:5]) / sum(pesos)
+    Estrato = c(ROTULO_ESTRATO[nr$estrato], "Total"),
+    `Posições consultadas` = c(nr$consultados, sum(nr$consultados)),
+    `Sem dados` = c(nr$privados, sum(nr$privados)),
+    `Taxa de não resposta` = pct(c(nr$taxa_nao_resposta, sum(nr$privados) / sum(nr$consultados))),
+    check.names = FALSE
+  ),
+  caption = "Não resposta por estrato (perfis privados e jogadores \"Anônimo\")"
+)
+tabela(
+  data.frame(
+    Parâmetro = ROTULO[names(lim)],
+    `Observada (por inscrição)` = sapply(lim, function(l) num(l$observada, 3)),
+    `Limite inferior` = sapply(lim, function(l) num(l$inferior, 3)),
+    `Limite superior` = sapply(lim, function(l) num(l$superior, 3)),
+    check.names = FALSE
+  ),
+  caption = "Limites de pior caso: não respondentes como 0 e como 1"
+)
+tabela(
+  data.frame(
+    Parâmetro = ROTULO[names(ajuste)],
+    `Sem ajuste` = mapply(function(a, v) num(a$sem_ajuste, casas(v)), ajuste, names(ajuste)),
+    `Ajustada por posição` = mapply(function(a, v) num(a$ajustada, casas(v)), ajuste, names(ajuste)),
+    check.names = FALSE
+  ),
+  caption = "Ajuste por classe de posição no torneio (por jogador)"
+)
 ```
 
-O EPA é estimado na própria amostra de campo, contra a variância de uma AAS de mesmo $n$ com $s_y^2$ ponderada (nunca contra a variância do Kaggle, que é outra população). Os pesos são muito desiguais: os 5 maiores somam `r round(100 * concentracao)`% da soma dos pesos, e o tamanho efetivo de amostra de Kish é de cerca de 14 em 67. Só a desigualdade dos pesos já implicaria um EPA perto de 4,7.
+A não resposta é de `r pct(taxa_nr, 0)` e cai à medida que o buy-in sobe. A correção do plano supõe que ela é aleatória dentro do torneio, e duas análises descritivas medem quanto essa hipótese pesa:
 
-O EPA estimado varia de 0,4 (ROI) a 11 (lucrativo estrito) e deve ser lido só qualitativamente. No ROI, o valor extremo infla $s_y^2$ e derruba o EPA; a fórmula de Kish supõe pesos não relacionados com $y$, o que não vale aqui; e, na simulação, o EPA estimado numa amostra fica em média na metade do EPA real. O coeficiente de correlação intraclasse derivado do EPA não é interpretável neste plano (ADR-005). A conclusão sustentada pelos dados e pela simulação é que o plano de campo é bem menos eficiente que uma AAS de mesmo tamanho.
-
-## Não resposta
-
-```{r campo-nao-resposta, eval = tem_campo}
-tabela(taxa_nao_resposta(coleta), caption = "Não resposta por estrato")
-pior_caso <- do.call(rbind, lapply(c("lucrativo", "lucrativo_estrito"), function(v) {
-  lim <- limites_pior_caso(coleta, moldura, B, v)
-  data.frame(
-    variavel = v, observada = lim$observada, inferior = lim$inferior, superior = lim$superior
-  )
-}))
-tabela(pior_caso, caption = "Limites de pior caso (por inscrição): não respondentes como 0 e como 1")
-ajuste <- do.call(rbind, lapply(variaveis_campo, function(v) {
-  aj <- ajustar_por_posicao(coleta, moldura, B, v, unidade = "jogador")
-  data.frame(variavel = v, sem_ajuste = aj$sem_ajuste, ajustada = aj$ajustada)
-}))
-tabela(ajuste, caption = "Ajuste por classe de posição no torneio (por jogador)")
-```
-
-A não resposta é de 55% e cai com o buy-in. A correção do plano supõe que ela é aleatória dentro do torneio, e duas análises descritivas medem quanto essa hipótese pesa (ADR-015):
-
-- **Limites de pior caso.** Sem nenhuma hipótese sobre quem não respondeu, a proporção de lucrativos por inscrição fica entre 0,41 e 0,95. Os limites reincluem os torneios com 0 ou 1 respondente, então não usam exatamente os mesmos torneios da estimativa observada.
-- **Ajuste por posição no torneio.** A posição na lista de resultados é a única informação disponível sobre quem não respondeu, e a resposta é maior entre os mais bem colocados. Reponderar por metade de cima e de baixo do torneio reduz o ROI em cerca de 2 p.p. e quase não muda as proporções. É uma heurística, não o ajuste canônico por classes.
+- **Limites de pior caso** (Manski, 1989). Sem nenhuma hipótese sobre quem não respondeu, a proporção de lucrativos por inscrição fica entre `r num(lim$lucrativo$inferior, 2)` e `r num(lim$lucrativo$superior, 2)`. São calculados por inscrição porque a frequência $f_i$ de quem não respondeu é desconhecida, e reincluem os torneios com 0 ou 1 respondente.
+- **Ajuste por posição no torneio.** A posição na lista de resultados é a única informação disponível sobre quem não respondeu, e a resposta é maior entre os mais bem colocados (§6.2). Reponderar pelas metades de cima e de baixo de cada torneio, dentro da célula, reduz o ROI em cerca de `r num(ajuste$roi$sem_ajuste - ajuste$roi$ajustada, 0)` p.p. e quase não muda as proporções. É uma heurística de sensibilidade, inspirada nas classes de ajuste de peso (Lohr, 2022, cap. 8), não o ajuste canônico.
 
 O risco maior não aparece nessas contas: quem mantém perfil público no SharkScope tende a ser o jogador mais regular e mais vencedor. Por isso, **todas as estimativas de campo descrevem os jogadores com perfil público**, não todos os inscritos.
 
-# Análise exploratória dos estratos de buy-in
+# 6. Análise exploratória
 
-Verifica no campo a escolha dos 3 estratos feita com o Kaggle. As tabelas sem peso descrevem os respondentes e ignoram o plano. As estimativas por estrato (domínio) usam o estimador de três estágios, com IC de gl = b − 1. A discussão completa está em `docs/notas/aed_estratos.md` (`Rscript scripts/explorar_estratos.R`).
+## 6.1 Os estratos de buy-in no campo
 
-```{r aed-dados, eval = tem_campo}
-caminho_top10 <- "data/raw/sharkscope/top10_torneios.csv"
-top10 <- carregar_top10(caminho_top10)
-comparacao_top10 <- comparar_top10_estratos(coleta, top10, moldura)
-```
-
-## Moldura
-
-```{r aed-moldura, eval = tem_campo, fig.width = 9, fig.height = 4}
-tabela(resumir_moldura_estratos(moldura), caption = "Moldura por estrato")
+```{r aed-moldura, fig.width = 9, fig.height = 3.8, fig.cap = "Moldura de campo por estrato"}
+mol <- resumir_moldura_estratos(moldura)
+tabela(
+  data.frame(
+    Estrato = ROTULO_ESTRATO[mol$estrato], Torneios = mol$torneios,
+    `Buy-in (US$)` = sprintf("%s a %s", num(mol$buyin_min), num(mol$buyin_max)),
+    `Inscritos (mediana)` = num(mol$inscritos_mediana, 0),
+    `% dos torneios` = pct(mol$pct_torneios / 100),
+    `% das inscrições` = pct(mol$pct_inscricoes / 100),
+    check.names = FALSE
+  ),
+  caption = "Moldura por estrato (4 blocos)"
+)
 grafico_moldura_estratos(moldura)
 ```
 
-O Mid/High tem torneios menores (6,8% das inscrições) e buy-in de US\$ 27 a US\$ 530. Só 4 torneios têm buy-in ≥ US\$ 100, em 2 dos 4 blocos, o que inviabiliza um estrato High.
+O Mid/High tem torneios menores (`r pct(mol$pct_inscricoes[mol$estrato == "mid_high"] / 100)` das inscrições) e buy-in de US\$ 27 a US\$ 530. Só 4 torneios têm buy-in ≥ US\$ 100, o que inviabiliza um estrato High.
 
-## Não resposta
-
-```{r aed-resposta, eval = tem_campo, fig.width = 6, fig.height = 4}
-tabela(taxa_nao_resposta(coleta), caption = "Não resposta na amostra aleatória")
-tabela(comparacao_top10, caption = "Amostra aleatória x top 10 (24 torneios originais)")
-grafico_resposta_estratos(comparacao_top10)
-```
-
-A resposta cresce com o buy-in, na amostra e no top 10. O Micro tem a maior não resposta e o maior peso no $\hat N$.
-
-## ROI e lucrativos por estrato
-
-```{r aed-roi, eval = tem_campo, fig.width = 6, fig.height = 4}
-tabela(resumir_variavel_estratos(coleta, "roi"), caption = "ROI dos respondentes (sem peso)")
+```{r aed-roi, fig.width = 6, fig.height = 4, fig.cap = "ROI dos respondentes por estrato (eixo cortado em 100%)"}
 grafico_roi_estratos(coleta)
-tabela(estimar_dominios_estratos(coleta, moldura, B, "roi"),
-  caption = "ROI médio por estrato (domínio, por jogador)"
+dominio <- function(v) {
+  d <- estimar_dominios_estratos(coleta, moldura, B, v)
+  data.frame(estrato = d$estrato, est = d$estimativa, li = d$li, ls = d$ls, pct_n = d$pct_N_hat)
+}
+d_roi <- dominio("roi")
+d_luc <- dominio("lucrativo")
+tabela(
+  data.frame(
+    Estrato = ROTULO_ESTRATO[d_roi$estrato],
+    `ROI médio (%)` = num(d_roi$est, 1), `IC 95%` = ic_txt(d_roi$li, d_roi$ls),
+    Lucrativos = num(d_luc$est, 3), `IC 95% (logit)` = ic_txt(d_luc$li, d_luc$ls, 3),
+    `% dos jogadores (N̂)` = pct(d_roi$pct_n / 100),
+    check.names = FALSE
+  ),
+  caption = "Estimativas por estrato (domínios), por jogador distinto, 3 gl"
 )
-tabela(estimar_dominios_estratos(coleta, moldura, B, "lucrativo"),
-  caption = "Proporção de lucrativos por estrato (IC logit)"
-)
-tabela(estimar_dominios_estratos(coleta, moldura, B, "lucrativo_estrito"),
-  caption = "Proporção de lucrativos estritos (ROI > 0 e lucro > 0) por estrato (IC logit)"
-)
+dec_roi <- decompor_variancia_estratos(coleta, "roi")
+dec_luc <- decompor_variancia_estratos(coleta, "lucrativo")
 ```
 
-```{r aed-sensibilidade, eval = tem_campo}
-# Sensibilidade: o maior ROI (cauda do Mid/High) tratado como nao resposta.
-maior <- which.max(ifelse(coleta$respondeu %in% TRUE, coleta$roi, -Inf))
-sem_maior <- coleta
-sem_maior$respondeu[maior] <- FALSE
-tabela(estimar_dominios_estratos(sem_maior, moldura, B, "roi"),
-  caption = sprintf(
-    "ROI por estrato sem o maior ROI (%s%%)", format(coleta$roi[maior], decimal.mark = ",")
-  )
-)
-```
+Cada estrato é tratado como um domínio, com o mesmo estimador de três estágios restrito a ele. O Micro tem ROI e proporção de lucrativos menores e responde por `r pct(d_roi$pct_n[d_roi$estrato == "micro"] / 100, 0)` dos jogadores estimados. O ROI do Mid/High é puxado por `r nick_maior` e tem IC enorme. Numa decomposição descritiva da soma de quadrados entre os respondentes (sem pesos), o estrato explica `r pct(dec_roi$proporcao[1], 0)` da variação do ROI e `r pct(dec_luc$proporcao[1], 0)` da de lucrativo, o que corresponderia a um EPA da estratificação entre 0,90 e 0,97. É pouco, mas, ao contrário do Kaggle, os estratos diferem. Testes que ignoram o plano apontam associação entre ROI e buy-in (Kruskal-Wallis entre estratos, p = 0,04; Spearman com o buy-in, $r_s$ = 0,36, p = 0,002).
 
-## Quanto o estrato explica
+## 6.2 Top 10 dos torneios (fora do plano)
 
-```{r aed-decomposicao, eval = tem_campo}
-tabela(decompor_variancia_estratos(coleta, "roi"), caption = "Decomposição da SQ do ROI")
-tabela(decompor_variancia_estratos(sem_maior, "roi"),
-  caption = "Decomposição da SQ do ROI, sem o maior ROI"
-)
-tabela(decompor_variancia_estratos(coleta, "lucrativo"),
-  caption = "Decomposição da SQ de lucrativo"
-)
-tabela(associar_buyin(coleta, moldura, "roi"),
-  caption = "Associação do ROI com o buy-in (descritiva, ignora o plano)"
-)
-```
+Os 10 primeiros colocados dos 24 torneios originais foram consultados de 05/11 a 10/11 e ficam **fora do plano amostral**. São comparados, sem pesos, com a amostra aleatória dos mesmos torneios restrita às posições acima de 10, para que ninguém apareça nos dois grupos.
 
-O estrato explica de 3% a 10% da soma de quadrados (EPA aproximado da estratificação entre 0,90 e 0,97). É pouco, mas ao contrário do Kaggle os estratos diferem: o Micro tem ROI e proporção de lucrativos menores. Sem o maior ROI, o QM entre torneios é igual ao QM dentro, logo $\rho_{int}$ ≈ 0 para o ROI.
-
-# Análise exploratória do top 10
-
-Os 10 primeiros dos 24 torneios originais, consultados de 05/11 a 10/11, ficam fora do plano amostral. São comparados com a amostra aleatória dos mesmos torneios sem as posições 1 a 10, que seriam o mesmo registro. Tudo é sem peso. A discussão completa está em `docs/notas/aed_top10.md` (`Rscript scripts/explorar_top10.R`).
-
-```{r top10-dados, eval = tem_campo}
+```{r top10}
+top10 <- carregar_top10(caminho_top10)
 top10p <- preparar_top10(top10, moldura)
 grupos_top10 <- montar_grupos_top10(top10p, coleta)
 por_torneio_top10 <- comparar_por_torneio_top10(grupos_top10)
 populacao_ref <- if (tem_kaggle) carregar_populacao_kaggle(caminho_kaggle, "nenhum")
-referencia_top10 <- tabela_referencia_top10(grupos_top10, coleta, moldura, B, populacao_ref)
-```
-
-## O top 10 ao lado dos outros resultados
-
-```{r top10-referencia, eval = tem_campo}
-tabela(referencia_top10, caption = "Kaggle, estimativa do plano, amostra aleatória e top 10")
-```
-
-Top 10 e amostra aleatória têm ROI mediano de 16% a 18% e cerca de 90% de lucrativos. Os dois grupos ficam perto da estimativa do plano e longe do Kaggle. O que separa o campo do Kaggle é o perfil público no SharkScope, e não o resultado no torneio.
-
-## Top 10 x amostra aleatória
-
-```{r top10-grupos, eval = tem_campo, fig.width = 7, fig.height = 4}
-tabela(resumir_grupos_top10(grupos_top10), caption = "Top 10 x amostra (posição > 10)")
-tabela(resumir_grupos_top10(grupos_top10, por_estrato = TRUE), caption = "Por estrato")
-roi_plano <- referencia_top10$roi_media[referencia_top10$tipo == "com peso (1/f_i)"]
-grafico_top10_vs_amostra(grupos_top10, referencia = roi_plano)
-tabela(testar_top10(grupos_top10, por_torneio_top10, top10p),
-  caption = "Testes descritivos (ignoram o plano e a conglomeração)"
+ref <- tabela_referencia_top10(grupos_top10, coleta, moldura, B, populacao_ref)
+fonte_ref <- c(
+  "Kaggle (populacao)" = "Kaggle (população)",
+  "Campo: plano em tres estagios" = "Campo: estimativa do plano",
+  "Campo: amostra aleatoria (32 torneios)" = "Campo: amostra aleatória (32 torneios)",
+  "Campo: amostra, posicao > 10 (24)" = "Campo: amostra, posição > 10 (24 torneios)",
+  "Top 10 (24 torneios)" = "Top 10 (24 torneios)"
 )
+tipo_ref <- c(
+  "parametro" = "parâmetro", "com peso (1/f_i)" = "com peso (1/f_i)", "sem peso" = "sem peso"
+)
+plano_ref <- ref$fonte == "Campo: plano em tres estagios"
+tabela(
+  data.frame(
+    Fonte = unname(fonte_ref[ref$fonte]), Tipo = unname(tipo_ref[ref$tipo]),
+    n = ifelse(plano_ref, sprintf("%d (na estimação)", n_estimacao), num(ref$n, 0)),
+    `ROI médio (%)` = num(ref$roi_media, 1),
+    `ROI mediano (%)` = ifelse(is.na(ref$roi_mediana), "—", num(ref$roi_mediana, 1)),
+    Lucrativos = num(ref$prop_lucrativos, 3),
+    check.names = FALSE
+  ),
+  caption = "Kaggle, estimativa do plano, amostra aleatória e top 10"
+)
+testes <- testar_top10(grupos_top10, por_torneio_top10, top10p)
+resp_pos <- resumir_resposta_top10(top10p, "posicao")
+reconsultas <- conferir_reconsultas(top10p, coleta)
 ```
 
-Terminar no top 10 não indica ROI de longo prazo maior: a distribuição do ROI e a proporção de lucrativos não diferem, e dentro do top 10 o ROI não depende da posição. A taxa de resposta, sim, é maior no top 10.
+```{r top10-grafico, fig.width = 7, fig.height = 4, fig.cap = "ROI do top 10 e da amostra aleatória (posição > 10); a linha é a estimativa do plano"}
+grafico_top10_vs_amostra(grupos_top10, referencia = ref$roi_media[ref$tipo == "com peso (1/f_i)"])
+```
 
-## Não resposta por posição e consistência das consultas
-
-```{r top10-posicao, eval = tem_campo, fig.width = 9, fig.height = 4}
-tabela(resumir_resposta_top10(top10p, "posicao"), caption = "Top 10: resposta por posição")
+```{r top10-posicao, fig.width = 9, fig.height = 3.8, fig.cap = "Top 10: taxa de resposta e ROI por posição"}
 grafico_top10_posicao(top10p)
-tabela(conferir_reconsultas(top10p, coleta),
-  caption = "Posições 1 a 10 sorteadas na amostra: o mesmo registro consultado duas vezes"
-)
 ```
 
-A resposta cai de 61% nas posições 1 a 3 para 42% nas posições 8 a 10 e 38% fora do top 10. A não resposta depende do resultado no torneio, o que contraria a hipótese do ADR-006, mas o ROI dos respondentes não depende. As 19 reconsultas têm o mesmo status de resposta e ROI a menos de 0,5 ponto de distância.
+- **Terminar no top 10 não indica ROI de longo prazo maior.** Top 10 e amostra aleatória têm ROI mediano de 16% a 18% e cerca de 90% de lucrativos (Mann-Whitney, p = `r num(testes$p_valor[1])`; Fisher, p = `r num(testes$p_valor[2])`), e dentro do top 10 o ROI não depende da posição (Spearman, p = `r num(testes$p_valor[5])`). Os testes ignoram o plano e a conglomeração e são só descritivos.
+- **O que separa o campo do Kaggle é o perfil público, não o resultado no torneio.** Os dois grupos ficam perto da estimativa do plano e longe do Kaggle.
+- **A não resposta depende da posição.** A taxa de resposta cai de `r pct(sum(resp_pos$respondentes[1:3]) / sum(resp_pos$consultados[1:3]), 0)` nas posições 1 a 3 para `r pct(sum(resp_pos$respondentes[8:10]) / sum(resp_pos$consultados[8:10]), 0)` nas posições 8 a 10 e 38% fora do top 10. Isso contraria a hipótese de não resposta aleatória dentro do torneio, mas o ROI dos respondentes não depende da posição, o que limita o viés que ela produz.
+- **As consultas são consistentes.** As `r nrow(reconsultas)` posições do top 10 que também tinham sido sorteadas na amostra tiveram o mesmo status de resposta nas duas consultas, e o ROI diferiu em no máximo `r num(max(abs(reconsultas$dif_roi), na.rm = TRUE), 1)` ponto, uma variação que vem de o SharkScope atualizar resultados com atraso.
 
-# Comparação e discussão
-
-A tabela completa, com os dois tamanhos de amostra e o plano em três estágios, está em `docs/comparacao_planos.md`. Em resumo:
+# 7. Comparação e discussão
 
 | | AAS e AAS estratificada (Kaggle) | Três estágios (campo e população sintética) |
 |---|---|---|
 | Moldura necessária | Lista de jogadores | Só a lista de blocos de tempo |
 | Viés do estimador | Desprezível | Desprezível (na simulação) |
-| EP estimado × EP real | Iguais | Linearizado capta cerca de metade da variância com 4 blocos; o JK1 acerta em média |
+| EP estimado × EP real | Iguais | O linearizado capta cerca de metade da variância com 4 blocos; o jackknife acerta em média |
 | Cobertura do IC de 95% | 94% a 96% | 87% a 94% (Wald); 92% a 96% com logit nas proporções |
 | Eficiência (EPA) | 0,92 a 1,02 | 6 a 12 vezes a variância da AAS, por jogador |
 | Graus de liberdade | Cerca de $n$ | $b - 1 = 3$ |
 
-**As populações não são as mesmas**, então o que se compara são as propriedades dos planos, não as médias. O Kaggle é sintético e inclui todos os jogadores (ROI médio de −32%, 19% de lucrativos). O campo descreve os jogadores com perfil público no SharkScope (ROI médio estimado de 17%, 85% de lucrativos). A análise do top 10 reforça essa leitura: o que separa o campo do Kaggle é o perfil público, não o resultado no torneio.
+**As populações não são as mesmas**, então o que se compara são as propriedades dos planos, não as médias. O Kaggle é sintético e inclui todos os jogadores (ROI médio de −32%, 19% de lucrativos). O campo descreve os jogadores com perfil público no SharkScope (ROI médio estimado de `r num(r_jog$roi$estimativa, 0)`%, `r pct(r_jog$lucrativo$estimativa, 0)` de lucrativos).
 
-**Respostas às perguntas do projeto:**
+**Respostas às perguntas do projeto**
 
-1. **ROI médio e proporção de lucrativos.** Entre os jogadores com perfil público, ROI médio de cerca de 17% e proporção de lucrativos de cerca de 0,85. O IC do ROI encosta em zero, e o limite inferior da proporção fica entre 0,23 e 0,48 conforme o EP usado. Os dados não permitem afirmar que o ROI médio é positivo.
+1. **ROI médio e proporção de lucrativos.** Entre os jogadores com perfil público, ROI médio de cerca de `r num(r_jog$roi$estimativa, 0)`% e proporção de lucrativos de cerca de `r num(r_jog$lucrativo$estimativa, 2)`. O IC do ROI encosta em zero, e o limite inferior da proporção fica entre `r num(r_jog$lucrativo$li_jk1)` e `r num(r_jog$lucrativo$li)`, conforme o EP usado. Os dados não permitem afirmar que o ROI médio é positivo.
 2. **Fontes de variância.** Os termos da fórmula não são componentes. Pelos componentes não viesados, a variação dentro dos blocos responde por cerca de metade da variância ou mais, e o componente entre blocos não é distinguível de zero com 4 blocos.
-3. **EPA.** O plano de campo é bem menos eficiente que uma AAS de mesmo tamanho: de 6 a 12 vezes na simulação, com tamanho efetivo de Kish de cerca de 14 em 67 no campo. O valor do EPA estimado numa única amostra não é confiável.
-4. **Estratificação no Kaggle.** Por buy-in, nenhum ganho (EPA ≈ 1), com alocação proporcional ou de Neyman, porque o ROI não varia entre as faixas. No campo, os estratos diferem um pouco (o estrato explica de 3% a 10% da soma de quadrados).
-5. **Não resposta.** 55%, maior nos buy-ins baixos e nas piores posições do torneio. Sem hipótese sobre os não respondentes, a proporção de lucrativos fica entre 0,41 e 0,95.
+3. **EPA.** O plano de campo é bem menos eficiente que uma AAS de mesmo tamanho: de 6 a 12 vezes na simulação, com tamanho efetivo de Kish de `r num(n_kish, 0)` em `r epa_campo$roi$n` no campo. O EPA estimado numa única amostra não é confiável.
+4. **Estratificação no Kaggle.** Por buy-in, nenhum ganho (EPA ≈ 1), com alocação proporcional ou de Neyman, porque o ROI não varia entre as faixas. No campo, os estratos diferem um pouco.
+5. **Não resposta.** `r pct(taxa_nr, 0)`, maior nos buy-ins baixos e nas piores posições do torneio. Sem hipótese sobre os não respondentes, a proporção de lucrativos fica entre `r num(lim$lucrativo$inferior, 2)` e `r num(lim$lucrativo$superior, 2)`.
 
-**Limitações.**
+**Limitações**
 
 - **Viés de não resposta**, que nenhum ajuste com os dados disponíveis corrige: as estimativas valem para perfis públicos.
 - **Poucas UPAs.** Com 4 blocos, a variância é mal estimada, os intervalos são largos e, pela simulação, ainda otimistas. Os blocos perdidos deixam a tarde e a noite de dia útil representadas por um único bloco.
-- **Aproximações nos pesos.** $f_i$ vem da média de jogos por dia em 12 meses, não das 76 h; $M_k$ conta entradas, com re-entries.
+- **Aproximações nos pesos.** $f_i$ vem da média de jogos por dia em 12 meses, não das 76 h do período; $M_k$ conta entradas, com re-entries, e superestima os jogadores distintos.
 - **Sorteios do 3º estágio não totalmente independentes**, pela colisão das sementes derivadas.
-- **Janela do ROI e sobrevivência.** O ROI é o de 12 meses, e quem perde muito tende a parar de jogar.
+- **Janela do ROI e sobrevivência.** O ROI é o de 12 meses, e quem perde muito tende a parar de jogar e a ter menos chance de estar ativo no período.
 - **Cauda pesada.** Um único jogador desloca o ROI médio em cerca de 4 p.p.
 - **Validade externa.** MTTs do PokerStars em 76 h (de sábado à noite a terça), não o poker online em geral.
 
-**O que faríamos diferente:** sortear mais blocos (e listá-los assim que terminam, antes que saiam do alcance da busca), mesmo ao custo de menos jogadores por torneio; e registrar o número de torneios de cada jogador na janela, para um peso $1/f_i$ menos aproximado.
+**O que faríamos diferente.** Sortear mais blocos, e listá-los assim que terminam, antes que saiam do alcance da busca, mesmo ao custo de menos jogadores por torneio: é a única forma de aumentar os graus de liberdade. Registrar também o número de torneios de cada jogador na janela, para um peso $1/f_i$ menos aproximado.
 
 # Referências
 
-Ver `docs/referencias.md`.
+- BOLFARINE, H.; BUSSAB, W. O. *Elementos de Amostragem*. São Paulo: Blucher, 2005.
+- COCHRAN, W. G. *Sampling Techniques*. 3. ed. New York: Wiley, 1977.
+- KISH, L. *Survey Sampling*. New York: Wiley, 1965.
+- KISH, L. Weighting for unequal $P_i$. *Journal of Official Statistics*, v. 8, n. 2, p. 183–200, 1992.
+- LOHR, S. L. *Sampling: Design and Analysis*. 3. ed. Boca Raton: CRC Press, 2022.
+- LUMLEY, T. *Complex Surveys: A Guide to Analysis Using R*. Hoboken: Wiley, 2010.
+- MANSKI, C. F. Anatomy of the selection problem. *Journal of Human Resources*, v. 24, n. 3, p. 343–360, 1989.
+- THOMPSON, S. K. *Sampling*. 3. ed. Hoboken: Wiley, 2012.
+- WOLTER, K. M. *Introduction to Variance Estimation*. 2. ed. New York: Springer, 2007.
+- NEFEDOV, S. *Poker Tournament Survival — Skill vs. Variance* [conjunto de dados]. Kaggle. <https://www.kaggle.com/datasets/sergionefedov/poker-tournament-survivorship>.
+
+# Apêndice: reprodutibilidade
+
+Código, dados de campo e registro de cada sorteio e decisão estão no repositório do projeto. O dataset do Kaggle fica fora do repositório (`bash scripts/baixar_kaggle.sh`). Para refazer os números deste relatório:
+
+```bash
+Rscript -e 'testthat::test_dir("tests/testthat")'   # inclui os exemplos do Thompson
+for e in buyin skill; do for n in 120 67; do
+  Rscript scripts/simular_kaggle.R --estratificar-por $e --n $n --n-rep 5000 --seed 42
+done; done
+Rscript scripts/simular_kaggle_tres_estagios.R --b 4,6,12 --n-rep 5000 --seed 164363
+Rscript scripts/checar_variancia_kaggle.R --b 4 --n-rep 2000
+Rscript scripts/estimar_campo.R --unidade jogador
+Rscript -e 'rmarkdown::render("docs/relatorio.Rmd", output_format = "all")'
+```
+
+O delineamento detalhado está em `docs/Metodologia.md`, as decisões estatísticas em `.ai/modelagem.md`, e a correspondência entre cada fórmula e a fonte em `docs/referencias.md`.

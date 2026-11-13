@@ -137,7 +137,7 @@ Rscript scripts/explorar_top10.R      # top 10 x amostra x plano x Kaggle
 ### Relatório
 
 ```r
-rmarkdown::render("docs/relatorio.Rmd")   # gera docs/relatorio.html
+rmarkdown::render("docs/relatorio.Rmd", output_format = "all")   # gera docs/relatorio.html e docs/relatorio.md
 ```
 
 ### Testes
