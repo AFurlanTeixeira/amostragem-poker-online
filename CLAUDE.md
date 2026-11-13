@@ -32,7 +32,7 @@ Rscript scripts/sortear_amostra.R torneios --help       # sorteio de campo
 Rscript scripts/estimar_campo.R --help                  # estimação em três estágios
 Rscript scripts/explorar_estratos.R --help              # análise exploratória dos estratos
 Rscript scripts/explorar_top10.R --help                 # AED do top 10 e comparação
-Rscript -e 'rmarkdown::render("docs/relatorio.Rmd")'    # relatório
+Rscript -e 'rmarkdown::render("docs/relatorio_final.Rmd", output_format = "all")'  # relatório (.html e .md)
 ```
 
 ## Architecture
