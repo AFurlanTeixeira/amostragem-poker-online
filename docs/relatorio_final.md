@@ -17,18 +17,19 @@ ME430 — Técnicas de Amostragem · Estatística, Unicamp · 2º semestre de
 
 # Resumo
 
-Não existe uma lista dos jogadores de poker online, e por isso não é
+Não existe uma lista dos jogadores de poker online e, por isso, não é
 possível sortear jogadores diretamente. Este trabalho compara duas
 formas de lidar com a falta de moldura. A primeira é a amostragem direta
-de elementos (AAS e AAS estratificada), possível só quando há uma lista:
-ela foi simulada por Monte Carlo num dataset do Kaggle, tratado como
-população conhecida. A segunda é uma **amostragem estratificada em três
-estágios** aplicada em campo no SharkScope, em que a única moldura é o
-tempo: sorteiam-se blocos de 2 h, depois torneios dentro dos blocos
-(estratificados por buy-in) e, por fim, jogadores dentro dos torneios.
+de elementos (amostragem aleatória simples, AAS, e AAS estratificada),
+possível só quando há uma lista: ela foi simulada por Monte Carlo num
+conjunto de dados do Kaggle, tratado como população conhecida. A segunda
+é uma amostragem estratificada em três estágios aplicada em campo no
+SharkScope, em que a única moldura é o tempo: sorteiam-se blocos de 2 h,
+depois torneios dentro dos blocos (estratificados por buy-in) e, por
+fim, jogadores dentro dos torneios.
 
-Entre os jogadores com perfil público no SharkScope que jogaram MTTs do
-PokerStars de 17/10/2026 20:00 a 21/10/2026 00:00:
+Entre os jogadores com perfil público no SharkScope que jogaram torneios
+multimesa (MTT) do PokerStars de 17/10/2026 20:00 a 21/10/2026 00:00:
 
 | Parâmetro (por jogador distinto) | Estimativa | EP linearizado | IC 95% | EP jackknife | IC 95% (jackknife) |
 |----|---:|---:|----|---:|----|
@@ -36,7 +37,8 @@ PokerStars de 17/10/2026 20:00 a 21/10/2026 00:00:
 | Lucrativos (ROI \> 0) | 0,854 | 0,073 | \[0,476; 0,974\] | 0,116 | \[0,233; 0,991\] |
 | ROI \> 0 e lucro \> 0 | 0,723 | 0,181 | \[0,128; 0,979\] | 0,291 | \[0,025; 0,996\] |
 
-IC t com 3 graus de liberdade para o ROI e IC logit para as proporções.
+EP é o erro-padrão e IC, o intervalo de confiança: IC t com 3 graus de
+liberdade para o ROI e IC logit para as proporções.
 
 - **As estimativas valem para perfis públicos.** A não resposta foi de
   55%, e quem mantém o perfil aberto tende a ser mais regular e mais
@@ -46,21 +48,24 @@ IC t com 3 graus de liberdade para o ROI e IC logit para as proporções.
   captou cerca de metade da variância real. O jackknife de blocos acerta
   a variância em média, mas nenhum dos dois leva a cobertura a 95%. O IC
   do ROI médio encosta em zero.
-- **O plano em três estágios é de 6 a 12 vezes menos eficiente que uma
-  AAS de mesmo tamanho**, sobretudo pela desigualdade dos pesos. É o
-  preço de não ter moldura de jogadores.
+- **Na simulação, o plano em três estágios foi de 6 a 12 vezes menos
+  eficiente que uma AAS de mesmo tamanho**, sobretudo pela desigualdade
+  dos pesos. É o preço de não ter moldura de jogadores.
 - **Estratificar por buy-in não ajudou no Kaggle** (efeito do
-  planejamento ≈ 1), porque o ROI médio é o mesmo nas três faixas.
+  planejamento ≈ 1), porque o ROI médio é o mesmo nas três faixas. No
+  campo, porém, os estratos diferem um pouco (§7.1), e essa conclusão
+  não se transfere automaticamente.
 
 # 1. Introdução e motivação
 
 O objetivo é estimar o desempenho médio dos jogadores de torneios de
-poker online, medido pelo **ROI médio** ($`\bar Y`$), e a **proporção de
-jogadores lucrativos** ($`P`$). O ROI (*return on investment*) de um
-jogador é o lucro líquido dividido pelo total pago em inscrições, em %.
-Também queremos medir quanto a estrutura de conglomerados (jogadores
-agrupados em torneios, e torneios agrupados no tempo) altera a precisão
-das estimativas, em comparação com uma amostra aleatória simples.
+poker online, medido pelo ROI médio ($`\bar Y`$), e a proporção de
+jogadores lucrativos ($`P`$). O ROI (*return on investment*, retorno
+sobre o investimento) de um jogador é o lucro líquido dividido pelo
+total pago em inscrições, em %. Busca-se também medir quanto a estrutura
+de conglomerados (jogadores agrupados em torneios, e torneios agrupados
+no tempo) altera a precisão das estimativas, em comparação com uma
+amostra aleatória simples.
 
 Duas restrições práticas definem o desenho:
 
@@ -75,9 +80,9 @@ Duas restrições práticas definem o desenho:
 Por isso o desenho de campo evita depender de uma lista completa e
 concentra o esforço de coleta em poucos conglomerados. Para medir o que
 se perde com isso, o mesmo problema é estudado numa população em que
-existe moldura: um dataset do Kaggle com 45.000 jogadores sintéticos, em
-que se pode sortear jogadores diretamente e repetir o sorteio milhares
-de vezes. As perguntas do projeto são:
+existe moldura: um conjunto de dados do Kaggle com 45.000 jogadores
+sintéticos, em que se pode sortear jogadores diretamente e repetir o
+sorteio milhares de vezes. As perguntas do projeto são:
 
 1.  Qual o ROI médio por jogador e a proporção de lucrativos, com IC de
     95%?
@@ -98,10 +103,10 @@ exploratória (§7), os erros não amostrais (§8) e a discussão (§9).
 
 ## 2.1 População-alvo
 
-> Inscrições de jogadores em **torneios MTT regulares com buy-in de US\$
-> 1,00 ou mais** do **PokerStars.com**, com início entre **17/10/2026
-> 20:00** e **21/10/2026 00:00** (76 h, horário de Brasília). Ficam de
-> fora freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go,
+> Inscrições de jogadores em torneios MTT regulares com buy-in de US\$
+> 1,00 ou mais do PokerStars.com, com início entre 17/10/2026 20:00
+> (sábado) e 21/10/2026 00:00 (76 h, horário de Brasília). Ficam de fora
+> freerolls, torneios abaixo de US\$ 1,00, Spin & Go, Sit & Go,
 > satélites e cash game.
 
 **O período é limitado pela fonte da listagem.** O lobby do PokerStars
@@ -111,8 +116,8 @@ SharkScope mostra todos, mas só a partir de 17/10/2026 18:24, e a janela
 anda com o tempo. O período começa às 20:00 de 17/10, o primeiro início
 de bloco de 2 h dentro dessa janela, e termina antes do prazo da
 análise. Dois períodos anteriores (01/10 a 14/10 e 11/10 a 20/10) foram
-abandonados **antes** de qualquer sorteio de torneios, quando ficou
-claro que a fonte não os cobria; a semente, registrada antes do primeiro
+abandonados antes de qualquer sorteio de torneios, quando ficou claro
+que a fonte não os cobria; a semente, registrada antes do primeiro
 sorteio, foi mantida.
 
 **Torneios abaixo de US\$ 1,00 ficam fora** porque têm comportamento
@@ -123,15 +128,15 @@ cada bloco, antes do sorteio do 2º estágio.
 **A unidade sorteada é a inscrição**, o par jogador × torneio. Um mesmo
 jogador pode aparecer mais de uma vez na população, em torneios
 diferentes, e quem joga mais tem mais chance de ser sorteado. O
-parâmetro de interesse, porém, é o **ROI médio por jogador distinto**.
-Para corrigir a diferença de chance, cada respondente recebe o peso de
+parâmetro de interesse, porém, é o ROI médio por jogador distinto. Para
+corrigir a diferença de chance, cada respondente recebe o peso de
 multiplicidade $`1/f_i`$, em que $`f_i`$ é o número de torneios que ele
 jogou no período (§4.2). A versão *por inscrição* ($`f_i = 1`$), que
 pondera os jogadores pela frequência com que jogam, é reportada como
 sensibilidade.
 
-**Re-entries.** Dentro de um mesmo torneio, o jogador conta **uma única
-vez**, por mais entradas que tenha feito. O ROI do SharkScope é um
+**Re-entries.** Dentro de um mesmo torneio, o jogador conta uma única
+vez, por mais entradas que tenha feito. O ROI do SharkScope é um
 atributo do jogador, e não da entrada; se cada entrada contasse como uma
 unidade, quem faz re-entry teria mais chance de ser sorteado e um mesmo
 valor de $`y`$ apareceria duplicado no conglomerado.
@@ -145,13 +150,16 @@ valor de $`y`$ apareceria duplicado no conglomerado.
 | 2º estágio (USA) | Torneio | $`k`$ | $`N_{jh}`$ | $`n_{jh}`$ |
 | 3º estágio (UTA) | Jogador distinto inscrito no torneio | $`i`$ | $`M_k`$ | $`m_k`$ |
 
+UPA, USA e UTA são as unidades primária, secundária e terciária de
+amostragem.
+
 ## 2.3 Estratos de buy-in
 
 | Estrato              | Faixa de buy-in    |
 |----------------------|--------------------|
-| $`h = 1`$ — Micro    | US\$ 1,00 a 4,99   |
-| $`h = 2`$ — Low      | US\$ 5,00 a 24,99  |
-| $`h = 3`$ — Mid/High | US\$ 25,00 ou mais |
+| $`h = 1`$ (Micro)    | US\$ 1,00 a 4,99   |
+| $`h = 2`$ (Low)      | US\$ 5,00 a 24,99  |
+| $`h = 3`$ (Mid/High) | US\$ 25,00 ou mais |
 
 A escolha de 3 estratos, e não 5, foi feita com o Kaggle antes da coleta
 e é discutida na §5.1.
@@ -160,10 +168,10 @@ e é discutida na §5.1.
 
 | Variável | Definição | Fonte |
 |----|----|----|
-| $`y_{ki}`$ — ROI | *Total ROI* (%) do jogador no SharkScope, só no PokerStars, na **janela fixa de 01/10/2025 a 30/09/2026** | SharkScope |
-| $`\ell_{ki}`$ — Lucro | *Profit* (R\$, a moeda em que o SharkScope mostrou os valores) no mesmo filtro | SharkScope |
-| $`d_{ki}`$ — Lucrativo | $`d_{ki} = 1`$ se $`y_{ki} > 0`$. Versão estrita: $`d_{ki} = 1`$ se $`y_{ki} > 0`$ e $`\ell_{ki} > 0`$ | Derivada |
-| $`M_k`$ | Número de inscritos no torneio, **aproximado pelo total de entradas** mostrado pela fonte | Listagem do SharkScope |
+| $`y_{ki}`$ (ROI) | *Total ROI* (%) do jogador no SharkScope, só no PokerStars, na janela fixa de 01/10/2025 a 30/09/2026 | SharkScope |
+| $`\ell_{ki}`$ (lucro) | *Profit* (R\$, a moeda em que o SharkScope mostrou os valores) no mesmo filtro | SharkScope |
+| $`d_{ki}`$ (lucrativo) | $`d_{ki} = 1`$ se $`y_{ki} > 0`$. Versão estrita: $`d_{ki} = 1`$ se $`y_{ki} > 0`$ e $`\ell_{ki} > 0`$ | Derivada |
+| $`M_k`$ | Número de inscritos no torneio, aproximado pelo total de entradas mostrado pela fonte | Listagem do SharkScope |
 | $`f_i`$ | Número de torneios do jogador no período, aproximado por `n_jogos_dia` × 76/24 (mínimo 1) | SharkScope (média de jogos por dia) |
 | $`N_{jh}`$ | Número de torneios do estrato $`h`$ no bloco $`j`$ | Listagem do SharkScope |
 
@@ -184,22 +192,22 @@ e é discutida na §5.1.
   janela de 12 meses do ROI, não nas 76 h do período. É a única
   informação de frequência disponível para cada jogador.
 
-## 2.5 População de referência: o dataset do Kaggle
+## 2.5 População de referência: o conjunto de dados do Kaggle
 
-O dataset *Poker Tournament Survival* (Nefedov, Kaggle) tem 45.000
-jogadores, um por linha, com o histórico agregado de 10 a 1.567 torneios
-(mediana de 111). Não tem valores ausentes. As colunas usadas são o ROI
-realizado (`realized_roi`), o indicador de lucrativo (`profitable`, que
-equivale a ROI \> 0 em todas as linhas) e o buy-in médio (`avg_buyin`),
-classificado nas mesmas faixas do campo.
+O conjunto de dados *Poker Tournament Survival* (Nefedov, Kaggle) tem
+45.000 jogadores, um por linha, com o histórico agregado de 10 a 1.567
+torneios (mediana de 111). Não tem valores ausentes. As colunas usadas
+são o ROI realizado (`realized_roi`), o indicador de lucrativo
+(`profitable`, que equivale a ROI \> 0 em todas as linhas) e o buy-in
+médio (`avg_buyin`), classificado nas mesmas faixas do campo.
 
-Os dados são **sintéticos**: o dicionário descreve a coluna `skill` como
-a “vantagem verdadeira de longo prazo” do jogador, uma variável latente
+Os dados são sintéticos: o dicionário descreve a coluna `skill` como a
+“vantagem verdadeira de longo prazo” do jogador, uma variável latente
 que não existe em dados reais. Não há torneio nem horário, então o plano
 de campo não pode ser sorteado diretamente nele (§5.3). Os parâmetros
-verdadeiros são ROI médio de −31,88% (mediana de −34%, DP de 45,96 p.p.)
-e 19,39% de lucrativos. O ROI vai de −100% a +400%, com cauda direita
-longa.
+verdadeiros são ROI médio de −31,88% (mediana de −34%, desvio-padrão,
+DP, de 45,96 p.p.) e 19,39% de lucrativos. O ROI vai de −100% a +400%,
+com cauda direita longa.
 
 **As duas populações não são a mesma**, e as médias não devem ser
 comparadas diretamente. A comparação é metodológica: precisão, cobertura
@@ -210,19 +218,19 @@ dos intervalos, efeito do planejamento e comportamento dos estimadores.
 ## 3.1 Por que um estágio temporal
 
 A primeira versão do plano sorteava torneios dentro de cada estrato.
-Para isso seria preciso listar **todos** os torneios do período, o que
-não é viável. A solução é sortear **blocos de tempo** antes dos
-torneios. A lista de todos os blocos é trivial: 76 h divididas em blocos
-de 2 h dão $`B = 38`$ blocos. A lista de torneios só precisa ser montada
-**dentro dos blocos sorteados**. É a lógica da amostragem por áreas
-(Cochran, 1977, cap. 10–11), aplicada ao tempo: em vez de listar a
-população inteira, listam-se só as áreas sorteadas.
+Para isso seria preciso listar todos os torneios do período, o que não é
+viável. A solução é sortear blocos de tempo antes dos torneios. A lista
+de todos os blocos é trivial: 76 h divididas em blocos de 2 h dão
+$`B = 38`$ blocos. A lista de torneios só precisa ser montada dentro dos
+blocos sorteados. É a lógica da amostragem por áreas (Cochran, 1977,
+cap. 10–11), aplicada ao tempo: em vez de listar a população inteira,
+listam-se só as áreas sorteadas.
 
 O estágio temporal traz dois ganhos adicionais:
 
 - o efeito do horário (público diferente de madrugada e no horário nobre
   europeu ou brasileiro) passa a fazer parte do desenho;
-- a estratificação por buy-in é aplicada **dentro de cada bloco**, o que
+- a estratificação por buy-in é aplicada dentro de cada bloco, o que
   garante que todos os estratos estejam representados.
 
 Uma variante considerada, e não adotada pelo tamanho do período, é
@@ -247,9 +255,9 @@ dia) antes do sorteio.
            → consulta de ROI, lucro e jogos por dia no SharkScope
 
 Todos os sorteios são AAS sem reposição feitos com `sample.int()` do R,
-com a semente **164363**, registrada antes do primeiro sorteio. Cada
-célula e cada torneio recebe uma semente derivada da principal, para que
-o sorteio de uma unidade não mude quando outras unidades entram depois.
+com a semente 164363, registrada antes do primeiro sorteio. Cada célula
+e cada torneio recebe uma semente derivada da principal, para que o
+sorteio de uma unidade não mude quando outras unidades entram depois.
 
 ## 3.3 Tamanho e alocação da amostra
 
@@ -258,11 +266,11 @@ A restrição é a cota de 140 consultas por dia no SharkScope.
 | Parâmetro | Valor | Justificativa |
 |----|----|----|
 | $`B`$ | 38 | 76 h em blocos de 2 h |
-| $`b`$ | 6 sorteados, **4 efetivos** | Mínimo razoável para estimar a variância entre blocos; os blocos 34 e 36 foram perdidos (§3.5) |
+| $`b`$ | 6 sorteados, 4 efetivos | Mínimo razoável para estimar a variância entre blocos; os blocos 34 e 36 foram perdidos (§3.5) |
 | $`H`$ | 3 | Faixas de buy-in (§5.1) |
 | $`n_{jh}`$ | 2, mais torneios extras se preciso | Mínimo de 2 torneios com respondentes para estimar a variância entre torneios na célula |
 | $`m_k`$ | 5 | Cálculo de $`n`$ abaixo |
-| **Total** | $`4 \times 3 \times 2 \times 5 = 120`$ posições; **160** com os 8 torneios extras | Esperavam-se cerca de 110 respondentes |
+| **Total** | $`4 \times 3 \times 2 \times 5 = 120`$ posições; 160 com os 8 torneios extras | Esperavam-se cerca de 110 respondentes |
 
 Com $`n_{jh} = 1`$ ou $`m_k = 1`$ não é possível estimar a componente de
 variância correspondente sem suposições extras, como colapsar estratos.
@@ -292,7 +300,7 @@ de qualquer consulta de ROI, foi $`m_k = 5`$ titulares, sem reservas. As
 5 posições são as 5 primeiras da mesma permutação sorteada, então
 continuam sendo uma AAS.
 
-**Trade-off.** Para a mesma quantidade de consultas, sortear mais
+**Contrapartida.** Para a mesma quantidade de consultas, sortear mais
 torneios com menos jogadores em cada um reduz a variância quando a
 correlação intraclasse $`\rho`$ é positiva. Aqui isso não era possível:
 a busca de torneios dos primeiros blocos já tinha saído da janela do
@@ -300,17 +308,18 @@ SharkScope.
 
 **Limite que o $`n`$ não resolve.** Com $`b = 4`$ blocos, o IC usa $`t`$
 com $`b - 1 = 3`$ graus de liberdade (§4.6). Como
-$`t_{3;\,0{,}975}/z_{0{,}975} = 1{,}62`$, a margem real pode ficar até
-60% maior do que a da tabela, por mais jogadores que sejam consultados.
+$`t_{3;\,0{,}975}/z_{0{,}975} = 1{,}62`$, a margem real fica cerca de
+62% maior do que a da tabela, que usa $`z`$, por mais jogadores que
+sejam consultados.
 
 ## 3.4 Protocolo de coleta
 
-**Fase 0 — Sorteio dos blocos.** Gerar a lista dos $`B`$ blocos, com o
+**Fase 0: sorteio dos blocos.** Gerar a lista dos $`B`$ blocos, com o
 fuso registrado, e sortear $`b`$ blocos com a semente fixa.
 
-**Fase 1 — Listagem e sorteio dos torneios.**
+**Fase 1: listagem e sorteio dos torneios.**
 
-1.  Para cada bloco sorteado, listar **todos** os MTTs com início no
+1.  Para cada bloco sorteado, listar todos os MTTs com início no
     intervalo, usando a busca de torneios do SharkScope, e registrar ID,
     buy-in, horário de início e número total de entradas. Só listar um
     bloco depois que ele terminar, e o quanto antes, porque a janela da
@@ -319,7 +328,7 @@ fuso registrado, e sortear $`b`$ blocos com a semente fixa.
     Classificar os restantes nos estratos e contar $`N_{jh}`$.
 3.  Sortear $`n_{jh}`$ torneios por célula.
 
-**Fase 2 — Sorteio dos jogadores.**
+**Fase 2: sorteio dos jogadores.**
 
 4.  Em cada torneio sorteado, sortear uma ordem de posições de 1 a
     $`M_k`$ na lista de resultados do SharkScope (1 = campeão), que já
@@ -332,7 +341,7 @@ fuso registrado, e sortear $`b`$ blocos com a semente fixa.
 6.  Anotar também os 10 primeiros colocados de cada torneio, para uma
     comparação descritiva fora do plano (§7.2).
 
-**Fase 3 — Consulta no SharkScope.**
+**Fase 3: consulta no SharkScope.**
 
 7.  Consultar, por dia, no máximo o número de nicknames permitido pela
     cota, em ordem aleatória, e não agrupada por estrato, para que a
@@ -341,7 +350,7 @@ fuso registrado, e sortear $`b`$ blocos com a semente fixa.
     usado.
 
 Cada sorteio, decisão e não resposta foi registrado com data e semente
-num log de coleta, antes de a decisão seguinte ser tomada.
+num registro de coleta, antes de a decisão seguinte ser tomada.
 
 ## 3.5 Execução
 
@@ -350,8 +359,8 @@ num log de coleta, antes de a decisão seguinte ser tomada.
 
 **Perda dos blocos 34 e 36 (22/10).** Os blocos 34 (terça, 14–16 h) e 36
 (terça, 18–20 h) já não podiam ser listados: o custo de busca do
-SharkScope não alcançava mais esses horários. Foram tratados como **não
-resposta de UPA**, sem substituição: $`b = 4`$ e peso do 1º estágio
+SharkScope não alcançava mais esses horários. Foram tratados como não
+resposta de UPA, sem substituição: $`b = 4`$ e peso do 1º estágio
 $`B/b = 9{,}5`$. A listagem feita por engano dos horários vizinhos
 (blocos 35 e 37) foi descartada, porque trocar UPAs por escolha tira a
 base probabilística do 1º estágio. A hipótese é que a perda não tem
@@ -376,16 +385,15 @@ perfil é privado no SharkScope ou quando a posição sorteada é um jogador
 “Anônimo”, que não pode ser consultado (8 casos). Na primeira rodada de
 consultas (22/10), a taxa de resposta foi de 20/51 ≈ 39%, muito abaixo
 dos cerca de 92% supostos no dimensionamento, e três células ficaram
-abaixo dos mínimos de estimação. A regra adotada, registrada no log
-antes de novas consultas, foi: **enquanto uma célula tiver menos de 2
-torneios com pelo menos 2 respondentes, sorteia-se o próximo torneio da
-permutação da célula** e consultam-se as 5 primeiras posições da
-permutação dele. Os $`n`$ primeiros elementos de uma permutação
-aleatória formam uma AAS de tamanho $`n`$, então a célula continua sendo
-uma AAS. Se a célula esgotasse os $`N_{jh}`$ torneios sem chegar ao
-mínimo, seria colapsada com o estrato vizinho do mesmo bloco (técnica de
-estratos colapsados, que superestima um pouco a variância). A regra foi
-aplicada duas vezes:
+abaixo dos mínimos de estimação. A regra adotada, registrada antes de
+novas consultas, foi: enquanto uma célula tiver menos de 2 torneios com
+pelo menos 2 respondentes, sorteia-se o próximo torneio da permutação da
+célula e consultam-se as 5 primeiras posições da permutação dele. Os
+$`n`$ primeiros elementos de uma permutação aleatória formam uma AAS de
+tamanho $`n`$, então a célula continua sendo uma AAS. Se a célula
+esgotasse os $`N_{jh}`$ torneios sem chegar ao mínimo, seria colapsada
+com o estrato vizinho do mesmo bloco (técnica de estratos colapsados,
+que superestima um pouco a variância). A regra foi aplicada duas vezes:
 
 | Data  | Célula          | Torneios extras               | Respondentes nos extras |
 |-------|-----------------|-------------------------------|------------------------:|
@@ -470,7 +478,7 @@ $`\hat Y = \sum w\,y`$ é o estimador de Horvitz–Thompson, com peso
 \pi_{jhki} = \frac{b}{B}\cdot\frac{n_{jh}}{N_{jh}}\cdot\frac{m_k}{M_k}, \qquad w_{jhki} = \frac{1}{\pi_{jhki}} = \frac{B}{b}\cdot\frac{N_{jh}}{n_{jh}}\cdot\frac{M_k}{m_k}.
 ```
 
-O peso é calculado **por célula** (bloco × estrato), e não com um único
+O peso é calculado por célula (bloco × estrato), e não com um único
 $`N_h/n_h`$ por estrato somando blocos diferentes, porque o número de
 torneios de cada estrato varia de bloco para bloco.
 
@@ -488,12 +496,12 @@ w = 9{,}5 \times \frac{8}{2} \times \frac{180}{4} \Big/ 68{,}72 = 24{,}88.
 
 O número total de inscrições $`M_0`$ é desconhecido e também é estimado,
 com a mesma fórmula aplicada a $`y \equiv 1`$. A média por inscrição é
-então o **estimador razão**
+então o estimador razão
 $`\hat R = \hat Y/\hat M_0 = \sum w\,y / \sum w`$ (Thompson, 2012,
 p. 175; Bolfarine e Bussab, 2005, eq. 8.13).
 
-Para a média **por jogador distinto**, um jogador com $`f_i`$ inscrições
-no período aparece $`f_i`$ vezes na população de inscrições. Atribuindo
+Para a média por jogador distinto, um jogador com $`f_i`$ inscrições no
+período aparece $`f_i`$ vezes na população de inscrições. Atribuindo
 $`y_i/f_i`$ a cada uma delas, a soma das $`f_i`$ inscrições dá $`y_i`$:
 
 ``` math
@@ -548,7 +556,7 @@ $`b/B = 4/38`$, e o fator vale 0,89; as duas versões são comparadas na
 ## 4.5 Variância da razão: linearização e jackknife
 
 Como $`\hat R = \hat Y/\hat N`$ é uma razão de dois totais estimados,
-sua variância é aproximada por **linearização de Taylor**: aplica-se a
+sua variância é aproximada por linearização de Taylor: aplica-se a
 fórmula da §4.4 à variável resíduo $`z_i = (y_i - \hat R)/f_i`$ e
 divide-se pelo quadrado do denominador (Lohr, 2022, cap. 9):
 
@@ -558,8 +566,8 @@ divide-se pelo quadrado do denominador (Lohr, 2022, cap. 9):
 
 A linearização trata $`\hat N`$ como fixo, o que só vale quando a
 variação de $`\hat N`$ é pequena. Como alternativa que não depende dela,
-reporta-se ao lado o **jackknife de blocos** (JK1), que recalcula a
-razão inteira retirando um bloco por vez (Wolter, 2007, cap. 4):
+reporta-se ao lado o *jackknife* de blocos (JK1), que recalcula a razão
+inteira retirando um bloco por vez (Wolter, 2007, cap. 4):
 
 ``` math
 \hat v_{JK}(\hat R) = \frac{b-1}{b}\sum_{j=1}^{b}\bigl(\hat R_{(j)} - \hat R\bigr)^2, \qquad \hat R_{(j)} = \frac{\sum_{l \ne j}\hat Y_l}{\sum_{l \ne j}\hat N_l}.
@@ -570,7 +578,7 @@ os dois são reportados.
 
 ## 4.6 Intervalos de confiança
 
-**ROI: intervalo t com $`b - 1`$ graus de liberdade.** Com $`b/B`$
+**ROI: intervalo t com $`b - 1`$ graus de liberdade (gl).** Com $`b/B`$
 pequeno, a variância é estimada essencialmente a partir dos $`b`$ totais
 de bloco, então os graus de liberdade vêm do número de UPAs, e não do
 número de torneios ou de jogadores:
@@ -603,7 +611,7 @@ a proporção de lucrativos:
 ## 4.7 Componentes de variância
 
 A pergunta 2 pede quanto da variância vem de cada estágio. Os dois
-termos da §4.4 **não** respondem a isso. O 1º termo usa os totais
+termos da §4.4 não respondem a isso. O 1º termo usa os totais
 *estimados* $`\hat Y_j`$, que carregam o erro de amostrar torneios e
 jogadores dentro do bloco:
 
@@ -639,11 +647,10 @@ O EPA compara a variância do plano com a de uma AAS de mesmo tamanho
 \text{EPA} = \frac{\widehat{\mathrm{Var}}(\hat R)}{\widehat{\mathrm{Var}}_{\text{AAS}}(\bar y)}, \qquad \widehat{\mathrm{Var}}_{\text{AAS}}(\bar y) = \Bigl(1-\frac{n}{\hat N}\Bigr)\frac{s_y^2}{n},
 ```
 
-com $`s_y^2`$ ponderada pelos pesos finais e estimada **na própria
-amostra de campo**, nunca com a variância do Kaggle, que é outra
-população.
+com $`s_y^2`$ ponderada pelos pesos finais e estimada na própria amostra
+de campo, nunca com a variância do Kaggle, que é outra população.
 
-- $`\text{EPA} > 1`$: o plano é **menos** eficiente que uma AAS de mesmo
+- $`\text{EPA} > 1`$: o plano é menos eficiente que uma AAS de mesmo
   $`n`$, pelos conglomerados e pela desigualdade dos pesos;
 - $`\text{EPA} < 1`$: a estratificação compensa essas perdas.
 
@@ -691,7 +698,7 @@ mesmo tamanho.
 **Medidas do Monte Carlo.** Com $`R = 5.000`$ réplicas e o parâmetro
 verdadeiro $`\theta`$ conhecido: viés $`= \bar{\hat\theta} - \theta`$;
 EP real = desvio-padrão das $`R`$ estimativas; EP estimado = raiz da
-média das variâncias estimadas; EQM = média de
+média das variâncias estimadas; erro quadrático médio (EQM) = média de
 $`(\hat\theta - \theta)^2`$; cobertura = fração dos IC que contêm
 $`\theta`$; e EPA empírico
 $`= \mathrm{Var}_{MC}(\text{plano})/\mathrm{Var}_{MC}(\text{AAS de mesmo } n)`$.
@@ -841,6 +848,17 @@ réplicas): precisão
 Plano em três estágios na população sintética, por jogador: cobertura do
 IC de 95% e EPA
 
+<div class="figure" style="text-align: center">
+
+<img src="figuras/relatorio-tres-estagios-cobertura-1.png" alt="Nenhum método chega a 95% de cobertura com poucos blocos (população sintética, 5.000 réplicas)"  />
+<p class="caption">
+
+Nenhum método chega a 95% de cobertura com poucos blocos (população
+sintética, 5.000 réplicas)
+</p>
+
+</div>
+
 As colunas de razão dividem a média da variância estimada pela variância
 real: “Var. lin.” é a linearizada usada no campo; “Com N verdadeiro”
 divide $`\widehat{\mathrm{Var}}(\hat Z)`$ pelo $`N`$ verdadeiro, e não
@@ -879,7 +897,7 @@ por $`\hat N`$ (só é possível aqui); “JK1” é o jackknife de blocos.
 
 # 6. Resultados de campo
 
-## 6.1 Estimativas
+## 6.1 Estimativas: intervalos largos, e o do ROI encosta em zero
 
 | Parâmetro | Estimativa | EP linearizado | IC 95% | EP JK1 | IC 95% (JK1) |
 |:---|---:|---:|---:|---:|---:|
@@ -889,6 +907,17 @@ por $`\hat N`$ (só é possível aqui); “JK1” é o jackknife de blocos.
 
 Estimativas por jogador distinto (IC t no ROI e logit nas proporções; 3
 gl)
+
+<div class="figure" style="text-align: center">
+
+<img src="figuras/relatorio-campo-estimativas-grafico-1.png" alt="O IC do ROI encosta em zero, e o JK1 alarga os intervalos das proporções (IC de 95%, 3 gl)"  />
+<p class="caption">
+
+O IC do ROI encosta em zero, e o JK1 alarga os intervalos das proporções
+(IC de 95%, 3 gl)
+</p>
+
+</div>
 
 Entre os 72 respondentes, sem pesos, o ROI vai de -24,7% a 1.064,4%, com
 mediana de 17,1% e média simples de 30,0%; 84,7% têm ROI \> 0.
@@ -909,7 +938,7 @@ são largos porque a variância é estimada com 4 blocos.
   entre os dois EP mede sobretudo o quanto a variância é mal
   determinada.
 
-## 6.2 Sensibilidade
+## 6.2 Sensibilidade: um único jogador desloca o ROI médio em cerca de 4 p.p.
 
 | Cenário | ROI médio (%) | EP | IC 95% | EP JK1 | IC 95% (JK1) |
 |:---|---:|---:|---:|---:|---:|
@@ -925,13 +954,14 @@ Sensibilidade do ROI médio
 - **O maior ROI da amostra** (MuoMadre, 1.064,4%) foi conferido no
   SharkScope e mantido. Sozinho, ele desloca a média em cerca de 4 p.p.,
   o que é esperado com 67 respondentes e uma distribuição de cauda
-  longa. Sem ele, o IC inclui zero com folga, e o EP JK1 sobe para 7,30,
-  mais um sinal de que a variância é mal determinada com 4 blocos.
+  longa. Sem ele, o IC linearizado passa a incluir zero, o do JK1 o
+  inclui com folga, e o EP JK1 sobe para 7,30, mais um sinal de que a
+  variância é mal determinada com 4 blocos.
 - **Conglomerado último.** Usar só o 1º termo, sem a correção
   $`(1 - b/B)`$, leva o EP do ROI de 5,50 para 5,59: as duas versões
   ficam próximas e nenhuma resolve o problema da linearização.
 
-## 6.3 De onde vem a variância
+## 6.3 De onde vem a variância: os dados não isolam o efeito do horário
 
 | Parâmetro | 1º termo | 2º termo | Entre blocos | Entre torneios | Dentro dos torneios |
 |:---|---:|---:|---:|---:|---:|
@@ -945,27 +975,27 @@ não viesados (§4.7)
 Na escala linearizada do ROI, os totais $`\hat Z_j`$ dos blocos são
 -2.218, 2.156, 256, -194 (blocos 5, 8, 24, 30). Os blocos 5 e 8, os dois
 de domingo, puxam a estimativa em direções opostas, e por isso o 1º
-termo da fórmula concentra de 81% a 95% da variância. Isso **não** quer
+termo da fórmula concentra de 81% a 95% da variância. Isso não quer
 dizer que a diferença entre blocos domina: a simulação mostra que o 1º
 termo concentra 90% mesmo numa população sem efeito de horário (§5.3,
 item 5). A variância estimada de $`\hat Z_8`$ dentro do bloco (DP de
 cerca de 2.549) é do tamanho do próprio total: a diferença entre os
 blocos 5 e 8 é compatível com erro de amostragem dentro deles.
 
-Pelos componentes não viesados, a variação **dentro dos blocos** (entre
+Pelos componentes não viesados, a variação dentro dos blocos (entre
 torneios e entre jogadores) responde por cerca de metade da variância ou
 mais nas três variáveis, e o componente entre blocos vai de zero a
 metade conforme a variável. Esses componentes são muito instáveis, e na
 razão os componentes “entre” tendem a ser subestimados (§5.3).
 
-A resposta à pergunta 2 é, portanto, que os dados **não permitem**
-apontar o horário como principal fonte de incerteza, nem descartá-lo. A
+A resposta à pergunta 2 é, portanto, que os dados não permitem apontar o
+horário como principal fonte de incerteza, nem descartá-lo. A
 recomendação prática continua sendo sortear mais blocos: toda a
 variância cai com $`1/b`$, porque cada bloco a mais traz também mais
 torneios e mais jogadores, e só mais blocos aumentam os graus de
 liberdade.
 
-## 6.4 Efeito do planejamento
+## 6.4 Efeito do planejamento: o plano é bem menos eficiente que uma AAS
 
 | Parâmetro | EPA | Parte dos pesos (1 + CV²) | Resto | n efetivo de Kish | ρ derivado |
 |:---|---:|---:|---:|---:|---:|
@@ -986,19 +1016,20 @@ lido qualitativamente:
 - a separação de Kish supõe pesos não relacionados com $`y`$, o que não
   vale aqui (o peso $`1/f_i`$ e o ROI andam juntos), então o “resto” não
   mede conglomeração;
-- na simulação, o EPA estimado numa amostra fica em média na metade do
-  EPA real;
+- na simulação, o EPA estimado numa única amostra subestima o real: em
+  média, fica entre 48% e 79% dele;
 - a correlação intraclasse derivada de
-  $`\text{EPA} \approx 1 + (\bar m - 1)\rho`$ dá valores fora de
-  $`[-1/(\bar m - 1), 1]`$ e não é interpretável: os torneios têm
-  tamanhos e pesos muito diferentes, $`\bar m = 2{,}79`$, e a variância
-  é estimada entre blocos. A hipótese de que jogadores do mesmo torneio
-  têm desempenho correlacionado fica sem resposta com estes dados.
+  $`\text{EPA} \approx 1 + (\bar m - 1)\rho`$ não é interpretável: nas
+  duas proporções ela sai do intervalo admissível
+  $`[-1/(\bar m - 1), 1]`$ (1,03 e 5,56), os torneios têm tamanhos e
+  pesos muito diferentes, $`\bar m = 2{,}79`$, e a variância é estimada
+  entre blocos. A hipótese de que jogadores do mesmo torneio têm
+  desempenho correlacionado fica sem resposta com estes dados.
 
 A conclusão sustentada pelos dados e pela simulação é que o plano de
 campo é bem menos eficiente que uma AAS de mesmo tamanho.
 
-## 6.5 Não resposta
+## 6.5 Não resposta: 55%, maior nos buy-ins baixos
 
 | Estrato  | Posições consultadas | Sem dados | Taxa de não resposta |
 |:---------|---------------------:|----------:|---------------------:|
@@ -1024,12 +1055,22 @@ Limites de pior caso: não respondentes como 0 e como 1
 
 Ajuste por classe de posição no torneio (por jogador)
 
+<div class="figure" style="text-align: center">
+
+<img src="figuras/relatorio-campo-nao-resposta-grafico-1.png" alt="A não resposta cai à medida que o buy-in sobe (160 posições consultadas)"  />
+<p class="caption">
+
+A não resposta cai à medida que o buy-in sobe (160 posições consultadas)
+</p>
+
+</div>
+
 A não resposta é de 55% e cai à medida que o buy-in sobe, o que é
-compatível com jogadores de stakes mais altos terem perfil público com
+compatível com jogadores de buy-ins mais altos terem perfil público com
 mais frequência. Cada bloco teve 18 respondentes em 40 posições
-originais. A correção do plano supõe que a não resposta é aleatória
-dentro do torneio, e duas análises descritivas medem quanto essa
-hipótese pesa:
+consultadas (30 originais e 10 dos torneios extras). A correção do plano
+supõe que a não resposta é aleatória dentro do torneio, e duas análises
+descritivas medem quanto essa hipótese pesa:
 
 - **Limites de pior caso** (Manski, 1989). Sem nenhuma hipótese sobre
   quem não respondeu, a proporção de lucrativos por inscrição fica entre
@@ -1049,8 +1090,8 @@ hipótese pesa:
 O risco maior não aparece nessas contas: quem mantém perfil público no
 SharkScope tende a ser o jogador mais regular e mais vencedor. Isso é
 coerente com a proporção de lucrativos muito alta para um jogo em que o
-rake faz a maioria perder. Por isso, **todas as estimativas de campo
-descrevem os jogadores com perfil público**, e não todos os inscritos.
+rake faz a maioria perder. Por isso, todas as estimativas de campo
+descrevem os jogadores com perfil público, e não todos os inscritos.
 
 # 7. Análise exploratória
 
@@ -1099,10 +1140,11 @@ ROI dos respondentes por estrato (eixo cortado em 100%)
 Estimativas por estrato (domínios), por jogador distinto, 3 gl
 
 Cada estrato é tratado como um domínio, com o mesmo estimador de três
-estágios restrito a ele (Lohr, 2022, §4.3). O Micro tem ROI e proporção
-de lucrativos menores e responde por 63% dos jogadores estimados, porque
-seus torneios são grandes e seus jogadores, frequentes. O ROI do
-Mid/High é puxado por MuoMadre e tem IC enorme.
+estágios restrito a ele (Lohr, 2022, §4.3). O Micro tem o menor ROI
+médio e proporção de lucrativos abaixo da do Low (a menor é a do
+Mid/High) e responde por 63% dos jogadores estimados, porque seus
+torneios são grandes e seus jogadores, frequentes. O ROI do Mid/High é
+puxado por MuoMadre e tem IC enorme.
 
 Numa decomposição descritiva da soma de quadrados entre os respondentes
 (sem pesos), o estrato explica 3% da variação do ROI e 10% da de
@@ -1116,7 +1158,7 @@ não ajuda vale, portanto, só para a população sintética.
 ## 7.2 Top 10 dos torneios (fora do plano)
 
 Os 10 primeiros colocados dos 24 torneios originais foram consultados de
-05/11 a 10/11 e ficam **fora do plano amostral**: não são uma amostra
+05/11 a 10/11 e ficam fora do plano amostral: não são uma amostra
 probabilística e não entram nos estimadores. São comparados, sem pesos,
 com a amostra aleatória dos mesmos torneios restrita às posições acima
 de 10, para que ninguém apareça nos dois grupos.
@@ -1157,9 +1199,11 @@ Top 10: taxa de resposta e ROI por posição
   lucrativos (Mann-Whitney, p = 0,32; Fisher, p = 1,00), e dentro do top
   10 o ROI não depende da posição (Spearman, p = 0,84). Os testes
   ignoram o plano e a conglomeração e são só descritivos.
-- **O que separa o campo do Kaggle é o perfil público, não o resultado
-  no torneio.** Os dois grupos ficam perto da estimativa do plano e
-  longe do Kaggle.
+- **A distância entre o campo e o Kaggle não vem do resultado no
+  torneio.** Os dois grupos ficam perto da estimativa do plano e longe
+  do Kaggle. A explicação mais provável é a seleção pelo perfil público,
+  somada ao fato de o Kaggle ser sintético; esta comparação, porém, não
+  permite separar as duas causas.
 - **A não resposta depende da posição.** A taxa de resposta cai de 61%
   nas posições 1 a 3 para 42% nas posições 8 a 10 e 38% fora do top 10.
   Isso contraria a hipótese de não resposta aleatória dentro do torneio,
@@ -1167,7 +1211,7 @@ Top 10: taxa de resposta e ROI por posição
   que ela produz. É o que motiva o ajuste por posição da §6.5.
 - **As consultas são consistentes.** As 19 posições do top 10 que também
   tinham sido sorteadas na amostra tiveram o mesmo status de resposta
-  nas duas consultas, e o ROI diferiu em no máximo 0,5 ponto (§8).
+  nas duas consultas, e o ROI diferiu em no máximo 0,5 p.p. (§8).
 
 # 8. Erros não amostrais
 
@@ -1177,12 +1221,12 @@ Top 10: taxa de resposta e ROI por posição
 | **Jogador “Anônimo”** na lista de resultados | Não pode ser consultado nem identificado; tratado como perfil privado | 8 casos, incluídos na taxa de não resposta |
 | **`n_jogos_dia` ausente** | Sem ele não há peso $`1/f_i`$; anotado em toda consulta | Nenhum respondente sem a informação |
 | **Bloco sorteado que não pôde ser listado** (não resposta de UPA) | Sem substituição nem novo sorteio; peso $`B/b`$ com os blocos listados | Blocos 34 e 36 perdidos; $`b = 4`$ (§3.5) |
-| **Listagem indisponível ou incompleta** | Redefinir o período **antes** do sorteio dos torneios e listar cada bloco assim que ele termina | Período redefinido duas vezes antes da Fase 1 (§2.1) |
+| **Listagem indisponível ou incompleta** | Redefinir o período antes do sorteio dos torneios e listar cada bloco assim que ele termina | Período redefinido duas vezes antes da Fase 1 (§2.1) |
 | **Torneio sem lista de resultados acessível ou com menos de 2 respondentes** | Não resposta de USA: fica fora da estimação, e $`n_{jh}`$ conta só os torneios que ficam | 3 torneios com 0 e 5 com 1 respondente |
 | **Re-entry** | O jogador conta uma vez por torneio; posição repetida é pulada | $`M_k`$ continua contando entradas (limitação, §9) |
 | **Mesmo jogador sorteado em dois torneios** | Manter os dois registros, porque a unidade é a inscrição | 1 caso (§3.5) |
 | **Jogador com poucos torneios** (ROI instável) | Previsto: sensibilidade excluindo quem tem menos de 30 torneios | Não foi feita: a coleta não registrou o número de torneios da janela, só `n_jogos_dia` |
-| **Defasagem temporal** (o ROI muda entre os dias de consulta) | Janela fixa de 01/10/2025 a 30/09/2026 para todos os jogadores | Mesmo assim, consultas em dias diferentes diferem em até 0,5 ponto de ROI, provavelmente porque o SharkScope incorpora resultados com atraso e converte o lucro pelo câmbio do dia. Nenhum sinal mudou |
+| **Defasagem temporal** (o ROI muda entre os dias de consulta) | Janela fixa de 01/10/2025 a 30/09/2026 para todos os jogadores | Mesmo assim, consultas em dias diferentes diferem em até 0,5 p.p. de ROI, provavelmente porque o SharkScope incorpora resultados com atraso e converte o lucro pelo câmbio do dia. Nenhum sinal mudou |
 | **Valor extremo** | Conferir no SharkScope e manter; reportar a sensibilidade | MuoMadre (1.064,4%), §6.2 |
 | **Colisão nas sementes derivadas** | Registrada como limitação; o sorteio não pode ser refeito | 2 pares de torneios com a mesma semente (§3.5) |
 
@@ -1195,7 +1239,7 @@ Top 10: taxa de resposta e ROI por posição
 | Moldura necessária | Lista de jogadores | Só a lista de blocos de tempo |
 | Viés do estimador | Desprezível | Desprezível (na simulação) |
 | EP estimado × EP real | Iguais | O linearizado capta cerca de metade da variância com 4 blocos; o jackknife acerta em média |
-| Cobertura do IC de 95% | 94% a 96% | 87% a 94% (Wald); 92% a 96% com logit nas proporções |
+| Cobertura do IC de 95% | 94% a 96% | 87% a 94% (Wald); 92% a 95% com logit nas proporções |
 | Eficiência (EPA) | 0,92 a 1,02 | 6 a 12 vezes a variância da AAS, por jogador |
 | Graus de liberdade | Cerca de $`n`$ | $`b - 1 = 3`$ |
 
@@ -1265,7 +1309,7 @@ teria compensado essas perdas.
   O período não cobre uma semana inteira nem eventos que acontecem só em
   outros dias.
 
-## 9.4 O que faríamos diferente
+## 9.4 Recomendações para uma nova coleta
 
 - **Sortear mais blocos**, mesmo ao custo de menos jogadores por
   torneio, e listá-los assim que terminam, antes que saiam do alcance da
@@ -1282,8 +1326,8 @@ teria compensado essas perdas.
 ## 9.5 Considerações éticas
 
 - **Termos de uso.** Toda a coleta no SharkScope foi manual e respeitou
-  a cota da conta. Não se usou scraping automatizado, nem do SharkScope
-  nem do PokerStars.
+  a cota da conta. Não se usou extração automatizada de dados
+  (*scraping*), nem do SharkScope nem do PokerStars.
 - **Privacidade.** Nicknames são pseudônimos públicos, escolhidos pelo
   próprio jogador e exibidos abertamente no PokerStars e no SharkScope.
   Sozinhos, não identificam a pessoa. Nenhum outro dado do jogador, além
@@ -1313,9 +1357,9 @@ teria compensado essas perdas.
 # Apêndice: reprodutibilidade
 
 O código, os dados de campo e o registro de cada sorteio e decisão estão
-no repositório do projeto. O dataset do Kaggle fica fora do repositório
-(`bash scripts/baixar_kaggle.sh`). Para refazer os números deste
-relatório:
+no repositório do projeto. O conjunto de dados do Kaggle fica fora do
+repositório (`bash scripts/baixar_kaggle.sh`). Para refazer os números
+deste relatório:
 
 ``` bash
 Rscript -e 'testthat::test_dir("tests/testthat")'   # inclui os exemplos do Thompson
