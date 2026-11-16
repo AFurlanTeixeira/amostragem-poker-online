@@ -70,8 +70,8 @@ painel_intervalos <- function(d, titulo, referencia, rotulo_ref, ylim, legenda =
 #'   `estimativa`, `li`, `ls`, `li_jk1`, `ls_jk1`.
 #' @return NULL, invisivelmente.
 grafico_estimativas_ic <- function(estimativas) {
-  stopifnot(all(c("parametro", "escala", "estimativa", "li", "ls", "li_jk1", "ls_jk1") %in%
-    names(estimativas)))
+  colunas <- c("parametro", "escala", "estimativa", "li", "ls", "li_jk1", "ls_jk1")
+  stopifnot(all(colunas %in% names(estimativas)))
   roi <- estimativas[estimativas$escala == "roi", , drop = FALSE]
   prop <- estimativas[estimativas$escala == "proporcao", , drop = FALSE]
   antigo <- graphics::par(mar = c(3, 4.5, 3, 1), family = "sans")
