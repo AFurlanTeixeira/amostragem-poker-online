@@ -48,6 +48,7 @@ R/simulacao_kaggle.R          Monte Carlo de AAS/AAS estratificada (proporcional
 R/simulacao_kaggle_tres_estagios.R  população sintética com a estrutura do campo e Monte Carlo do plano
 R/exploracao_estratos.R       AED dos estratos de campo: moldura, não resposta, domínios, decomposição, gráficos
 R/exploracao_top10.R          AED do top 10 (fora do plano) e comparação com amostra, plano e Kaggle
+R/graficos_relatorio.R        gráficos do relatório final: IC de campo, cobertura por b, não resposta
 ```
 
 Regras que não podem ser quebradas (ver [`.ai/modelagem.md`](.ai/modelagem.md)):
