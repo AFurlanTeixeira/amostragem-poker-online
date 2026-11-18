@@ -149,6 +149,16 @@ ex_m <- sum(a$torneio == a$torneio[ex])
 ex_f <- frequencia_no_periodo(na_estimacao$n_jogos_dia[ex])
 f_amostra <- frequencia_no_periodo(na_estimacao$n_jogos_dia)
 
+# Parametros do Kaggle (secao 2.5), conferidos no CSV: ROI medio e proporcao
+# de lucrativos. Fixos aqui porque o CSV fica fora do repositorio.
+ROI_KAGGLE <- -31.88
+LUCRATIVOS_KAGGLE <- 0.1939
+# Distancia do ROI do Kaggle a estimativa de campo, em erros-padrao: JK1 e
+# linearizado com a variancia dobrada (a simulacao da secao 5.3 mostra que ele
+# capta cerca de metade da variancia com 4 blocos).
+dist_kaggle_jk1 <- (r_jog$roi$estimativa - ROI_KAGGLE) / r_jog$roi$ep_jk1
+dist_kaggle_lin2 <- (r_jog$roi$estimativa - ROI_KAGGLE) / (sqrt(2) * r_jog$roi$ep)
+
 # Conta do IC logit (secao 4.6), proporcao de lucrativos.
 p_luc <- por_jogador$lucrativo$estimativa
 ep_luc <- por_jogador$lucrativo$erro_padrao
@@ -178,35 +188,24 @@ if (knitr::pandoc_to("gfm")) {
 
 # Resumo
 
-Não existe uma lista dos jogadores de poker online e, por isso, não é possível sortear jogadores diretamente. Este trabalho compara duas formas de lidar com a falta de moldura. A primeira é a amostragem direta de elementos (amostragem aleatória simples, AAS, e AAS estratificada), possível só quando há uma lista: ela foi simulada por Monte Carlo num conjunto de dados do Kaggle, tratado como população conhecida. A segunda é uma amostragem estratificada em três estágios aplicada em campo no SharkScope, em que a única moldura é o tempo: sorteiam-se blocos de 2 h, depois torneios dentro dos blocos (estratificados por buy-in) e, por fim, jogadores dentro dos torneios.
+Conjuntos de dados simulados são uma alternativa barata à coleta de dados reais, mas só servem se reproduzirem o fenômeno que imitam. Este trabalho investigou se o retorno sobre o investimento (ROI) dos jogadores de um conjunto de dados sintético de torneios de poker, disponível no Kaggle, se parece com o ROI de jogadores reais. Como não existe lista de jogadores nem de torneios de poker online, a amostra de jogadores reais foi obtida por uma amostragem estratificada em três estágios, em que a única moldura é o tempo: sortearam-se blocos de 2 h de um período de 76 h de outubro de 2026, torneios multimesa (MTT) do PokerStars dentro dos blocos, estratificados por buy-in, e jogadores dentro dos torneios, cujo ROI foi consultado no SharkScope. A média por jogador distinto foi estimada por um estimador razão com peso de multiplicidade $1/f_i$, e a variância, por linearização de Taylor e por *jackknife* de blocos (JK1). Dos 6 blocos sorteados, 4 puderam ser listados, e a não resposta chegou a `r pct(taxa_nr, 0)`, o que deixou `r n_estimacao` respondentes em `r length(unique(na_estimacao$torneio_id))` torneios. Entre os jogadores reais com perfil público, o ROI médio estimado foi de `r num(r_jog$roi$estimativa, 1)`% (IC de 95% `r ic_txt(r_jog$roi$li, r_jog$roi$ls)` pela linearização e `r ic_txt(r_jog$roi$li_jk1, r_jog$roi$ls_jk1)` pelo JK1) e a proporção de lucrativos, de `r num(r_jog$lucrativo$estimativa, 2)` (IC JK1 `r ic_txt(r_jog$lucrativo$li_jk1, r_jog$lucrativo$ls_jk1)`), contra ROI médio de `r num(ROI_KAGGLE, 1)`% e proporção de lucrativos de `r num(LUCRATIVOS_KAGGLE, 2)` no Kaggle. Os valores do Kaggle ficam fora dos intervalos do ROI e da proporção de lucrativos, e mesmo no pior caso da não resposta, com todos os não respondentes tratados como não lucrativos, a proporção de lucrativos do campo, por inscrição, seria de `r num(lim$lucrativo$inferior, 2)`. Como apoio, avaliou-se por Monte Carlo o desempenho dos planos: no Kaggle, a amostragem aleatória simples (AAS) e a AAS estratificada por buy-in tiveram intervalos com a cobertura nominal, sem ganho da estratificação; numa população sintética com a estrutura do campo, o plano em três estágios foi praticamente não viesado, mas de 6 a 12 vezes menos eficiente que uma AAS, e seu erro-padrão linearizado captou cerca de metade da variância com 4 blocos. Conclui-se que os dados do Kaggle não reproduzem o desempenho dos jogadores reais observados: são muito mais pessimistas, tanto no ROI médio quanto na proporção de lucrativos. A conclusão vale para jogadores com perfil público no SharkScope, que tendem a ser mais regulares e mais vencedores que o conjunto dos inscritos, e se apoia em intervalos que, com só 4 unidades primárias, ainda são otimistas.
 
-Entre os jogadores com perfil público no SharkScope que jogaram torneios multimesa (MTT) do PokerStars de 17/10/2026 20:00 a 21/10/2026 00:00:
-
-| Parâmetro (por jogador distinto) | Estimativa | EP linearizado | IC 95% | EP jackknife | IC 95% (jackknife) |
-|---|---:|---:|---|---:|---|
-| `r ROTULO[["roi"]]` | `r num(r_jog$roi$estimativa)` | `r num(r_jog$roi$ep)` | `r ic_txt(r_jog$roi$li, r_jog$roi$ls)` | `r num(r_jog$roi$ep_jk1)` | `r ic_txt(r_jog$roi$li_jk1, r_jog$roi$ls_jk1)` |
-| `r ROTULO[["lucrativo"]]` | `r num(r_jog$lucrativo$estimativa, 3)` | `r num(r_jog$lucrativo$ep, 3)` | `r ic_txt(r_jog$lucrativo$li, r_jog$lucrativo$ls, 3)` | `r num(r_jog$lucrativo$ep_jk1, 3)` | `r ic_txt(r_jog$lucrativo$li_jk1, r_jog$lucrativo$ls_jk1, 3)` |
-| `r ROTULO[["lucrativo_estrito"]]` | `r num(r_jog$lucrativo_estrito$estimativa, 3)` | `r num(r_jog$lucrativo_estrito$ep, 3)` | `r ic_txt(r_jog$lucrativo_estrito$li, r_jog$lucrativo_estrito$ls, 3)` | `r num(r_jog$lucrativo_estrito$ep_jk1, 3)` | `r ic_txt(r_jog$lucrativo_estrito$li_jk1, r_jog$lucrativo_estrito$ls_jk1, 3)` |
-
-EP é o erro-padrão e IC, o intervalo de confiança: IC t com 3 graus de liberdade para o ROI e IC logit para as proporções.
-
-- **As estimativas valem para perfis públicos.** A não resposta foi de `r pct(taxa_nr, 0)`, e quem mantém o perfil aberto tende a ser mais regular e mais vencedor. No Kaggle, só 19% dos jogadores são lucrativos.
-- **Os intervalos são largos e ainda otimistas.** Só 4 blocos puderam ser usados, e numa simulação do mesmo plano o erro-padrão linearizado captou cerca de metade da variância real. O jackknife de blocos acerta a variância em média, mas nenhum dos dois leva a cobertura a 95%. O IC do ROI médio encosta em zero.
-- **Na simulação, o plano em três estágios foi de 6 a 12 vezes menos eficiente que uma AAS de mesmo tamanho**, sobretudo pela desigualdade dos pesos. É o preço de não ter moldura de jogadores.
-- **Estratificar por buy-in não ajudou no Kaggle** (efeito do planejamento ≈ 1), porque o ROI médio é o mesmo nas três faixas. No campo, porém, os estratos diferem um pouco (§7.1), e essa conclusão não se transfere automaticamente.
+**Palavras-chave:** dados sintéticos; amostragem em múltiplos estágios; estimador razão; *jackknife*; não resposta; poker online.
 
 # 1. Introdução e motivação
 
-O objetivo é estimar o desempenho médio dos jogadores de torneios de poker online, medido pelo ROI médio ($\bar Y$), e a proporção de jogadores lucrativos ($P$). O ROI (*return on investment*, retorno sobre o investimento) de um jogador é o lucro líquido dividido pelo total pago em inscrições, em %. Busca-se também medir quanto a estrutura de conglomerados (jogadores agrupados em torneios, e torneios agrupados no tempo) altera a precisão das estimativas, em comparação com uma amostra aleatória simples.
+O Kaggle disponibiliza um conjunto de dados sintético com o histórico de 45.000 jogadores de torneios de poker. Dados simulados como esses são fáceis de usar, mas só servem como substitutos de dados reais se reproduzirem o fenômeno que imitam. A pergunta central deste trabalho é se o desempenho dos jogadores do Kaggle se parece com o de jogadores reais, medido em ambos pelo ROI médio ($\bar Y$) e pela proporção de jogadores lucrativos ($P$). O ROI (*return on investment*, retorno sobre o investimento) de um jogador é o lucro líquido dividido pelo total pago em inscrições, em %.
+
+Para responder, é preciso estimar esses parâmetros numa amostra de jogadores reais, o que traz um problema de amostragem: não há lista de onde sorteá-los. Busca-se também medir quanto a estrutura de conglomerados (jogadores agrupados em torneios, e torneios agrupados no tempo) altera a precisão das estimativas, em comparação com uma amostra aleatória simples.
 
 Duas restrições práticas definem o desenho:
 
 - **Não existe uma moldura completa de torneios nem de jogadores.** O PokerStars realiza centenas de milhares de torneios por ano e não publica uma lista com todos eles.
 - **A coleta de desempenho é cara.** O ROI de cada jogador é consultado à mão no SharkScope, que limita o número de consultas (140 por dia na conta usada no projeto), e o prazo de entrega deixa poucos dias de coleta.
 
-Por isso o desenho de campo evita depender de uma lista completa e concentra o esforço de coleta em poucos conglomerados. Para medir o que se perde com isso, o mesmo problema é estudado numa população em que existe moldura: um conjunto de dados do Kaggle com 45.000 jogadores sintéticos, em que se pode sortear jogadores diretamente e repetir o sorteio milhares de vezes. As perguntas do projeto são:
+Por isso o desenho de campo evita depender de uma lista completa e concentra o esforço de coleta em poucos conglomerados. Para medir o que se perde com isso, o próprio Kaggle serve de população de teste: nele existe moldura, e é possível sortear jogadores diretamente e repetir o sorteio milhares de vezes. As perguntas do projeto são:
 
-1. Qual o ROI médio por jogador e a proporção de lucrativos, com IC de 95%?
+1. O ROI médio e a proporção de lucrativos dos jogadores reais se parecem com os do Kaggle? Quanto valem, com IC de 95%?
 2. Quanto da variância vem da variação entre blocos, entre torneios e dentro dos torneios?
 3. Qual o efeito do planejamento (EPA) do plano em três estágios, e quanto dele vem da variação dos pesos?
 4. No Kaggle, quanto a estratificação (alocação proporcional e de Neyman) ganha em relação à AAS?
@@ -271,7 +270,7 @@ O conjunto de dados *Poker Tournament Survival* (Nefedov, Kaggle) tem 45.000 jog
 
 Os dados são sintéticos: o dicionário descreve a coluna `skill` como a "vantagem verdadeira de longo prazo" do jogador, uma variável latente que não existe em dados reais. Não há torneio nem horário, então o plano de campo não pode ser sorteado diretamente nele (§5.3). Os parâmetros verdadeiros são ROI médio de −31,88% (mediana de −34%, desvio-padrão, DP, de 45,96 p.p.) e 19,39% de lucrativos. O ROI vai de −100% a +400%, com cauda direita longa.
 
-**As duas populações não são a mesma**, e as médias não devem ser comparadas diretamente. A comparação é metodológica: precisão, cobertura dos intervalos, efeito do planejamento e comportamento dos estimadores.
+**As duas populações não são a mesma.** O Kaggle é sintético e inclui todos os jogadores simulados; o campo descreve jogadores reais, mas só os que têm perfil público no SharkScope (§6.5), em outro período e com outra composição de buy-ins. Comparar as médias é a pergunta central do trabalho (§9.1), e essas diferenças entram como ressalvas na resposta. O Kaggle também é usado para comparar os planos amostrais (precisão, cobertura dos intervalos e efeito do planejamento), o que não depende de as populações serem iguais.
 
 # 3. Delineamento amostral
 
@@ -971,7 +970,37 @@ grafico_top10_posicao(top10p)
 
 # 9. Comparação e discussão
 
-## 9.1 Os dois tipos de plano
+## 9.1 O ROI do Kaggle não se parece com o dos jogadores reais
+
+```{r kaggle-vs-campo}
+tabela(
+  data.frame(
+    ` ` = c("ROI médio (%)", "IC 95% do ROI (linearizado)", "IC 95% do ROI (JK1)",
+            "Lucrativos (ROI > 0)", "IC 95% de lucrativos (JK1)",
+            "Lucrativos, pior caso da não resposta (por inscrição)"),
+    Kaggle = c(num(ROI_KAGGLE, 1), "—", "—", num(LUCRATIVOS_KAGGLE, 2), "—", "—"),
+    `Campo (perfis públicos)` = c(
+      num(r_jog$roi$estimativa, 1), ic_txt(r_jog$roi$li, r_jog$roi$ls),
+      ic_txt(r_jog$roi$li_jk1, r_jog$roi$ls_jk1), num(r_jog$lucrativo$estimativa, 2),
+      ic_txt(r_jog$lucrativo$li_jk1, r_jog$lucrativo$ls_jk1),
+      sprintf("de %s a %s", num(lim$lucrativo$inferior, 2), num(lim$lucrativo$superior, 2))
+    ),
+    check.names = FALSE
+  ),
+  caption = "Kaggle (parâmetros da população) e campo (estimativas por jogador distinto)"
+)
+```
+
+Não. No Kaggle, o ROI médio é de `r num(ROI_KAGGLE, 1)`% e só `r pct(LUCRATIVOS_KAGGLE, 0)` dos jogadores são lucrativos. Entre os jogadores reais com perfil público, o ROI médio estimado é de `r num(r_jog$roi$estimativa, 1)`% e a proporção de lucrativos, de `r num(r_jog$lucrativo$estimativa, 2)`. A diferença chega a ser de sinal: no Kaggle, o jogador típico perde cerca de um terço do que investe (mediana de −34%); no campo, a mediana da amostra é de `r num(stats::median(resp$roi), 0)`%, embora o IC do ROI médio encoste em zero.
+
+- **O ROI do Kaggle fica muito longe dos intervalos de campo.** Ele está a `r num(dist_kaggle_jk1, 1)` erros-padrão JK1 da estimativa de campo. Como a simulação da §5.3 mostra que o EP linearizado capta só cerca de metade da variância com 4 blocos, refez-se a conta dobrando a variância linearizada: a distância ainda é de `r num(dist_kaggle_lin2, 1)` erros-padrão.
+- **A proporção do Kaggle fica abaixo dos dois intervalos.** O limite inferior do JK1, o mais largo, é `r num(r_jog$lucrativo$li_jk1, 2)`, acima dos `r num(LUCRATIVOS_KAGGLE, 2)` do Kaggle.
+- **A distância aparece em todos os recortes do campo.** A amostra sem pesos, o top 10 e a amostra fora do top 10 têm ROI mediano de 16% a 18% e cerca de 85% a 90% de lucrativos, contra mediana de −34% no Kaggle (§7.2).
+- **A não resposta não explica a diferença na proporção.** No pior caso, com todos os não respondentes tratados como não lucrativos, a proporção de lucrativos por inscrição seria de `r num(lim$lucrativo$inferior, 2)` (§6.5), mais que o dobro da do Kaggle. Para o ROI médio não há limite equivalente, porque o ROI dos não respondentes não tem teto.
+
+Duas ressalvas delimitam a conclusão. Primeiro, o campo descreve só os jogadores com perfil público, que tendem a ser mais regulares e mais vencedores que o conjunto dos inscritos; o pior caso acima mostra que essa seleção não basta para aproximar a proporção da do Kaggle, mas não a elimina como parte da explicação. Segundo, o período (76 h de outubro de 2026) e o site (PokerStars) do campo não têm equivalente no Kaggle, que é sintético e não traz torneio, horário nem site (§2.5), e a composição de buy-ins é outra: no Kaggle, 65% dos jogadores estão no estrato Mid/High; no campo, esse estrato tem só 7% das inscrições (§7.1). Como o ROI do Kaggle é o mesmo nas três faixas (§5.1), essa diferença de composição não explica a distância. Com essas ressalvas, a resposta à pergunta central é que os dados sintéticos do Kaggle não reproduzem o desempenho dos jogadores reais observados: são muito mais pessimistas, tanto no ROI médio quanto na proporção de lucrativos.
+
+## 9.2 Os dois tipos de plano
 
 | | AAS e AAS estratificada (Kaggle) | Três estágios (campo e população sintética) |
 |---|---|---|
@@ -982,19 +1011,17 @@ grafico_top10_posicao(top10p)
 | Eficiência (EPA) | 0,92 a 1,02 | 6 a 12 vezes a variância da AAS, por jogador |
 | Graus de liberdade | Cerca de $n$ | $b - 1 = 3$ |
 
-**As populações não são as mesmas**, então o que se compara são as propriedades dos planos, não as médias. O Kaggle é sintético e inclui todos os jogadores (ROI médio de −32%, 19% de lucrativos). O campo descreve os jogadores com perfil público no SharkScope (ROI médio estimado de `r num(r_jog$roi$estimativa, 0)`%, `r pct(r_jog$lucrativo$estimativa, 0)` de lucrativos).
+Aqui o que se compara são as propriedades dos planos, e não as médias (§9.1). A comparação mostra o custo de não ter moldura. A AAS precisa de uma lista de jogadores e, com ela, entrega estimativas precisas e intervalos que cobrem o que prometem. O plano em três estágios dispensa a lista, mas paga de três formas: pesos muito desiguais (o que multiplica a variância), poucos conglomerados primários (o que deixa a variância mal estimada e com poucos graus de liberdade) e não resposta concentrada em alguns perfis. A estratificação, que no Kaggle não ajudou, também não teria compensado essas perdas.
 
-A comparação mostra o custo de não ter moldura. A AAS precisa de uma lista de jogadores e, com ela, entrega estimativas precisas e intervalos que cobrem o que prometem. O plano em três estágios dispensa a lista, mas paga de três formas: pesos muito desiguais (o que multiplica a variância), poucos conglomerados primários (o que deixa a variância mal estimada e com poucos graus de liberdade) e não resposta concentrada em alguns perfis. A estratificação, que no Kaggle não ajudou, também não teria compensado essas perdas.
+## 9.3 Respostas às perguntas do projeto
 
-## 9.2 Respostas às perguntas do projeto
-
-1. **ROI médio e proporção de lucrativos.** Entre os jogadores com perfil público, ROI médio de cerca de `r num(r_jog$roi$estimativa, 0)`% e proporção de lucrativos de cerca de `r num(r_jog$lucrativo$estimativa, 2)`. O IC do ROI encosta em zero, e o limite inferior da proporção fica entre `r num(r_jog$lucrativo$li_jk1)` e `r num(r_jog$lucrativo$li)`, conforme o EP usado. Os dados não permitem afirmar que o ROI médio é positivo.
+1. **Kaggle × jogadores reais.** Não se parecem: o Kaggle tem ROI médio de `r num(ROI_KAGGLE, 0)`% e `r pct(LUCRATIVOS_KAGGLE, 0)` de lucrativos, valores fora dos intervalos de campo (§9.1). Entre os jogadores reais com perfil público, ROI médio de cerca de `r num(r_jog$roi$estimativa, 0)`% e proporção de lucrativos de cerca de `r num(r_jog$lucrativo$estimativa, 2)`. O IC do ROI encosta em zero, e o limite inferior da proporção fica entre `r num(r_jog$lucrativo$li_jk1)` e `r num(r_jog$lucrativo$li)`, conforme o EP usado. Os dados não permitem afirmar que o ROI médio é positivo.
 2. **Fontes de variância.** Os termos da fórmula não são componentes. Pelos componentes não viesados, a variação dentro dos blocos responde por cerca de metade da variância ou mais, e o componente entre blocos não é distinguível de zero com 4 blocos.
 3. **EPA.** O plano de campo é bem menos eficiente que uma AAS de mesmo tamanho: de 6 a 12 vezes na simulação, com tamanho efetivo de Kish de `r num(n_kish, 0)` em `r epa_campo$roi$n` no campo. A maior parte da perda vem da desigualdade dos pesos. O EPA estimado numa única amostra não é confiável.
 4. **Estratificação no Kaggle.** Por buy-in, nenhum ganho (EPA ≈ 1), com alocação proporcional ou de Neyman, porque o ROI não varia entre as faixas. No campo, os estratos diferem um pouco.
 5. **Não resposta.** `r pct(taxa_nr, 0)`, maior nos buy-ins baixos e nas piores posições do torneio. Sem hipótese sobre os não respondentes, a proporção de lucrativos fica entre `r num(lim$lucrativo$inferior, 2)` e `r num(lim$lucrativo$superior, 2)`.
 
-## 9.3 Limitações
+## 9.4 Limitações
 
 - **Viés de não resposta**, que nenhum ajuste com os dados disponíveis corrige: as estimativas valem para perfis públicos.
 - **Poucas UPAs.** Com 4 blocos, a variância é mal estimada, os intervalos são largos e, pela simulação, ainda otimistas. Os blocos perdidos deixam a tarde e a noite de dia útil representadas por um único bloco.
@@ -1005,14 +1032,14 @@ A comparação mostra o custo de não ter moldura. A AAS precisa de uma lista de
 - **Cauda pesada.** Um único jogador desloca o ROI médio em cerca de 4 p.p. Mediana ponderada e ROI winsorizado não foram calculados.
 - **Validade externa.** Os resultados valem para MTTs do PokerStars em 76 h (de sábado à noite a terça), e não para o poker online em geral. O período não cobre uma semana inteira nem eventos que acontecem só em outros dias.
 
-## 9.4 Recomendações para uma nova coleta
+## 9.5 Recomendações para uma nova coleta
 
 - **Sortear mais blocos**, mesmo ao custo de menos jogadores por torneio, e listá-los assim que terminam, antes que saiam do alcance da busca. É a única forma de aumentar os graus de liberdade, e toda a variância cai com $1/b$.
 - **Estratificar os blocos** por período do dia ou dia da semana, para que a perda de um bloco não deixe um período inteiro sem representação.
 - **Registrar o número de torneios de cada jogador** na janela, para um peso $1/f_i$ menos aproximado e para a análise de sensibilidade prevista para jogadores com poucos torneios.
 - **Usar um gerador de sementes derivadas sem colisões.**
 
-## 9.5 Considerações éticas
+## 9.6 Considerações éticas
 
 - **Termos de uso.** Toda a coleta no SharkScope foi manual e respeitou a cota da conta. Não se usou extração automatizada de dados (*scraping*), nem do SharkScope nem do PokerStars.
 - **Privacidade.** Nicknames são pseudônimos públicos, escolhidos pelo próprio jogador e exibidos abertamente no PokerStars e no SharkScope. Sozinhos, não identificam a pessoa. Nenhum outro dado do jogador, além do que o SharkScope mostra publicamente, foi coletado.
